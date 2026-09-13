@@ -1,74 +1,153 @@
-MaleCNS v1.0 verisiyle yerel keşif ortamı kuruldu. Dosyalar `data/male-cns-v1.0/`, bağımlılıklar bu projeye özel `.venv/` içinde. Python 3.12 ve paket sürümleri `pyproject.toml` / `uv.lock` ile sabitlendi.
+# Hashtag Neural Lab
 
-**Neural Lab arayüzü:** `rtk proxy ./ui.sh` → <http://127.0.0.1:8766/>. Aynı ekranda canlı MuJoCo gövdesi, gerçek soma konumlarında model aktivitesi, bağlantı ağırlığı karşılaştırması ve eğitim kontrolleri. [Arayüz kullanımı ve deney durumları](LAB.md).
+**Sinek simülasyonu, canlı nöron aktivitesi ve yönelme eğitimi için yerel laboratuvar.**
 
-**Yeni: yürüyen sinek ve ilk koku eğitimi.** Canlı açılış: `rtk proxy ./sim.sh --policy trained`. Yeniden eğitim: `rtk proxy ./teach.sh`. [Simülasyon ve eğitim rehberi](SIMULATION.md), [eğitim öncesi/sonrası videolar](http://127.0.0.1:8765/simulation/). Bu deney, MaleCNS'ten çıkarılan 7.075 nöronluk basitleştirilmiş alt devreyi kullanır; tam beyin emülasyonu değildir.
+Tek ekranda HD MuJoCo simülasyonu, MaleCNS anatomisinden türetilen devre,
+bağlantı inceleme, eğitim ilerlemesi ve fizik testleri. Nörona veya bağlantıya
+tıklayın; kaynağını ve modeldeki değerlerini görün. Eğitiminizi ayrı kaydedip
+seçtiğiniz modeli yürüyüşte veya uçuşta çalıştırın.
 
-**Görünümleri açmak**
+Bu repo **büyük beyin verilerini, kişisel eğitimleri ve Python ortamlarını içermez**.
+Küçük uygulama paketi dağıtılır. İlk açılış ekranı ortamları kurar, verileri resmi
+kaynaklardan indirir ve ilk modeli sizin bilgisayarınızda eğitir. API anahtarı
+gerekmez; kişisel eğitimler internete yüklenmez.
 
-```bash
-cd /Users/macmert/fruitfly-hashtag
-rtk proxy ./run.sh
-```
+> Tam beyin emülasyonu değildir. MaleCNS'ten türetilen **7.075 nöronluk basitleştirilmiş
+> yönelme ağıdır**. Yürüyüşte FlyGym bacak kontrolcüsü, uçuşta FlyBody hazır kanat
+> politikası kullanılır. Eğitim yön kararını değiştirir; biyolojik öğrenme veya
+> kanat eğitimi değildir. [Bilimsel kapsam](docs/training.md#bilimsel-kapsam).
 
-Tarayıcıdan <http://127.0.0.1:8765> adresini aç. Sunucu yalnızca bu bilgisayardaki `127.0.0.1` adresini dinler ve `artifacts/` klasörünü sunar. Terminalde `Ctrl+C` ile durur. Port zaten kullanılıyorsa ikinci kopyayı başlatmak yerine mevcut adresi aç.
+## Hızlı başlangıç
 
-- **Nöronlar:** 28 gerçek SWC iskeleti, beyin ve VNC yüzeyiyle birlikte.
-- **Tüm hücre gövdeleri:** soma konumu bulunan 139.662 kayıt. Noktalar nöron dalları değildir.
-- **Tek nöron çifti:** DNge104 sağ/sol; ayrıntılı ve yakın inceleme için.
-- **Bağlantılar:** sınıflar arası temas sayıları ve 12781'in en güçlü giriş/çıkış ortakları.
+Doğrulanan tam platform **Apple Silicon macOS**. Linux deneysel; Windows yerel
+simülasyonu desteklenmez. Python **3.11+**, **pipx** ve uçuş için **Git** gerekir.
+Bilimsel kurulum için **15 GiB boş disk**, en az **16 GB RAM**, tercihen **32 GB RAM**
+ile planlayın. Bunlar kapasite önerileridir; 16 GB cihaz performansı ölçülmüş değildir.
+[Ayrıntılı gereksinimler ve Linux notları](docs/installation.md).
 
-Sürükleyerek döndür, tekerlekle yakınlaş. Sağdaki etiketlere tıklayarak nöronları/sınıfları gizle; çift tıklayarak birini ayır. Kamera simgesi PNG dışa aktarır. HTML dosyalarının her biri Plotly kodunu içerir; sunucu olmadan dosyaya çift tıklayarak ve internet olmadan da açılabilir. Alt kısımdaki resmî atlas bağlantısı internet kullanır.
-
-**Veriyle çalışmak**
-
-```bash
-cd /Users/macmert/fruitfly-hashtag
-rtk proxy ./lab.sh
-```
-
-JupyterLab başlangıç defterini açar. Hücreleri `Shift+Enter` ile çalıştır. Jupyter'nin yerel oturum bağlantısını kullan; `Ctrl+C` ile sunucuyu durdur. Yeni oturumda deftere güvenme bildirimi çıkarsa kendi yerel `baslangic.ipynb` dosyan olduğunu doğrulayarak aç. Defterin beş kod hücresi kurulum sırasında hatasız çalıştırıldı.
-
-Python örnekleri:
-
-```python
-from brain import find_neurons, partners, plot_neurons, graph
-
-find_neurons("DNge104")
-partners(12781, direction="in", limit=15)
-partners(12781, direction="out", limit=15)
-fig = plot_neurons([12781, 556329], context=False)
-fig.show()
-```
-
-Yeni bodyId seçildiğinde `plot_neurons` eksik SWC dosyasını resmî depodan indirir, nesne sürümünü sabitler, CRC32C ile doğrular ve önbelleğe alır. Çok sayıda nöronu tek grafikte çizmek tarayıcıyı yavaşlatabilir; küçük devrelerle başla.
-
-**İndirilenler ve boyut**
-
-Ana bağlantı dosyası yaklaşık 1,05 GB, anotasyon dosyası 14,5 MB, hücre düzeyindeki nörotransmiter tablosu 43,3 MB. Ayrıca 28 seçilmiş nöronun iskeleti ve `flybrains` paketinin JRCFIB2022M anatomi yüzeyi yerelde. Türetilen sparse bağlantı matrisi ve dört HTML görünümü de hazır. Simülasyon/eğitim paketleriyle birlikte ortam ve dosyalar yaklaşık 2,9 GiB disk alanı kullanır; `uv`'nin paylaşılan paket önbelleği bu toplama dahil değildir.
-
-Tek bir eğitilmiş “3 GB beyin modeli” indirilmedi. [Resmî indirme listesinde](https://male-cns.janelia.org/download/) yaklaşık 2,7 GB'lık `tbar-neurotransmitters` tablosu da var; bu sinaps düzeyinde tahmin verisi. Şimdiki anatomi/bağlantı incelemesi için hücre düzeyindeki tablo yeterli olduğundan bu dosya, ham elektron mikroskobu hacmi ve bütün nöronların geometrileri indirilmedi. Tüm geometriyi çevrimiçi Neuroglancer atlasından seçerek görüntüleyebilirsin.
-
-Kurulu anatomi araçları: NAVis 1.12.0, flybrains 0.6.3, Plotly 7.0.0, JupyterLab 4.6.3, neuprint-python 0.6.3, Neuroglancer 2.41.2, Brian2 2.10.1, PyArrow 25.0.1 ve SciPy 1.18.1. Yerel örnekler neuPrint hesabı veya token istemez. Brian2 kurulumu tek bir sentetik nöronla kontrol edildi. Sonradan eklenen PyTorch/FlyGym koku deneyi için [SIMULATION.md](SIMULATION.md) dosyasına bak; bu deney ayrıntılı bir Brian2 tam beyin simülasyonu değildir.
-
-**Veriyi doğru yorumlamak**
-
-- Ham bağlantı tablosunda 151.856.684 satır bulunur; tüm uçlar sınıflandırılmış nöron değildir.
-- Yerel keşif matrisi `superclass` alanı dolu 166.700 kaydı ve iki ucu da bu kümede olan bağlantıları tutar: 25.582.938 yönlü kenar, 124.177.617 sinaptik temas. Bu filtre makalenin 166.691 nöronluk sayımını birebir yeniden üretmez.
-- Matris satırı kaynak/presynaptic, sütunu hedef/postsynaptic nörondur. Ağırlıklar pozitif anatomik temas sayısıdır; fizyolojik işaret, bağlantı gecikmesi, reseptör dinamiği veya öğrenilmiş parametre değildir.
-- 27.038 kayıtta soma konumu yok; nokta görünümüne dahil edilmez. SWC dosyalarında birden fazla kök bileşeni bulunabilir; aralarına yapay bağlantı eklenmez.
-- SWC ve soma koordinatları 8 nm biriminden, flybrains yüzeyi nm biriminden µm'ye dönüştürülür. Görüntüleme için z ekseninin yönü ters çevrilir; kayıtlı koordinatlar değiştirilmez.
-- Görüntü, anatomiyi gösterir; elektriksel aktiviteyi, öğrenmeyi veya yaşayan sineğin davranışını göstermez. Bir dinamik model ayrıca seçilip sınanmalıdır.
-
-**Doğrulama ve yeniden üretme**
-
-Orijinal dosyaların SHA256 ve sunucu CRC32C kontrolleri geçti. 28 SWC dosyasında düğüm/ebeveyn ilişkileri ve sayısal koordinatlar kontrol edildi. Örnek 12781 nöronunun 1.751 giriş ve 1.426 çıkış ortağı, sparse matris ile ham Feather dosyası arasında birebir eşleşti. Dört yerel görünüm HTTP üzerinden açıldı; Jupyter defteri çalıştırıldı. Kayıtlar: `data/male-cns-v1.0/validation.json`, `derived/runtime-checks.json`, `skeleton-manifests/` ve `artifacts/validation.json`.
+macOS'ta Homebrew kullanıyorsanız:
 
 ```bash
-rtk proxy uv sync --locked
-rtk proxy .venv/bin/python prepare.py
+brew install pipx git
+pipx ensurepath
 ```
 
-`prepare.py` mevcut doğrulanmış SWC'leri ve bağlantı önbelleğini kullanır; HTML görünümleri yeniden üretir. Mevcut başlangıç defterini değiştirmez. Temel üç Feather dosyasının zaten yerelde bulunmasını bekler; kaynak adresleri ve nesne sürümleri `data/male-cns-v1.0/manifest.json` içinde kayıtlıdır.
+Terminali yeniden açın. Sonra aşağıdaki yollardan **birini** seçin.
 
-Araştırma notları ve bilimsel sınırlar: [arastirma.md](arastirma.md). Resmî kaynaklar: [MaleCNS](https://male-cns.janelia.org/download/), [NAVis](https://navis-org.github.io/navis/stable/), [flybrains](https://github.com/navis-org/navis-flybrains).
+### A — Repoyu klonlayın
+
+```bash
+git clone https://github.com/mertozbas/fruitfly-hashtag.git
+cd fruitfly-hashtag
+pipx install .
+fruitfly ui
+```
+
+### B — GitHub'dan doğrudan pipx ile
+
+```bash
+pipx install git+https://github.com/mertozbas/fruitfly-hashtag.git
+fruitfly ui
+```
+
+### C — PyPI sürümüyle
+
+PyPI yayını tamamlandıktan sonra aynı paket aşağıdaki şekilde kurulur. Paket
+bulunamazsa GitHub yolunu kullanın; GitHub ve PyPI yayını ayrı işlemlerdir.
+
+```bash
+pipx install fruitfly-hashtag
+fruitfly ui
+```
+
+Tarayıcıda **http://127.0.0.1:8766/** açılır. Açılmazsa adresi kendiniz girin.
+Terminali açık tutun; `Ctrl+C` ile durdurun.
+
+1. **Beyni indir ve kur** düğmesine basın. Python 3.12, bilimsel paketler,
+   yaklaşık **1,11 GB** MaleCNS tablosu ve seçilmiş geometriler hazırlanır.
+   İndirmeler SHA256 ile doğrulanır. İlk 3.000 adımlık model yerelde eğitilir;
+   kısa bir gerçek fizik / HD render kontrolü yapılır. Bu, başarı oranı testi değildir.
+2. İsterseniz **Uçuşu kur** seçin. Ayrı Python 3.11 / TensorFlow ortamı ve yaklaşık
+   **19,4 MB** resmi FlyBody arşivi indirilir. Python paketleri ayrıca yer kaplar.
+3. **Laboratuvarı aç** düğmesine basın. Aynı adres canlı UI'a dönüşür.
+4. **Davranış** ve **Simülasyondaki model** seçin; hedefi değiştirip izleyin.
+   Üstteki **Rehber** bağlantısı kılavuzu çevrimdışı açar.
+
+Sonraki açılışlarda `fruitfly ui` yeterlidir. Kurulum ekranına dönmek için önce
+`Ctrl+C`, sonra `fruitfly ui --setup` çalıştırın.
+
+## İlk eğitiminizi yapın
+
+1. **Davranış → Kokuya yönelme** seçin.
+2. Hedefi **X=12, Y=4 mm** yapıp **Hedefi uygula** düğmesine basın.
+3. **Adım=3000**, **Tohum=42** ile başlayın. Adım ağırlık güncelleme sayısıdır;
+   tohum tekrarlanabilir rastgele başlangıcı belirler.
+4. **Eğitimi başlat** seçin. Önceki model ayrı korunur; canlı simülasyon eğitim
+   boyunca seçili modeli kullanmaya devam eder.
+5. Öğrenme kaybı ve ardından **6 fizik koşulundaki** test hesaplanır. Tamamlanmasını
+   bekleyin; düşük kayıp tek başına başarılı hareket demek değildir.
+6. **Yeni modeli simülasyona al** düğmesine basın.
+7. Beyin panelinde **Δ Ağırlık** seçin. Mevcut bağlantıların anatomik başlangıca
+   göre değişen çarpanlarını görün. **Yeni anatomik bağlantı üretilmez.**
+8. Model menüsünden eski ve yeni koşuları aynı hedefte karşılaştırın.
+
+Her yeni eğitim aynı anatomik başlangıçtan başlar; seçili modelin kaldığı yerden
+devam etmez. Hedef X/Y canlı değerlendirme içindir; eğitim veri kümesini değiştirmez.
+Yeni koku türü, serbest ödül fonksiyonu veya kullanıcı veri kümesi tanımlama henüz yoktur.
+
+Uçuş kuruluysa **Uçuş · beyin bağlı** seçip aynı akışı kullanın. Eğitim sonrası bu
+kez uçuş hedefleri değerlendirilir. Sinek havada başlar; kalkış, iniş ve irtifa
+öğrenimi bu sürümün kapsamı dışındadır. [Tam eğitim rehberi](docs/training.md).
+
+## Rehber dizini
+
+| Konu | Kılavuz |
+| --- | --- |
+| Gereksinimler, pipx, ilk kurulum, disk ve port | [Kurulum](docs/installation.md) |
+| Mouse, metrikler, nöron ve bağlantılar | [UI kullanımı](docs/usage.md) |
+| Eğitim, uçuş, karşılaştırma ve bilimsel sınırlar | [Eğitim](docs/training.md) |
+| URL'ler, boyutlar, doğrulama, veri dosyaları | [Veriler ve modeller](docs/data.md) |
+| Hatalar, güncelleme, yedekleme, kaldırma | [Sorun giderme](docs/troubleshooting.md) |
+| Geliştirme, build ve yayın | [Geliştirici rehberi](docs/development.md) |
+| Kaynaklar ve ayrı lisanslar | [Üçüncü taraf bildirimleri](THIRD_PARTY_NOTICES.md) |
+
+Kılavuz paketin içindedir: **`fruitfly docs`**. Mevcut görevler tüm kaynaklar ve
+ortamlar hazırlandıktan sonra internetsiz çalışır; yeni indirme/güncelleme internet ister.
+
+## Veriler nerede?
+
+Varsayılan **`~/.fruitfly-hashtag/`** dizini repo ve pipx ortamından ayrıdır:
+
+```text
+~/.fruitfly-hashtag/
+├── docs/                   # Çevrimdışı rehber ve Markdown
+├── data/                   # Resmi MaleCNS ve FlyBody indirmeleri
+├── models/odor_navigation/ # Yerelde oluşturulan başlangıç devresi/modeli
+├── models/lab_runs/         # Her kişisel eğitim ayrı klasör
+├── artifacts/              # Türetilen geometri ve değerlendirme çıktıları
+├── .venv/                  # Python 3.12: yürüyüş/eğitim
+├── flight/.venv/           # Python 3.11: isteğe bağlı uçuş
+└── .runtime/               # Kurulum ve çalışma günlükleri
+```
+
+Farklı disk için **her komutta aynı `--home` değerini, komut adından önce** yazın.
+Git deposunu veri dizini olarak vermeyin.
+
+```bash
+fruitfly --home /Volumes/LabDisk/neural-lab ui
+fruitfly --home /Volumes/LabDisk/neural-lab doctor
+```
+
+Paket kaldırılınca veya yükseltilince kişisel eğitimler silinmez.
+[Yedekleme ve güncelleme](docs/troubleshooting.md).
+
+## Lisans ve kaynaklar
+
+Orijinal kod [MIT](LICENSE). MaleCNS verisi **CC BY 4.0**, FlyBody kodu **Apache 2.0**,
+Figshare politika/veri arşivleri **GPL 3.0+**, vendored Three.js **MIT** lisansındadır.
+Dış veriler uygulamanın MIT lisansına dönüşmez; veri ve politikalar wheel'e dahil
+edilmez. Atıflar: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+[MaleCNS](https://male-cns.janelia.org/download/) · [FlyGym](https://neuromechfly.org/)
+· [FlyBody](https://github.com/TuragaLab/flybody)
+· [Politika/veri arşivleri](https://doi.org/10.25378/janelia.25309105.v4)

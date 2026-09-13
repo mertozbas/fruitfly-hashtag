@@ -1,3 +1,5 @@
+> **Yeni dağıtım kullanıcıları:** [Güncel, taşınabilir kurulum ve kullanım rehberi](../docs/installation.md). Bu dosya ilk yerel geliştirme deneylerinin teknik kaydıdır; kişisel dosya yolları, koşu kimlikleri ve `rtk` komutları son kullanıcı kurulumu için gerekli değildir. Burada belirtilen yerel sonuç dosyaları dağıtıma dahil edilmez.
+
 # MaleCNS ile kokulu hedefe uçuş
 
 Neural Lab → **Davranış → Uçuş · beyin bağlı**. Hedef X/Y konumunu mm olarak

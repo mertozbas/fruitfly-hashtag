@@ -1,3 +1,5 @@
+> **Yeni dağıtım kullanıcıları:** [Güncel, taşınabilir kurulum ve kullanım rehberi](docs/usage.md). Bu dosya ilk yerel geliştirme deneylerinin teknik kaydıdır; kişisel dosya yolları, koşu kimlikleri ve `rtk` komutları son kullanıcı kurulumu için gerekli değildir. Burada belirtilen yerel sonuç dosyaları dağıtıma dahil edilmez.
+
 Neural Lab, mevcut yerel MaleCNS/FlyGym ortamının çalışma arayüzüdür.
 
 ```bash

@@ -1,3 +1,5 @@
+> **Yeni dağıtım kullanıcıları:** [Güncel, taşınabilir kurulum ve kullanım rehberi](docs/training.md). Bu dosya ilk yerel geliştirme deneylerinin teknik kaydıdır; kişisel dosya yolları, koşu kimlikleri ve `rtk` komutları son kullanıcı kurulumu için gerekli değildir. Burada belirtilen yerel sonuç dosyaları dağıtıma dahil edilmez.
+
 **Simülasyon ve ilk eğitim deneyi**
 
 Bu ortamda NeuroMechFly gövdesi MuJoCo fiziğiyle yürür. MaleCNS verisinden çıkarılan koku devresinin basitleştirilmiş modeli, iki antenin sentetik koku ölçümünü dönüş komutuna çevirir. Eğitim öncesi ve sonrası aynı hedeflerde karşılaştırılır.

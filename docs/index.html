@@ -1,0 +1,780 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rehber · Hashtag Neural Lab</title><link rel="icon" href="data:,"><style>
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#0c121b;color:#d9e5ee;font:16px/1.75 system-ui,sans-serif}aside{position:fixed;inset:0 auto 0 0;width:220px;padding:28px 22px;border-right:1px solid #263744;background:#101923}aside b{display:block;font-size:14px;letter-spacing:.08em;margin-bottom:25px}aside a{display:block;margin:10px 0}a{color:#7ee3c3}main{margin-left:220px;max-width:1080px;padding:36px 48px}section{padding:0 0 44px;margin-bottom:44px;border-bottom:1px solid #324653}h1{font-size:30px;line-height:1.3}h2{font-size:23px;margin-top:32px}h3{font-size:18px}pre{padding:18px;border:1px solid #2e4455;border-radius:7px;background:#060c13;overflow:auto;line-height:1.5}code{font:13px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}blockquote{border-left:3px solid #7ee3c3;margin-left:0;padding:3px 20px;color:#b6c8d7}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px;border:1px solid #293b4a;vertical-align:top}th{background:#162332}li{margin:7px 0}.meta{color:#98adbd;font-size:13px}@media(max-width:760px){aside{position:static;width:auto}aside a{display:inline-block;margin-right:18px}main{margin:0;padding:24px}table{display:block;overflow:auto}}@media print{aside{display:none}main{margin:0;padding:0}body{background:white;color:black}a{color:#064f44}pre{background:#eee}}
+</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Başlangıç</a><a href="#installation">Kurulum</a><a href="#usage">UI kullanımı</a><a href="#training">Eğitim</a><a href="#data">Veriler</a><a href="#troubleshooting">Sorun giderme</a><a href="#development">Geliştirme</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.0<br>Markdown dosyaları bu dizindedir.</p></aside><main><section id="README"><h1 id="hashtag-neural-lab">Hashtag Neural Lab</h1>
+<p><strong>Sinek simülasyonu, canlı nöron aktivitesi ve yönelme eğitimi için yerel laboratuvar.</strong></p>
+<p>Tek ekranda HD MuJoCo simülasyonu, MaleCNS anatomisinden türetilen devre,
+bağlantı inceleme, eğitim ilerlemesi ve fizik testleri. Nörona veya bağlantıya
+tıklayın; kaynağını ve modeldeki değerlerini görün. Eğitiminizi ayrı kaydedip
+seçtiğiniz modeli yürüyüşte veya uçuşta çalıştırın.</p>
+<p>Bu repo <strong>büyük beyin verilerini, kişisel eğitimleri ve Python ortamlarını içermez</strong>.
+Küçük uygulama paketi dağıtılır. İlk açılış ekranı ortamları kurar, verileri resmi
+kaynaklardan indirir ve ilk modeli sizin bilgisayarınızda eğitir. API anahtarı
+gerekmez; kişisel eğitimler internete yüklenmez.</p>
+<blockquote>
+<p>Tam beyin emülasyonu değildir. MaleCNS'ten türetilen <strong>7.075 nöronluk basitleştirilmiş
+yönelme ağıdır</strong>. Yürüyüşte FlyGym bacak kontrolcüsü, uçuşta FlyBody hazır kanat
+politikası kullanılır. Eğitim yön kararını değiştirir; biyolojik öğrenme veya
+kanat eğitimi değildir. <a href="#bilimsel-kapsam">Bilimsel kapsam</a>.</p>
+</blockquote>
+<h2 id="hzl-baslangc">Hızlı başlangıç</h2>
+<p>Doğrulanan tam platform <strong>Apple Silicon macOS</strong>. Linux deneysel; Windows yerel
+simülasyonu desteklenmez. Python <strong>3.11+</strong>, <strong>pipx</strong> ve uçuş için <strong>Git</strong> gerekir.
+Bilimsel kurulum için <strong>15 GiB boş disk</strong>, en az <strong>16 GB RAM</strong>, tercihen <strong>32 GB RAM</strong>
+ile planlayın. Bunlar kapasite önerileridir; 16 GB cihaz performansı ölçülmüş değildir.
+<a href="#installation">Ayrıntılı gereksinimler ve Linux notları</a>.</p>
+<p>macOS'ta Homebrew kullanıyorsanız:</p>
+<pre><code class="language-bash">brew install pipx git
+pipx ensurepath
+</code></pre>
+<p>Terminali yeniden açın. Sonra aşağıdaki yollardan <strong>birini</strong> seçin.</p>
+<h3 id="a-repoyu-klonlayn">A — Repoyu klonlayın</h3>
+<pre><code class="language-bash">git clone https://github.com/mertozbas/fruitfly-hashtag.git
+cd fruitfly-hashtag
+pipx install .
+fruitfly ui
+</code></pre>
+<h3 id="b-githubdan-dogrudan-pipx-ile">B — GitHub'dan doğrudan pipx ile</h3>
+<pre><code class="language-bash">pipx install git+https://github.com/mertozbas/fruitfly-hashtag.git
+fruitfly ui
+</code></pre>
+<h3 id="c-pypi-surumuyle">C — PyPI sürümüyle</h3>
+<p>PyPI yayını tamamlandıktan sonra aynı paket aşağıdaki şekilde kurulur. Paket
+bulunamazsa GitHub yolunu kullanın; GitHub ve PyPI yayını ayrı işlemlerdir.</p>
+<pre><code class="language-bash">pipx install fruitfly-hashtag
+fruitfly ui
+</code></pre>
+<p>Tarayıcıda <strong>http://127.0.0.1:8766/</strong> açılır. Açılmazsa adresi kendiniz girin.
+Terminali açık tutun; <code>Ctrl+C</code> ile durdurun.</p>
+<ol>
+<li><strong>Beyni indir ve kur</strong> düğmesine basın. Python 3.12, bilimsel paketler,
+   yaklaşık <strong>1,11 GB</strong> MaleCNS tablosu ve seçilmiş geometriler hazırlanır.
+   İndirmeler SHA256 ile doğrulanır. İlk 3.000 adımlık model yerelde eğitilir;
+   kısa bir gerçek fizik / HD render kontrolü yapılır. Bu, başarı oranı testi değildir.</li>
+<li>İsterseniz <strong>Uçuşu kur</strong> seçin. Ayrı Python 3.11 / TensorFlow ortamı ve yaklaşık
+   <strong>19,4 MB</strong> resmi FlyBody arşivi indirilir. Python paketleri ayrıca yer kaplar.</li>
+<li><strong>Laboratuvarı aç</strong> düğmesine basın. Aynı adres canlı UI'a dönüşür.</li>
+<li><strong>Davranış</strong> ve <strong>Simülasyondaki model</strong> seçin; hedefi değiştirip izleyin.
+   Üstteki <strong>Rehber</strong> bağlantısı kılavuzu çevrimdışı açar.</li>
+</ol>
+<p>Sonraki açılışlarda <code>fruitfly ui</code> yeterlidir. Kurulum ekranına dönmek için önce
+<code>Ctrl+C</code>, sonra <code>fruitfly ui --setup</code> çalıştırın.</p>
+<h2 id="ilk-egitiminizi-yapn">İlk eğitiminizi yapın</h2>
+<ol>
+<li><strong>Davranış → Kokuya yönelme</strong> seçin.</li>
+<li>Hedefi <strong>X=12, Y=4 mm</strong> yapıp <strong>Hedefi uygula</strong> düğmesine basın.</li>
+<li><strong>Adım=3000</strong>, <strong>Tohum=42</strong> ile başlayın. Adım ağırlık güncelleme sayısıdır;
+   tohum tekrarlanabilir rastgele başlangıcı belirler.</li>
+<li><strong>Eğitimi başlat</strong> seçin. Önceki model ayrı korunur; canlı simülasyon eğitim
+   boyunca seçili modeli kullanmaya devam eder.</li>
+<li>Öğrenme kaybı ve ardından <strong>6 fizik koşulundaki</strong> test hesaplanır. Tamamlanmasını
+   bekleyin; düşük kayıp tek başına başarılı hareket demek değildir.</li>
+<li><strong>Yeni modeli simülasyona al</strong> düğmesine basın.</li>
+<li>Beyin panelinde <strong>Δ Ağırlık</strong> seçin. Mevcut bağlantıların anatomik başlangıca
+   göre değişen çarpanlarını görün. <strong>Yeni anatomik bağlantı üretilmez.</strong></li>
+<li>Model menüsünden eski ve yeni koşuları aynı hedefte karşılaştırın.</li>
+</ol>
+<p>Her yeni eğitim aynı anatomik başlangıçtan başlar; seçili modelin kaldığı yerden
+devam etmez. Hedef X/Y canlı değerlendirme içindir; eğitim veri kümesini değiştirmez.
+Yeni koku türü, serbest ödül fonksiyonu veya kullanıcı veri kümesi tanımlama henüz yoktur.</p>
+<p>Uçuş kuruluysa <strong>Uçuş · beyin bağlı</strong> seçip aynı akışı kullanın. Eğitim sonrası bu
+kez uçuş hedefleri değerlendirilir. Sinek havada başlar; kalkış, iniş ve irtifa
+öğrenimi bu sürümün kapsamı dışındadır. <a href="#training">Tam eğitim rehberi</a>.</p>
+<h2 id="rehber-dizini">Rehber dizini</h2>
+<table>
+<thead>
+<tr>
+<th>Konu</th>
+<th>Kılavuz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gereksinimler, pipx, ilk kurulum, disk ve port</td>
+<td><a href="#installation">Kurulum</a></td>
+</tr>
+<tr>
+<td>Mouse, metrikler, nöron ve bağlantılar</td>
+<td><a href="#usage">UI kullanımı</a></td>
+</tr>
+<tr>
+<td>Eğitim, uçuş, karşılaştırma ve bilimsel sınırlar</td>
+<td><a href="#training">Eğitim</a></td>
+</tr>
+<tr>
+<td>URL'ler, boyutlar, doğrulama, veri dosyaları</td>
+<td><a href="#data">Veriler ve modeller</a></td>
+</tr>
+<tr>
+<td>Hatalar, güncelleme, yedekleme, kaldırma</td>
+<td><a href="#troubleshooting">Sorun giderme</a></td>
+</tr>
+<tr>
+<td>Geliştirme, build ve yayın</td>
+<td><a href="#development">Geliştirici rehberi</a></td>
+</tr>
+<tr>
+<td>Kaynaklar ve ayrı lisanslar</td>
+<td><a href="#THIRD_PARTY_NOTICES">Üçüncü taraf bildirimleri</a></td>
+</tr>
+</tbody>
+</table>
+<p>Kılavuz paketin içindedir: <strong><code>fruitfly docs</code></strong>. Mevcut görevler tüm kaynaklar ve
+ortamlar hazırlandıktan sonra internetsiz çalışır; yeni indirme/güncelleme internet ister.</p>
+<h2 id="veriler-nerede">Veriler nerede?</h2>
+<p>Varsayılan <strong><code>~/.fruitfly-hashtag/</code></strong> dizini repo ve pipx ortamından ayrıdır:</p>
+<pre><code class="language-text">~/.fruitfly-hashtag/
+├── docs/                   # Çevrimdışı rehber ve Markdown
+├── data/                   # Resmi MaleCNS ve FlyBody indirmeleri
+├── models/odor_navigation/ # Yerelde oluşturulan başlangıç devresi/modeli
+├── models/lab_runs/         # Her kişisel eğitim ayrı klasör
+├── artifacts/              # Türetilen geometri ve değerlendirme çıktıları
+├── .venv/                  # Python 3.12: yürüyüş/eğitim
+├── flight/.venv/           # Python 3.11: isteğe bağlı uçuş
+└── .runtime/               # Kurulum ve çalışma günlükleri
+</code></pre>
+<p>Farklı disk için <strong>her komutta aynı <code>--home</code> değerini, komut adından önce</strong> yazın.
+Git deposunu veri dizini olarak vermeyin.</p>
+<pre><code class="language-bash">fruitfly --home /Volumes/LabDisk/neural-lab ui
+fruitfly --home /Volumes/LabDisk/neural-lab doctor
+</code></pre>
+<p>Paket kaldırılınca veya yükseltilince kişisel eğitimler silinmez.
+<a href="#troubleshooting">Yedekleme ve güncelleme</a>.</p>
+<h2 id="lisans-ve-kaynaklar">Lisans ve kaynaklar</h2>
+<p>Orijinal kod <a href="../LICENSE">MIT</a>. MaleCNS verisi <strong>CC BY 4.0</strong>, FlyBody kodu <strong>Apache 2.0</strong>,
+Figshare politika/veri arşivleri <strong>GPL 3.0+</strong>, vendored Three.js <strong>MIT</strong> lisansındadır.
+Dış veriler uygulamanın MIT lisansına dönüşmez; veri ve politikalar wheel'e dahil
+edilmez. Atıflar: <a href="#THIRD_PARTY_NOTICES">THIRD_PARTY_NOTICES.md</a>.</p>
+<p><a href="https://male-cns.janelia.org/download/">MaleCNS</a> · <a href="https://neuromechfly.org/">FlyGym</a>
+· <a href="https://github.com/TuragaLab/flybody">FlyBody</a>
+· <a href="https://doi.org/10.25378/janelia.25309105.v4">Politika/veri arşivleri</a></p></section>
+<section id="installation"><h1 id="kurulum">Kurulum</h1>
+<p><a id="gereksinimler"></a></p>
+<h2 id="gereksinimler">Gereksinimler</h2>
+<p>İlk aşama küçük UI/başlatıcı paketi, ikinci aşama bilimsel ortamdır.
+<code>pipx install</code> yalnızca ilk aşamayı yapar; beyin verisi indirmez.</p>
+<table>
+<thead>
+<tr>
+<th>Bileşen</th>
+<th>Gereksinim</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Başlatıcı</td>
+<td>Python 3.11+ ve pipx</td>
+</tr>
+<tr>
+<td>Doğrulanan platform</td>
+<td>Apple Silicon macOS; geliştirme doğrulaması M4 Max üzerinde</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>Deneysel; x86_64, OpenGL/EGL veya OSMesa sürücüleri gerekir; tam Linux testi yapılmadı</td>
+</tr>
+<tr>
+<td>Intel Mac</td>
+<td>Yürüyüş doğrulanmadı; mevcut TensorFlow uçuş kilidi desteklenmiyor</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>Yerel bilimsel kurulum desteklenmez; WSL2/Linux deneysel, HD render garantisi yok</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>En az 16 GB ile planlayın, 32 GB önerilir; tam bağlantı matrisi hazırlanır</td>
+</tr>
+<tr>
+<td>Disk</td>
+<td>En az 15 GiB boş alanla başlayın; uv önbelleği ve eğitimler ek alan kullanır</td>
+</tr>
+<tr>
+<td>İnternet</td>
+<td>İlk kurulum, güncelleme ve yeni kaynak indirme için</td>
+</tr>
+<tr>
+<td>Tarayıcı</td>
+<td>WebGL destekli güncel masaüstü tarayıcı</td>
+</tr>
+<tr>
+<td>Git</td>
+<td>Klonlama ve uçuş ortamındaki sabitlenmiş FlyBody kaynağı için</td>
+</tr>
+</tbody>
+</table>
+<p>Python 3.12/3.11'i ayrı ayrı elle kurmanız gerekmez. Paketle gelen <code>uv</code> gerekirse
+bunları indirir; sistem Python'unuzu değiştirmez.
+<a href="https://docs.astral.sh/uv/guides/install-python/">uv Python yönetimi</a>.
+Yönelme eğitimi Apple Silicon'da MPS, diğer ortamlarda CPU kullanır. GPU zorunlu
+değildir; otomatik CUDA eğitim yolu yoktur. Uçuş ayrı TensorFlow ortamındadır.</p>
+<h2 id="1-pipxi-hazrlayn">1. pipx'i hazırlayın</h2>
+<p>macOS/Homebrew:</p>
+<pre><code class="language-bash">brew install pipx git
+pipx ensurepath
+</code></pre>
+<p>Ubuntu/Debian:</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install pipx git
+pipx ensurepath
+</code></pre>
+<p>Terminali yeniden açın; <code>pipx --version</code> çalışmalı. Eski Python seçilirse kuruluma
+<code>--python python3.12</code> ekleyin. <a href="https://pipx.pypa.io/latest/how-to/install-pipx.html">pipx rehberi</a>.
+<code>sudo pip install</code> gerekmez; uygulama kullanıcı hesabında çalışır.</p>
+<h2 id="2-uygulamay-kurun">2. Uygulamayı kurun</h2>
+<pre><code class="language-bash">pipx install git+https://github.com/mertozbas/fruitfly-hashtag.git
+fruitfly --version
+fruitfly ui
+</code></pre>
+<p>Klonlanmış repoda <code>pipx install .</code> kullanın. PyPI sürümü yayımlandığında
+<code>pipx install fruitfly-hashtag</code> aynı işi yapar. İndirilen wheel de kurulabilir:
+<code>pipx install ./fruitfly_hashtag-0.2.0-py3-none-any.whl</code>.</p>
+<p>http://127.0.0.1:8766/ açılır. İlk açılışta kurulum ekranı gelir; veri olmadan
+çalışır. Büyük indirme düğmeye bastıktan sonra başlar. Terminali açık tutun.</p>
+<h2 id="3-beyni-ve-yuruyusu-kurun">3. Beyni ve yürüyüşü kurun</h2>
+<p><strong>Beyni indir ve kur</strong> sırasıyla:</p>
+<ol>
+<li>Kilitli Python 3.12 paketlerini ayrı <code>.venv</code> içine kurar.</li>
+<li>MaleCNS v1.0 anotasyon, nörotransmiter ve bağlantı tablolarını indirir.</li>
+<li>Sabit kaynak sürümü, boyut ve SHA256 özetlerini doğrular.</li>
+<li>Keşif matrisini, 28 seçilmiş SWC iskeletini ve anatomi yüzeyini hazırlar.</li>
+<li>ORN → ALPN → Kenyon → MBON devresini oluşturur.</li>
+<li>Başlangıç modeli yoksa 3.000 adım / tohum 42 ile yerelde eğitir.</li>
+<li>UI geometrisini üretir; kısa gerçek fizik ve 1920×1080 render kontrolü yapar.</li>
+</ol>
+<p>Bu başlangıç kontrolü altı hedeflik başarı testi değildir. İlk modelde fizik
+skoru henüz boş olabilir; UI'dan yeni eğitim başlatınca görev testi de yapılır.</p>
+<p>Günlük ekranda ve <code>.runtime/setup.log</code> içinde görünür. İndirme bittikten sonra
+matris hazırlığı CPU/RAM kullanmaya devam eder; süre donanıma ve internete bağlıdır.
+Bağlantı kesilirse aynı düğmeyle tekrar deneyin. MaleCNS <code>.part</code> dosyaları mümkünse
+HTTP Range ile sürdürülür. Tam dosyalar yeniden indirilmeden doğrulanır. Bozuk
+tamamlanmış dosyanın üzerine sessizce yazılmaz; hata konumunu gösterir.</p>
+<h2 id="4-istege-bagl-ucus">4. İsteğe bağlı uçuş</h2>
+<p>Ana kurulum bitince <strong>Uçuşu kur</strong> düğmesi açılır. Python 3.11 / TensorFlow 2.15.1
+ayrı <code>flight/.venv</code> içine kurulur. FlyBody'nin sabit commit'i GitHub'dan, politika
+ve referans arşivleri Figshare'den alınır. Politika yüklenir ve kısa fizik kontrolü
+yapılır. Yürüyüş ortamı değişmez; kanat çırpmayı yeniden eğitmezsiniz.
+Yaklaşık 3 GB'lık resmi yürüyüş veri kümesi bu uçuş kurulumu için gerekmez.</p>
+<h2 id="5-laboratuvar-ve-sonraki-aclslar">5. Laboratuvar ve sonraki açılışlar</h2>
+<p><strong>Laboratuvarı aç</strong> aynı adresi canlı UI'a dönüştürür. Sonraki oturum: <code>fruitfly ui</code>.
+Otomatik tarayıcı istemiyorsanız <code>fruitfly ui --no-browser</code>; port doluysa
+<code>fruitfly ui --port 8770</code>. Kurulum yöneticisine dönmek için <code>Ctrl+C</code>, sonra
+<code>fruitfly ui --setup</code>. Aynı dizinde ikinci bir UI/kurulum eşzamanlı başlatılamaz.</p>
+<h2 id="terminalden-kurulum">Terminalden kurulum</h2>
+<pre><code class="language-bash">fruitfly setup walking
+fruitfly setup flight
+fruitfly doctor
+fruitfly ui
+</code></pre>
+<p>Birlikte: <code>fruitfly setup all</code>. Durdurmak: <code>Ctrl+C</code>. <code>doctor</code> dosya/ortam varlığını
+kontrol eder; bilimsel geçerlilik testi yapmaz.</p>
+<pre><code class="language-bash">fruitfly --home /Volumes/LabDisk/neural-lab setup all
+fruitfly --home /Volumes/LabDisk/neural-lab ui --port 8770
+</code></pre>
+<p>Tüm komutlarda aynı veri dizinini kullanın. Alternatif <code>FRUITFLY_HOME</code> ortam
+değişkenidir. Sistem <code>HOME</code> değerini değiştirmeyin. Veri dizini Git deposu olmamalı;
+yönetilen kod buraya sürüm güncellemelerinde yerleştirilir, veriler korunur.</p></section>
+<section id="usage"><h1 id="ui-kullanm">UI kullanımı</h1>
+<p>Sağ üstte <strong>⛶</strong> tam ekranı açar. <strong>Rehber</strong> ayrı sekmede çevrimdışı kılavuzu açar.
+Masaüstü düzeni tek ekran için tasarlanmıştır.</p>
+<h2 id="deney-secimi">Deney seçimi</h2>
+<p><strong>Davranış</strong> menüsünde kokuya yönelme ve kuruluysa beyne bağlı uçuş aktiftir.
+“Hazırlık” yazan kaçınma, görsel yönelme ve arazi uygulanmış eğitimler değildir.
+<strong>Simülasyondaki model</strong> hangi kayıtlı ağın çalıştığını gösterir; seçim eğitim başlatmaz.</p>
+<p><strong>Hedef X/Y</strong> milimetredir, sınırı ±30 mm. <strong>Hedefi uygula</strong> yeni bölüm başlatır.
+Her serbest hedefte başarı garanti edilmez; kısa uçuşta gerideki hedefe erişilemeyebilir.</p>
+<h2 id="simulasyon-ve-mouse">Simülasyon ve mouse</h2>
+<table>
+<thead>
+<tr>
+<th>İşlem</th>
+<th>Kontrol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Döndür</td>
+<td>Sol tuşla sürükle</td>
+</tr>
+<tr>
+<td>Kaydır</td>
+<td>Sağ tuşla sürükle</td>
+</tr>
+<tr>
+<td>Yakınlaş/uzaklaş</td>
+<td>Tekerlek / trackpad kaydırma</td>
+</tr>
+<tr>
+<td>Sineğe odaklan</td>
+<td>Gövde kamera seçeneği</td>
+</tr>
+<tr>
+<td>Hedefi ve ortamı gör</td>
+<td>Arena kamera seçeneği</td>
+</tr>
+<tr>
+<td>Anı incele</td>
+<td>Duraklat; kamerayı kullanmaya devam et</td>
+</tr>
+</tbody>
+</table>
+<p>Görüntü MuJoCo'da 1920×1080 üretilir; tarayıcı paneli daha küçük olabilir.
+HD gerçek zamanlı hız garantisi değildir. Uçuş yavaş çekimdir; <strong>simülasyon zamanı</strong>
+duvar saatinden farklı ilerler. Kanat hareketi hazır FlyBody politikasından gelir.</p>
+<h2 id="beyni-okumak">Beyni okumak</h2>
+<p><strong>Aktivite</strong>, son beyin kararındaki hesaplanan nöron yanıtıdır; biyolojik ölçüm
+değildir. Duraklatınca son değerler sabit kalır. 7.075 yanıt hesaplanır; gerçek
+soma konumu olan 4.826 nöron 3B'de çizilir. Eksik konumlar uydurulmaz.</p>
+<p><strong>Sade</strong> 520 temsilci bağ, <strong>Nöronun bağları</strong> seçili nöronun bağları,
+<strong>Tüm bağlar</strong> konumu bilinen 82.747 model bağı gösterir. Son seçenek daha yoğundur.
+Parlaklık ve sinyal eşiği yalnızca görünümü değiştirir, çalışan ağı değiştirmez.</p>
+<p>Düz çizgiler soma–soma bağlantı gösterimidir, akson geometrisi değildir.
+Arka plandaki 28 dallanan SWC gerçek anatomidir; yalnızca üçü çalışan alt devreye
+dahildir. Hesaplanmayan iskeletler gri kalır.</p>
+<p>Nörona/bağa tıklayın: bodyId, sınıf, kaynak anotasyonları, temaslar ve seçili
+modeldeki katsayılar ayrıntı panelinde açılır. JSON indirme seçili kaydı dışa
+aktarır; bütün checkpoint'i indirmez.</p>
+<p><strong>Δ Ağırlık</strong> anatomik başlangıca göre katsayı değişimidir; iki eğitimin birbirine
+farkı değildir. İki modelde aynı bağlantıyı ayrı ayrı seçerek karşılaştırabilirsiniz.</p>
+<h2 id="metrikler">Metrikler</h2>
+<table>
+<thead>
+<tr>
+<th>Gösterge</th>
+<th>Anlamı</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hedef uzaklığı</td>
+<td>Hedefe uzaklık (mm)</td>
+</tr>
+<tr>
+<td>Hız</td>
+<td>Gövde hızı (mm/s)</td>
+</tr>
+<tr>
+<td>Simülasyon zamanı</td>
+<td>Fizikte geçen süre</td>
+</tr>
+<tr>
+<td>Ödül</td>
+<td>Görevde raporlanan ilerleme; bu sürümde eğitim algoritmasının ödül fonksiyonu değildir</td>
+</tr>
+<tr>
+<td>Sol/sağ koku</td>
+<td>Gerçek anten konumlarından sentetik alanda alınan yoğunluk</td>
+</tr>
+<tr>
+<td>Motor komutu</td>
+<td>Yürüyüşte CPG sürüşü, uçuşta sınırlanmış yön hızı</td>
+</tr>
+<tr>
+<td>Doğrulama MSE</td>
+<td>Ayrı örneklerde öğretmen yön komutuyla model çıktısının ortalama kare farkı</td>
+</tr>
+<tr>
+<td>Fizik testi</td>
+<td>Seçili görevin son testindeki başarı sayısı; sonuç yoksa boş</td>
+</tr>
+<tr>
+<td>İrtifa / kanat frekansı</td>
+<td>Uçuş fiziği; ayrı öğrenilmiş beyin çıktıları değildir</td>
+</tr>
+<tr>
+<td>Aktivite haritası</td>
+<td>X/Z izdüşümünde model yanıtı; sıcaklık ölçümü değildir</td>
+</tr>
+<tr>
+<td>Saydam kesit</td>
+<td>Gerçek konumların Y dilimi; X-ray veya tıbbi tarama değildir</td>
+</tr>
+</tbody>
+</table>
+<p>ORN / ALPN / Kenyon / MBON hücre grupları ve hesaplama aşamalarıdır; anatomik
+bölge sınırlarının segmentasyonu olarak yorumlamayın.</p></section>
+<section id="training"><h1 id="egitim-ve-deney-rehberi">Eğitim ve deney rehberi</h1>
+<p><a id="ilk-egitim"></a></p>
+<h2 id="ilk-yuruyus-egitimi">İlk yürüyüş eğitimi</h2>
+<p>Akış: <strong>başlangıcı izle → eğit → fizik testini bekle → yeni modeli yükle → karşılaştır</strong>.</p>
+<ol>
+<li><code>fruitfly ui</code> açın. <strong>Kokuya yönelme → Eğitim öncesi</strong> modelini seçin.</li>
+<li>Hedefi <strong>X=12, Y=4</strong> yapıp <strong>Hedefi uygula</strong> seçin; başlangıç hareketini izleyin.</li>
+<li><strong>Adım=3000</strong>, <strong>Tohum=42</strong> yazıp <strong>Eğitimi başlat</strong> düğmesine basın.</li>
+<li>MSE grafiğini izleyin. Aynı anda bir iş çalışır; adım aralığı 200–10.000'dir.
+   Eğitim + değerlendirme 600 saniyeyle sınırlıdır. Yavaş cihazda daha az adım deneyin.</li>
+<li>Eğitimden sonra altı ayrı fizik koşulu değerlendirilir. <strong>Tamamlandı</strong> durumunu
+   bekleyin; “değerlendiriliyor” henüz bitmiş değildir.</li>
+<li><strong>Yeni modeli simülasyona al</strong> seçin. Başka hedefleri deneyin, eski modeli
+   menüden geri alarak karşılaştırın.</li>
+<li><strong>Δ Ağırlık</strong> ile değişen katsayıları, <strong>Aktivite</strong> ile canlı yanıtı inceleyin.</li>
+</ol>
+<p><code>3000/42</code> başlangıç önerisidir, başarı garantisi değildir. Tohum tekrarlanabilirliği
+artırır; cihaz/BLAS/MPS farklılıkları sayısal sonucu değiştirebilir.</p>
+<h2 id="ne-ogreniliyor">Ne öğreniliyor?</h2>
+<p>İki antenin sentetik koku yoğunluğu giriş olur. ORN → ALPN → Kenyon → MBON gerçek
+MaleCNS topolojisine bağlanır. Program koku gradyanı örnekleri üretir; öğretmen
+kuralı sağ/sol yön komutu verir. Ağ bunları <strong>denetimli taklit öğrenmesiyle</strong> öğrenir.</p>
+<p>Mevcut KC→MBON bağlarının sınırlı çarpanları ve yapay motor okuması değişir.
+Nöron kimlikleri, bağlantıların varlığı, diğer anatomik katmanlar ve gövde
+kontrolcüleri korunur. <strong>Yeni anatomik kenar üretilmez</strong>. “Beynin yeni hali” burada
+yeni katsayıları taşıyan checkpoint'tir.</p>
+<p>Her iş 2.048 sentetik eğitim, ayrı 512 doğrulama örneği kullanır. Hedef X/Y bu
+veri kümesini değiştirmez. Her yeni iş aynı anatomik başlangıçtan başlar; seçili
+checkpoint'ten fine-tuning yapılmaz. Yeni koku kimliği, ödül tasarımı veya kendi
+veri kümenizi eklemek kod değişikliği ve yeni değerlendirme gerektirir.</p>
+<h2 id="ucus-yonelmesi">Uçuş yönelmesi</h2>
+<ol>
+<li>Uygulamayı <code>Ctrl+C</code> ile durdurup <code>fruitfly setup flight</code> çalıştırın. Alternatif:
+   <code>fruitfly ui --setup</code> ekranında <strong>Uçuşu kur</strong>.</li>
+<li>Laboratuvarda <strong>Uçuş · beyin bağlı</strong> seçin. İlk geçişte yürüyüşte seçili ağ
+   aktarılır; model menüsünden başka kayıt seçebilirsiniz.</li>
+<li><strong>X=25, Y=8</strong> gibi ileri bir hedef deneyin. Sinek havada başlar.</li>
+<li>Adım/tohum girip <strong>Yönelme ağını eğit</strong> seçin. Aynı ağ eğitilir; bu kez altı
+   uçuş koşulunda test edilir.</li>
+<li>Yeni modeli yükleyin; aktivite, anten, yön, irtifa ve kanat telemetrisini birlikte okuyun.</li>
+</ol>
+<p>Zincir: anten → MaleCNS alt ağı → MBON yön okuması → sınırlı yön referansı →
+hazır FlyBody kanat politikası → MuJoCo fiziği → yeni anten konumu.
+Eşit koku girdisindeki nötr değer çıkarılır; yön kazancı 60, sınırı ±8 rad/s'dir.
+Beyin 10 ms, kanat kontrolü 0,2 ms, fizik 0,05 ms adımlarıyla çalışır.
+Kanat politikası, irtifa, kalkış ve iniş bu eğitimle öğrenilmez. Bir yürüyüş
+checkpoint'inin uçuşta başarısı varsayılmaz; görev testi ayrı okunur.</p>
+<h2 id="sonucu-degerlendirme">Sonucu değerlendirme</h2>
+<p>MSE azalması sentetik komutların daha iyi taklit edildiğini gösterir. Fizik testi
+bunun gövdede işe yarayıp yaramadığına dair küçük bir sınamadır. <strong>6/6 bile genel
+başarı oranı değildir.</strong> Yeni cihazda veya hedefte aynı sonuç garanti edilmez.</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Koşullar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Yürüyüş</td>
+<td><code>(12,±4)</code>, <code>(10,±5)</code>, <code>(14,±3)</code> mm; tohumlar 10–15</td>
+</tr>
+<tr>
+<td>Uçuş</td>
+<td><code>(22,±6)</code>, <code>(28,±9)</code>, <code>(24,±10)</code> mm; tohumlar 101–106</td>
+</tr>
+</tbody>
+</table>
+<p>Serbest hedef bu sabit listeyi değiştirmez. Küçük karşılaştırma için adım sayısını
+koruyup tohumları 42/43/44 deneyin; MSE, başarı, düşme ve son uzaklığı birlikte
+kaydedin. Yalnızca en iyi koşuyu genel başarı diye sunmayın.</p>
+<h2 id="kaytlar">Kayıtlar</h2>
+<p>UI işleri <code>models/lab_runs/run-&lt;UTC zaman damgası&gt;/</code> içine ayrı kaydolur:</p>
+<table>
+<thead>
+<tr>
+<th>Dosya</th>
+<th>İçerik</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run.json</code></td>
+<td>Kimlik, görev, adım, tohum, iş durumu</td>
+</tr>
+<tr>
+<td><code>trained.npz</code>, <code>untrained.npz</code></td>
+<td>Eğitim sonrası/öncesi ağırlık ve motor okuması</td>
+</tr>
+<tr>
+<td><code>circuit.json</code>, <code>body_ids.npz</code>, <code>layer*.npz</code></td>
+<td>Devre kimliği ve anatomik katmanlar</td>
+</tr>
+<tr>
+<td><code>training.json</code></td>
+<td>MSE geçmişi ve değişen katsayı sayısı</td>
+</tr>
+<tr>
+<td><code>evaluation.json</code></td>
+<td>Göreve özgü fizik sonuçları</td>
+</tr>
+<tr>
+<td><code>training.log</code>, <code>tensorboard/</code></td>
+<td>Günlük ve eğitim olayları</td>
+</tr>
+</tbody>
+</table>
+<p>Taşırken bütün koşu klasörünü ve kaynak sürümünü koruyun. UI uyumlu <code>complete</code>
+koşularını listeler. Uygulama açıkken dosyaları elle değiştirmeyin. Durdurma veya
+kapanma önceki başarılı koşuları silmez; yarım iş başarılı model olarak sunulmaz.
+Yarım eğitim adımından otomatik devam edilmez; yeni iş başlatabilirsiniz.</p>
+<p><a id="bilimsel-kapsam"></a></p>
+<h2 id="bilimsel-snrlar">Bilimsel sınırlar</h2>
+<p>Anatomi gerçektir; aktivite hesaplama modelinin yanıtıdır. Fizyolojik uyarıcı/
+baskılayıcı işaret, tekrarlayan dinamik, spike, gecikme, reseptör/koku kimliği ve
+biyolojik plastisite modellenmez. İskelet örnekleri tam sinir sistemi değildir.
+Isı/kesit görünümleri hesaplanan yanıtın görselleştirmesidir. Bu laboratuvar bu
+sınırlı varsayımlarla deney yapmak içindir; yaşayan sineğin bütün beyninin veya
+biyolojik öğrenmesinin yeniden üretildiğini iddia etmez.</p></section>
+<section id="data"><h1 id="veriler-ve-modeller">Veriler ve modeller</h1>
+<h2 id="beyni-indirmek-ne-demek">“Beyni indirmek” ne demek?</h2>
+<p>Tek bir 3 GB hazır beyin checkpoint'i indirilmez. Önce MaleCNS'in <strong>anatomik
+bağlantı verisi</strong> alınır; sonra bu veriden basitleştirilmiş devre oluşturulup
+yönelme katsayıları yerelde eğitilir. FlyBody uçuş için ayrıca hazır motor
+politikası indirir. Bu üç kavramı ayrı düşünün: <strong>anatomi / yönelme modeli / gövde politikası</strong>.</p>
+<h2 id="neler-indirilir">Neler indirilir?</h2>
+<table>
+<thead>
+<tr>
+<th>Kaynak</th>
+<th>Boyut</th>
+<th>Kullanımı</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>body-annotations-male-cns-v1.0-minconf-0.5.feather</code></td>
+<td>14.483.314 bayt</td>
+<td>Nöron kimlikleri, sınıflar ve konumlar</td>
+</tr>
+<tr>
+<td><code>body-neurotransmitters-male-cns-v1.0.feather</code></td>
+<td>43.282.834 bayt</td>
+<td>Hücre düzeyi nörotransmiter anotasyonu; bu model fizyolojik işaret kullanmaz</td>
+</tr>
+<tr>
+<td><code>connectome-weights-male-cns-v1.0-minconf-0.5.feather</code></td>
+<td>1.051.241.946 bayt</td>
+<td>Anatomik temas sayıları</td>
+</tr>
+<tr>
+<td>28 SWC + JRCFIB2022M yüzeyi</td>
+<td>Seçime bağlı ek geometri</td>
+<td>Gerçek anatomi görünümü</td>
+</tr>
+<tr>
+<td>FlyGym HD mesh</td>
+<td>Ek render varlıkları</td>
+<td>1920×1080 ayrıntılı gövde</td>
+</tr>
+<tr>
+<td>FlyBody <code>trained-fly-policies.zip</code></td>
+<td>6.537.720 bayt</td>
+<td>Hazır uçuş motor politikası; arşiv başka resmi politikalar da içerir</td>
+</tr>
+<tr>
+<td>FlyBody <code>datasets_flight-imitation.zip</code></td>
+<td>12.880.076 bayt</td>
+<td>Uçuş referansları ve kanat örüntüsü</td>
+</tr>
+</tbody>
+</table>
+<p>Boyutlar sıkıştırılmış kaynak dosyaları içindir. Python, TensorFlow, Torch,
+bilimsel paketler, çıkarılan arşivler, türetilen matrisler ve <code>uv</code> ortak önbelleği
+bunlara <strong>ek</strong> yer kaplar. Yaklaşık 3 GB'lık resmi yürüyüş kümesi, 2,7 GB sinaps
+nörotransmiter tablosu ve ham elektron mikroskobu hacimleri indirilmez.</p>
+<p>MaleCNS indirme URL'leri, nesne generation numaraları, boyutlar ve SHA256 değerleri
+pakette <code>fruitfly_lab/sources.json</code>, kaynak repoda <code>src/fruitfly_lab/sources.json</code>
+içindedir. İndirilince <code>data/male-cns-v1.0/manifest.json</code> yazılır. Kaynaklar
+<a href="https://male-cns.janelia.org/download/">resmi MaleCNS indirme sayfasındandır</a>.
+SWC dosyaları indirildikleri nesne sürümüne sabitlenir, CRC32C/SHA256 doğrulanır.</p>
+<p>FlyBody varlıkları <a href="https://doi.org/10.25378/janelia.25309105.v4">Figshare v4</a>
+dosya kimlikleri 44815195 / 51196859 ile alınır. Boyut, sabit SHA256, varsa kaynak
+MD5 ve ZIP bütünlüğü kontrol edilir; çıkarma yolları arşiv dışına çıkamaz.
+Kayıt <code>data/flybody/manifest.json</code> içindedir.</p>
+<h2 id="turetilenler">Türetilenler</h2>
+<p>Ham tabloda 151.856.684 satır vardır. Keşif filtresi <code>superclass</code> dolu 166.700 kayıt
+ve her iki ucu bu kümede olan 25.582.938 yönlü kenarı tutar. Bu, makaledeki sayımı
+birebir yeniden üretme iddiası değildir. Sparse matris satırı kaynak, sütunu hedeftir.
+Pozitif anatomik temas sayısı fizyolojik uyarıcı/baskılayıcı işaret değildir.</p>
+<p>Yönelme alt devresi: 2.228 ORN, 686 ALPN, 4.064 Kenyon, 97 MBON. Devre kimliği ve
+katman hash'leri checkpoint yüklerken doğrulanır. UI'nin konumsuz nöronlar ve
+temsili bağlantı çizimi sınırları <a href="#usage">kullanım rehberindedir</a>.</p>
+<h2 id="depolama-ve-gizlilik">Depolama ve gizlilik</h2>
+<p><code>data/</code>, <code>models/</code>, <code>artifacts/</code>, ortamlar ve günlükler kişisel çalışma dizinindedir.
+Bunlar Git ve Python wheel/sdist paketine dahil edilmez. İndirme dış sunuculara
+standart HTTP istekleri yapar; kişisel model/eğitim yükleme veya telemetri servisi yoktur.
+UI yalnızca <code>127.0.0.1</code> dinler; kimlik doğrulamalı çok kullanıcılı bir servis değildir.
+LAN'a veya internete açmak bu dağıtımın hazır bir özelliği değildir.</p></section>
+<section id="troubleshooting"><h1 id="sorun-giderme-bakm-ve-yedekleme">Sorun giderme, bakım ve yedekleme</h1>
+<h2 id="komut-bulunamyor">Komut bulunamıyor</h2>
+<p><code>fruitfly: command not found</code>: <code>pipx ensurepath</code> çalıştırıp terminali yeniden açın.
+<code>pipx list</code> içinde <code>fruitfly-hashtag</code> görünmeli. <code>pipx install</code> hatası için Python
+sürümünü kontrol edin; Python 3.11+ gerekir. Paket PyPI'de bulunmuyorsa README'deki
+GitHub veya yerel wheel yolunu kullanın.</p>
+<h2 id="port-veya-calsma-dizini-mesgul">Port veya çalışma dizini meşgul</h2>
+<p>8766 doluysa ikinci sunucu mevcut oturumu durdurmaz. Yeni dizinde yeni port seçin:
+<code>fruitfly --home ~/neural-lab-second ui --port 8770</code>. Aynı veri dizini kilitliyse
+önce o dizini kullanan terminalde <code>Ctrl+C</code> ile durdurun. Kilit dosyasını silmek
+gerekmez; işletim sistemi süreç bitince kilidi bırakır.</p>
+<h2 id="indirme-kesildi-hash-hatas">İndirme kesildi / hash hatası</h2>
+<p>İnternet ve boş diski kontrol edip aynı kurulum düğmesini tekrar kullanın.
+MaleCNS yarım indirmeleri mümkünse devam eder. Tam dosya SHA256 uyuşmuyorsa hata
+konumunu gösterir; uygulama üzerine yazmaz. O dosyayı yedek bir konuma taşıyıp
+kurulumu tekrar başlatın. Manifest hash'ini dosyaya uydurmak için değiştirmeyin.
+Nesne generation kaynaktan kaldırıldıysa geliştiricinin kaynak manifestini güncellemesi
+gerekir; program sessizce başka veri sürümüne geçmez.</p>
+<h2 id="siyah-goruntu-opengl-egl-hatas">Siyah görüntü / OpenGL / EGL hatası</h2>
+<p>Önce terminal ve <code>.runtime/setup.log</code> içindeki son hata; uçuşta ayrıca
+<code>.runtime/flight-worker.log</code>. macOS'ta masaüstü oturumu ve Apple Silicon doğrulanan
+yoldur. Linux otomatik <code>MUJOCO_GL=egl</code> kullanır; uygun sistem sürücüleri gerekir.
+Yazılımsal render isteyen Linux kurulumunda OSMesa sistem kütüphanesi kuruluysa
+<code>MUJOCO_GL=osmesa fruitfly ui</code> denenebilir. Bunlar Linux'ta doğrulanmış performans
+vaadi değildir. Tarayıcı WebGL kapalıysa beyin paneli de çizilemez.</p>
+<h2 id="kurulum-bitti-ama-ui-aclmad">Kurulum bitti ama UI açılmadı</h2>
+<p><code>fruitfly doctor</code> ile eksikleri görün. Bu yalnızca varlık kontrolüdür; çalışma
+başarısını kanıtlamaz. Terminaldeki Python/render hatasını düzeltin, sonra
+<code>fruitfly ui --setup</code> içinden kurulum düğmesini yeniden kullanın. Tam dosyalar
+doğrulanır ve mevcut başlangıç modeli yeniden eğitilmeden korunur.</p>
+<h2 id="ucus-aclamyor">Uçuş açılamıyor</h2>
+<p>Önce <code>fruitfly setup walking</code>, sonra <code>fruitfly setup flight</code>. Git'in kurulu
+olduğunu kontrol edin. Python 3.11 uçuş ortamıyla Python 3.12 yürüyüş ortamını
+karıştırmayın; birine elle farklı NumPy/TensorFlow sürümü kurmayın. Intel Mac
+uçuşu desteklenmez. Hazır politika yükleme kontrolü kanat eğitimi değildir.</p>
+<h2 id="egitim-basarsz-listede-yeni-model-yok">Eğitim başarısız / listede yeni model yok</h2>
+<p>UI işinin son durumunu ve <code>models/lab_runs/&lt;koşu&gt;/training.log</code> dosyasını okuyun.
+<code>complete</code> olmadan yeni model başarılı sonuç olarak sunulmaz. 600 saniye sınırında
+yavaş cihazda daha az adım deneyin. Bellek yetersizse başka ağır uygulamaları
+kapatın. Önceki başarılı model menüde kalır; yarım koşu kaldığı adımdan devam etmez.</p>
+<h2 id="guncelleme">Güncelleme</h2>
+<p>Önce bütün Neural Lab oturumlarını ve eğitimleri durdurun; aşağıdaki yollardan
+kurduğunuz kaynağa uygun olanı kullanın:</p>
+<pre><code class="language-bash">pipx upgrade fruitfly-hashtag
+</code></pre>
+<p>Klonlanmış repo için <code>git pull</code>, sonra repo içinde <code>pipx install --force .</code>.
+Kaynak değiştirmek için <code>pipx install --force git+https://github.com/mertozbas/fruitfly-hashtag.git</code>.
+Ardından <code>fruitfly ui --setup</code> ile ortamların kilitli sürümlerini tekrar eşitleyin.
+Yönetilen kod güncellenir; <code>data/</code>, <code>models/</code>, kişisel değerlendirmeler silinmez.
+Yönetilen bir kod dosyasını elle değiştirdiyseniz üzerine yazmak yerine hata verir;
+değişikliği yedekleyin veya yeni <code>--home</code> seçin.</p>
+<h2 id="yedekleme-ve-geri-donme">Yedekleme ve geri dönme</h2>
+<p>UI kapalıyken tüm <code>~/.fruitfly-hashtag/</code> klasörünü başka diske kopyalamak en kolay
+yedektir. En az <code>models/</code>, <code>data/</code> manifestleri, <code>.fruitfly-bundle.json</code> ve ilgili
+<code>artifacts/</code> sonuçlarını koruyun. Farklı bilgisayara taşırken <code>.venv</code> klasörlerini
+taşımak yerine yeni makinede kurulumu yeniden yapın. Koşu klasörlerini bütün taşıyın.</p>
+<p>Eski uygulama sürümüne dönmek için kayıtlı wheel'inizi <code>pipx install --force
+./fruitfly_hashtag-0.2.0-py3-none-any.whl</code> biçiminde kurun. Gelecekte devre şeması
+değişirse checkpoint uyumluluğunu ayrıca kontrol edin; eski veri dizinini yedekte tutun.</p>
+<h2 id="kaldrma">Kaldırma</h2>
+<pre><code class="language-bash">pipx uninstall fruitfly-hashtag
+</code></pre>
+<p>Bu komut çalışma dizininizi silmez. Verileri kaldırmak isterseniz önce eğitimleri
+yedekleyin, sonra seçtiğiniz <code>--home</code> klasörünü dosya yöneticisinden kaldırın.
+<code>uv</code> ortak önbelleği başka projelerce kullanılabilir; tüm önbelleği gelişigüzel silmeyin.</p></section>
+<section id="development"><h1 id="gelistirme-ve-yayn">Geliştirme ve yayın</h1>
+<h2 id="mimari">Mimari</h2>
+<p><code>src/fruitfly_lab/</code> hafif CLI ve kurulum ekranıdır; yalnızca <code>uv</code> bağımlılığı vardır.
+Kök Python dosyaları, mevcut FastAPI + MuJoCo uygulamasıdır. <code>ui/</code> vendored Three.js
+kullanan statik arayüzdür; Node build adımı gerekmez. <code>environments/walking/</code> Python
+3.12 bilimsel ortamının ayrı <code>pyproject.toml</code> ve <code>uv.lock</code> dosyalarını tutar.
+<code>flight/</code> Python 3.11 ortamıdır; TensorFlow/NumPy uyumluluğu için ayrıdır.</p>
+<p>Wheel, bu kaynak dosyalarının <strong>açık izin listesini</strong> <code>fruitfly_lab/bundle/</code> içine
+yerleştirir. CLI kodu kullanıcı çalışma dizinine kopyalar; bilimsel ortam o dizinde
+oluşturulur. Bu yüzden site-packages içine veri/model yazılmaz. Her dosyanın özeti
+<code>.fruitfly-bundle.json</code> ile izlenir; yerel kod değişiklikleri sessizce ezilmez.</p>
+<p>Kurulum ekranı standart Python HTTP sunucusudur; host/origin kontrolü ve tek iş
+sınırı vardır. Başlatma düğmesi aynı portu bilimsel FastAPI sunucusuna devreder.
+Kurulum 2 saatle, tek alt komut 1 saatle sınırlanır; durdurma alt süreç grubunu
+kapatır. Veri ve model işlemleri yereldir. Cloud/LLM/MCP servisi gerekmez.</p>
+<h2 id="yerel-gelistirme">Yerel geliştirme</h2>
+<pre><code class="language-bash">uv sync --locked --group dev
+uv run --no-sync python -m unittest discover -s tests -v
+uv run --no-sync python tools/build_docs.py --check
+uv build
+uv run --no-sync python -m twine check dist/*
+</code></pre>
+<p>Kök ortam artık hafif uygulama içindir. Bilimsel bağımlılık için <strong>kaynak repoda
+eski doğrudan <code>uv sync</code> alışkanlığını kullanmayın</strong>; <code>fruitfly setup walking</code> ayrı
+çalışma dizinini hazırlar. Paket dışı bilimsel geliştirme gerekiyorsa ortam
+manifestini inceleyip izole test dizini kullanın. <code>ui.sh</code> eski yerel geliştirici
+ortamını açan yardımcıdır; son kullanıcı akışı <code>fruitfly ui</code> komutudur.</p>
+<p>Doküman Markdown'ını değiştirdikten sonra <code>uv run python tools/build_docs.py</code>
+çalıştırın. <code>docs/index.html</code> çevrimdışı tek sayfa rehberidir; README ve bütün rehber
+bölümlerinden üretilir. CI eski kalan HTML'i yakalar.</p>
+<h2 id="paket-dogrulamas">Paket doğrulaması</h2>
+<pre><code class="language-bash">pipx install ./dist/fruitfly_hashtag-0.2.0-py3-none-any.whl
+fruitfly --home /tmp/neural-lab-clean ui --port 8770 --no-browser
+</code></pre>
+<p>Boş dizinde <code>/</code> kurulum ekranını, <code>/guide/index.html</code> kılavuzu, <code>/api/setup</code>
+hazır olmayan durumu döndürmelidir. Beyin verisi kendiliğinden indirilmemelidir.
+Test paketi wheel/sdist'te <code>data/</code>, <code>models/</code>, <code>.venv/</code>, <code>.runtime/</code>, anahtar veya
+kişisel eğitim bulunmadığını kontrol eder. Ağ indirmeleri ve bilimsel simülasyon
+birim testlerinde çalıştırılmaz; ayrıca temiz bilimsel kurulum kontrolü gerekir.</p>
+<h2 id="github-pypi">GitHub / PyPI</h2>
+<p>GitHub deposu: https://github.com/mertozbas/fruitfly-hashtag
+PyPI adı: <code>fruitfly-hashtag</code>. Paket build'i PyPI yayını anlamına gelmez.</p>
+<ol>
+<li>Sürümü <code>pyproject.toml</code> ve <code>src/fruitfly_lab/__init__.py</code> içinde artırın.</li>
+<li>Rehberi üretin, test/build/metadata kontrolünü çalıştırın. Arşiv listesini inceleyin.</li>
+<li>Kaynak değişikliklerini main'e pushlayın; CI sonucunu bekleyin.</li>
+<li><code>v0.2.0</code> gibi etiket ve GitHub release oluşturun; doğrulanmış wheel/sdist ekleyin.</li>
+<li>PyPI için aşağıdaki iki yöntemden birini kullanın; kimlik bilgilerini repoya koymayın.</li>
+</ol>
+<p><strong>Trusted Publishing:</strong> PyPI hesabında pending publisher oluşturup owner
+<code>mertozbas</code>, repo <code>fruitfly-hashtag</code>, workflow <code>publish.yml</code>, environment <code>pypi</code>
+tanımlayın. Sonra GitHub Actions'tan yayın işini elle başlatın. Bu işlem otomatik
+etiket push'unda yayın yapmaz. <a href="https://docs.pypi.org/trusted-publishers/">PyPI resmi rehber</a>.</p>
+<p><strong>Yerel token:</strong> Ortamda yetkili <code>TWINE_USERNAME=__token__</code> ve <code>TWINE_PASSWORD</code>
+güvenle tanımlıysa <code>uv run python -m twine upload dist/*</code> kullanılır. Token'ı
+komut satırına, günlük dosyasına veya README'ye yazmayın.</p>
+<p>Yayın sonrası <code>pipx install fruitfly-hashtag==0.2.0</code> ile <strong>gerçek PyPI kaynağından</strong>
+yeni izole kurulum doğrulanmalıdır. Kaynak kod, paket meta verisi ve PyPI hash'leri
+uyumlu olmalıdır. PyPI sürümü değiştirilemez; hata düzeltmesi yeni sürüm gerektirir.</p></section>
+<section id="THIRD_PARTY_NOTICES"><h1 id="kaynaklar-ve-lisans-bildirimleri">Kaynaklar ve lisans bildirimleri</h1>
+<p>Neural Lab bağımsız bir Hashtag projesidir; aşağıdaki projelerle resmi bağlantı
+veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politikaları kapsamaz.</p>
+<table>
+<thead>
+<tr>
+<th>Kaynak</th>
+<th>Lisans / atıf</th>
+<th>Dağıtım şekli</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MaleCNS v1.0</td>
+<td><a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; FlyEM/HHMI Janelia, Cambridge, MRC LMB, Google Research; <a href="https://male-cns.janelia.org/download/">resmi veri sayfası</a></td>
+<td>Kullanıcı resmi depodan indirir; burada kaynak URL/hash'leri vardır</td>
+</tr>
+<tr>
+<td>FlyGym / NeuroMechFly</td>
+<td><a href="https://github.com/NeLy-EPFL/flygym">Resmi kaynak ve lisans</a>; <a href="https://neuromechfly.org/">proje / bilimsel atıflar</a></td>
+<td>Ayrı bilimsel ortamda bağımlılık; HD mesh kaynak paketinin indirme mekanizmasıyla alınır</td>
+</tr>
+<tr>
+<td>FlyBody</td>
+<td><a href="https://github.com/TuragaLab/flybody/blob/d015e9bfe441bd90ae431bac24c55cb74bdbce26/LICENSE">Apache 2.0</a>, TuragaLab; <a href="https://github.com/TuragaLab/flybody">resmi repo</a></td>
+<td>Sabit commit <code>d015e9bfe441bd90ae431bac24c55cb74bdbce26</code>; wheel'e dahil değildir</td>
+</tr>
+<tr>
+<td>FlyBody politika ve veri arşivleri</td>
+<td><a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL 3.0+</a>, Figshare kaydının lisansı; <a href="https://doi.org/10.25378/janelia.25309105.v4">Whole-body physics simulation of fruit fly locomotion destek verisi, v4</a></td>
+<td>Kullanıcı indirir; yerel manifeste kaynak ve hash yazılır; wheel/Git içinde yoktur</td>
+</tr>
+<tr>
+<td>flybrains / JRCFIB2022M</td>
+<td><a href="https://github.com/navis-org/navis-flybrains">Resmi paket, kaynak ve varlık bildirimleri</a></td>
+<td>Harici bağımlılık ve anatomi yüzeyi; upstream veri bildirimleri geçerlidir</td>
+</tr>
+<tr>
+<td>MuJoCo</td>
+<td><a href="https://github.com/google-deepmind/mujoco">Apache 2.0 kaynak</a></td>
+<td>Ayrı ortam bağımlılığı</td>
+</tr>
+<tr>
+<td>Three.js 0.180.0 / OrbitControls</td>
+<td>MIT; Three.js authors; <a href="../ui/vendor/THREE-LICENSE.txt">yerel lisans</a>, <a href="https://github.com/mrdoob/three.js/tree/r180">kaynak</a></td>
+<td>UI JavaScript dosyaları lisansı ve checksum manifestiyle paketlenir</td>
+</tr>
+<tr>
+<td>uv</td>
+<td><a href="https://github.com/astral-sh/uv">MIT veya Apache 2.0</a></td>
+<td>Hafif başlatıcı bağımlılığı; kendi paket lisanslarıyla kurulur</td>
+</tr>
+</tbody>
+</table>
+<p>Torch, TensorFlow, NumPy, SciPy, NAVis ve diğer geçişli bağımlılıklar kendi
+lisanslarıyla ayrı ortamlara kurulur; kilit dosyalarında sürümleri bulunur.
+İndirilen veri/politikaları başka bir ürünle yeniden dağıtırken ilgili kaynak
+lisansını, bildirimleri ve atıf gereksinimlerini ayrıca koruyun.</p>
+<p>Anatomiden üretilen model bir mühendislik türevidir: pozitif normalize edilmiş
+ileri besleme, sentetik anten kodlaması, öğrenilmiş kenar çarpanları ve yapay
+motor eşlemesi içerir. Veri sağlayıcılarının biyolojik olarak doğruladığı bir
+öğrenme veya tam beyin emülasyonu değildir.</p></section></main></body></html>

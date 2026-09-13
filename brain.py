@@ -72,7 +72,9 @@ def build_graph():
                  raw_rows=raw_rows, retained_rows=len(weight), edges=matrix.nnz,
                  synaptic_contacts=int(matrix.sum()), orientation="row=pre, column=post",
                  weights="unsigned anatomical contact counts; no physiological sign or learned parameters")
-    expected = json.loads((DATA / "validation.json").read_text())["exploratory_superclass_filter"]
+    # Expected counts for the version-pinned public sources; a fresh installation
+    # must not depend on a private validation artifact from the author's machine.
+    expected = dict(nodes=166700, edges=25582938, synaptic_contacts=124177617)
     for key in ("nodes", "edges", "synaptic_contacts"):
         if stats[key] != expected[key]:
             raise ValueError(f"Graph validation mismatch: {key}")

@@ -12,3 +12,7 @@ models/
 !.env.example
 *.pem
 *.key
+dist/
+build/
+*.egg-info/
+.pytest_cache/

@@ -1,0 +1,23 @@
+[project]
+name = "fruitfly-hashtag"
+version = "0.1.0"
+description = "Local MaleCNS anatomy and connectivity exploration"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "brian2==2.10.1",
+    "flybrains==0.6.3",
+    "google-crc32c==1.8.0",
+    "jupyterlab==4.6.3",
+    "navis==1.12.0",
+    "neuroglancer==2.41.2",
+    "neuprint-python==0.6.3",
+    "plotly==7.0.0",
+    "pyarrow==25.0.1",
+    "scipy==1.18.1",
+    "flygym[examples,rl]==2.1.0",
+    "fastapi>=0.141.1",
+    "uvicorn>=0.52.4",
+]
+
+[tool.uv]
+package = false

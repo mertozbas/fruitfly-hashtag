@@ -65,7 +65,7 @@ def load_policy(kind="trained"):
         raise ValueError("Unknown checkpoint kind")
     path = MODEL / f"{kind}.npz"
     if not path.exists():
-        raise FileNotFoundError("Run: rtk proxy .venv/bin/python odor_brain.py train")
+        raise FileNotFoundError("Önce fruitfly setup walking ile başlangıç modelini oluşturun.")
     return Policy(path)
 
 

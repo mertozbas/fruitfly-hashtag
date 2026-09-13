@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field, ConfigDict
 ROOT = Path(__file__).resolve().parent
 BASE = ROOT / "models/odor_navigation"
 RUNS = ROOT / "models/lab_runs"
-PORT = 8766
+PORT = int(os.environ.get("FRUITFLY_PORT", "8766"))
 
 class Runtime:
     def __init__(self):
@@ -151,7 +151,7 @@ def read_json(path):
 def models():
     training = read_json(BASE / "training.json")
     evaluation = read_json(ROOT / "artifacts/simulation/evaluation.json")
-    records = [dict(id="trained", name="Koku / doğrulanmış", path=BASE / "trained.npz", training=training,
+    records = [dict(id="trained", name="Başlangıç / yerelde eğitilmiş", path=BASE / "trained.npz", training=training,
                     evaluation=evaluation["summary"]["trained"] if evaluation else None),
                dict(id="untrained", name="Eğitim öncesi", path=BASE / "untrained.npz", training=None,
                     evaluation=evaluation["summary"]["untrained"] if evaluation else None)]
@@ -371,6 +371,15 @@ def cancel():
     return runtime.job
 
 app.mount("/assets", StaticFiles(directory=ROOT / "ui"), name="assets")
+app.mount("/guide", StaticFiles(directory=ROOT / "docs", html=True), name="guide")
+
+@app.get("/LICENSE")
+def license_text():
+    return FileResponse(ROOT / "LICENSE", media_type="text/plain")
+
+@app.get("/ui/vendor/THREE-LICENSE.txt")
+def vendor_license():
+    return FileResponse(ROOT / "ui/vendor/THREE-LICENSE.txt", media_type="text/plain")
 
 @app.get("/")
 def index():
