@@ -71,4 +71,3 @@ class Policy:
         mbon = np.tanh(2 * (kc @ self.weight))
         turn = float(np.tanh(mbon @ self.decoder + self.bias).item())
         return turn, [orn, alpn, kc, mbon]
-
