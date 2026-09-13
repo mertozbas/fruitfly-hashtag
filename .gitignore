@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.runtime/
+data/
+artifacts/
+models/
+.serena/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
