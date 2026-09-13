@@ -10,9 +10,9 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
-      PIPX_HOME: ${{ runner.temp }}/neural-lab-pipx
-      PIPX_BIN_DIR: ${{ runner.temp }}/neural-lab-bin
-      PIPX_MAN_DIR: ${{ runner.temp }}/neural-lab-man
+      PIPX_HOME: ${{ github.workspace }}/.ci/neural-lab-pipx
+      PIPX_BIN_DIR: ${{ github.workspace }}/.ci/neural-lab-bin
+      PIPX_MAN_DIR: ${{ github.workspace }}/.ci/neural-lab-man
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
