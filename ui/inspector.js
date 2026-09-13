@@ -28,6 +28,7 @@ export function createInspector({api,onSelect}) {
     if(!data)return;
     const renderToken=++renderGeneration;
     refreshTabs();content.replaceChildren();
+    if(model==='flight-pretrained')content.append(note('MaleCNS anatomik kaydı. Bu nöron ve bağlantılar FlyBody uçuş politikasına bağlı değil.'));
     if(selection.kind==='edge'){
       const m=data.model;
       if(tab==='metadata'){
@@ -70,6 +71,7 @@ export function createInspector({api,onSelect}) {
   }
   let activityModel=null;
   function tick(values,modelId=activityModel){activity=values||[];activityModel=modelId;const live=document.getElementById('detail-live');if(!live||!data)return;
+    if(modelId==='flight-pretrained'){live.textContent='Uçuşta MaleCNS aktivite verisi yok.';return;}
     const text=n=>Number.isInteger(n?.circuit?.activity_index)?num(activity[n.circuit.activity_index],5):'Devre dışında';
     live.textContent=selection.kind==='node'?`Canlı model aktivitesi: ${text(data)}`:`Kaynak aktivitesi: ${text(data.source)} · Hedef: ${text(data.target)}`;
     if(selection.kind==='edge'&&data.model){

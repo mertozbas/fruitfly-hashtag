@@ -31,9 +31,20 @@ export function createAnalyses(graph,{getSelection}){
   new ResizeObserver(()=>{if(visible)draw();}).observe($('analyses-view'));
   function update(s){current=s;disconnected=false;status();if(visible)draw();}
   function status(){
+    if(current.behavior==='flight'){$('analysis-frame').textContent='MALECNS UÇUŞA BAĞLI DEĞİL · AKTİVİTE VERİSİ YOK';return;}
     $('analysis-frame').textContent=disconnected?'AKIŞ KESİLDİ · SON KARE':current.seq?`${current.paused?'DURAKLATILDI':current.idle?'BOŞTA':'CANLI'} · #${current.seq} · ${Number(current.time_s).toFixed(2)} s`:'CANLI VERİ BEKLENİYOR';
   }
   function draw(){
+    if(visible&&current.behavior==='flight'){
+      for(const id of ['region-map','heat-map','xray-map']){
+        const view=setup($(id),allBounds);if(!view)continue;
+        if(id!=='heat-map')background(view,surface,allBounds);
+        view.c.fillStyle='#8da5b5';view.c.font='10px monospace';view.c.fillText(id==='heat-map'?'Uçuş nöron verisi yok':'MaleCNS anatomisi · uçuşa bağlı değil',10,view.h/2);
+      }
+      for(const row of rows){row.fill.style.width='0%';row.value.textContent='—';row.row.title='Aktivite verisi yok';}
+      $('region-name').textContent='ANATOMİ';$('region-selection').textContent='Uçuşu FlyBody hazır politikası kontrol ediyor';$('motor-drive').textContent='MaleCNS bağlantısı yok';
+      return;
+    }
     if(!visible||!current.activity)return;
     const selected=getSelection(),selectedNode=selected?.kind==='node'?byId.get(selected.id):selected?.kind==='edge'?byId.get(selected.target):null;
     const activity=current.activity;

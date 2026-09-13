@@ -100,7 +100,7 @@ def connection(source, target, model_path):
             raise KeyError("Bu yönde anatomik bağlantı yok")
         a,b = circuit_index().get(source),circuit_index().get(target)
         model = None
-        if a and b and a["level"] + 1 == b["level"]:
+        if model_path is not None and a and b and a["level"] + 1 == b["level"]:
             level, row, col = a["level"], a["layer_index"], b["layer_index"]
             base = float(circuit().layers[level][row,col])
             if base:

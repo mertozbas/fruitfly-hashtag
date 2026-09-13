@@ -33,21 +33,75 @@ class Runtime:
         self.job = {"status": "idle"}
         self.job_process = None
         self.lock = threading.Lock()
+        self.sim_lock = threading.RLock()
+        self.workers = {}
+        self.behavior = 'odor'
         self.last_heartbeat = 0
     def control(self, command):
-        if not self.process or not self.process.is_alive():
-            raise HTTPException(503, "Simülasyon işlemi çalışmıyor; yerel sunucuyu yeniden başlat.")
-        try:
-            self.commands.put_nowait(command)
-        except queue.Full:
-            raise HTTPException(429, "Komut kuyruğu dolu")
-    def read(self):
-        while True:
+        with self.sim_lock:
+            if not self.process or not self.process.is_alive():
+                raise HTTPException(503, "Simülasyon işlemi çalışmıyor; yerel sunucuyu yeniden başlat.")
             try:
-                self.latest = self.states.get_nowait()
-            except queue.Empty:
-                break
-        return self.latest
+                self.commands.put_nowait(command)
+                if command['op'] == 'pause':
+                    self.workers[self.behavior]['paused'] = command['paused']
+            except queue.Full:
+                raise HTTPException(429, "Komut kuyruğu dolu")
+    def read(self):
+        with self.sim_lock:
+            while True:
+                try:
+                    self.latest = self.states.get_nowait()
+                    self.latest['behavior'] = self.behavior
+                except queue.Empty:
+                    break
+            return self.latest
+
+    def switch(self, behavior):
+        with self.sim_lock:
+            if behavior == self.behavior:
+                return
+            if behavior not in self.workers:
+                from lab_flight import FlightProcess
+                if not (ROOT / 'flight/.venv/bin/python').exists() or not (ROOT / 'data/flybody/trained-fly-policies/flight/saved_model.pb').exists():
+                    raise HTTPException(503, 'Uçuş kurulumu eksik: flight/README.md')
+                commands, states = queue.Queue(32), queue.Queue(2)
+                process = FlightProcess(commands, states)
+                self.workers[behavior] = dict(process=process, commands=commands, states=states, paused=False)
+            target = self.workers[behavior]
+            if not target['process'].is_alive():
+                raise HTTPException(503, 'Uçuş işlemi durdu; yerel sunucuyu yeniden başlat.')
+            # Keep the inactive physics state, model and camera intact.
+            self.read()
+            self.commands.put({'op': 'pause', 'paused': True}, timeout=1)
+            self.behavior = behavior
+            self.process, self.commands, self.states = (target[k] for k in ('process', 'commands', 'states'))
+            while True:
+                try:
+                    self.states.get_nowait()
+                except queue.Empty:
+                    break
+            self.latest = dict(behavior=behavior, starting=True)
+            self.commands.put({'op': 'pause', 'paused': target['paused']}, timeout=1)
+            self.commands.put({'op': 'heartbeat'}, timeout=1)
+            self.last_heartbeat = time.monotonic()
+
+    def stop(self):
+        for worker in self.workers.values():
+            process, commands, states = (worker[k] for k in ('process', 'commands', 'states'))
+            if process.is_alive():
+                try:
+                    commands.put({'op': 'shutdown'}, timeout=1)
+                except queue.Full:
+                    process.terminate()
+                process.join(5)
+            if process.is_alive():
+                process.terminate()
+                process.join(5)
+            for channel in (commands, states):
+                if hasattr(channel, 'cancel_join_thread'):
+                    channel.cancel_join_thread()
+                    channel.close()
 
 runtime = Runtime()
 
@@ -66,21 +120,14 @@ async def lifespan(app):
     runtime.commands, runtime.states = ctx.Queue(32), ctx.Queue(2)
     runtime.process = ctx.Process(target=simulate, args=(runtime.commands, runtime.states), daemon=True)
     runtime.process.start()
+    runtime.workers['odor'] = dict(process=runtime.process, commands=runtime.commands, states=runtime.states, paused=False)
     try:
         yield
     finally:
         if runtime.job_process and runtime.job_process.poll() is None:
             runtime.job_process.terminate()
             runtime.job_process.wait(timeout=10)
-        if runtime.process.is_alive():
-            runtime.commands.put({"op": "shutdown"})
-            runtime.process.join(5)
-        if runtime.process.is_alive():
-            runtime.process.terminate()
-            runtime.process.join(5)
-        for channel in (runtime.commands, runtime.states):
-            channel.cancel_join_thread()
-            channel.close()
+        runtime.stop()
 
 app = FastAPI(title="Hashtag Neural Lab", lifespan=lifespan)
 
@@ -125,20 +172,23 @@ def health():
 
 @app.get("/api/catalog")
 def catalog():
-    return dict(models=[{k:v for k,v in m.items() if k != "path"} for m in models()], job=runtime.job,
+    from lab_flight import metadata
+    flight = metadata()
+    return dict(models=[{k:v for k,v in m.items() if k != "path"} for m in models()]+[flight], job=runtime.job,
       experiments=[dict(id="odor", title="Kokuya yönelme", status="validated", detail="Taklit öğrenmesi · 6 fizik koşulu"),
                    dict(id="avoidance", title="Kokudan kaçınma", status="planned", detail="Ters yönlendirme hedefi ve kaçınma değerlendirmesi hazırlanacak."),
                    dict(id="vision", title="Görsel yönelme", status="planned", detail="Görsel duyusal kodlama ve yeni devre bağlantısı gerekli."),
                    dict(id="terrain", title="Engel / arazi", status="planned", detail="Dokunma gözlemleri, arazi görevleri ve ödül tasarımı gerekli."),
-                   dict(id="flight", title="Uçuş", status="research", detail="FlyBody uçuş görevleri var; ayrı uçuş kontrolcüsü, aerodinamik ve beyin–motor eşlemesi henüz bağlanmadı.")])
+                   dict(id="flight", title="Uçuş", status="pretrained", detail="FlyBody hazır politika · kanat aerodinamiği · havada başlayan rota takibi. MaleCNS devresi uçuşa bağlı değil.")])
 
 @app.get("/api/state")
 def state():
-    now = time.monotonic()
-    if now - runtime.last_heartbeat > 5 and runtime.process.is_alive():
-        runtime.control({"op": "heartbeat"})
-        runtime.last_heartbeat = now
-    return dict(simulation=runtime.read(), job=runtime.job, alive=runtime.process.is_alive())
+    with runtime.sim_lock:
+        now = time.monotonic()
+        if now - runtime.last_heartbeat > 5 and runtime.process.is_alive():
+            runtime.control({"op": "heartbeat"})
+            runtime.last_heartbeat = now
+        return dict(simulation=runtime.read(), job=runtime.job, alive=runtime.process.is_alive())
 
 @app.get("/api/graph")
 def graph():
@@ -172,14 +222,17 @@ def neuron_connections(body_id: int, direction: Literal["in", "out"] = "out",
 @app.get("/api/connection/{source}/{target}")
 def connection_details(source: int, target: int, model: str = "trained"):
     from lab_details import connection
-    record = resolve_model(model)
+    record = None if model == 'flight-pretrained' else resolve_model(model)
     try:
-        return connection(source, target, record["path"])
+        return connection(source, target, record["path"] if record else None)
     except KeyError as exc:
         raise HTTPException(404, str(exc))
 
 @app.get("/api/model/{model_id}")
 def model_details(model_id: str):
+    if model_id == 'flight-pretrained':
+        from lab_flight import metadata
+        return metadata()
     import numpy as np
     record = resolve_model(model_id)
     graph = read_json(ROOT / "artifacts/lab/graph.json")
@@ -192,7 +245,8 @@ def model_details(model_id: str):
 
 class Control(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
-    op: Literal["pause", "reset", "model", "camera"]
+    op: Literal["pause", "reset", "model", "camera", "behavior", "next"]
+    behavior: Literal['odor', 'flight'] = 'odor'
     paused: bool = False
     goal: tuple[float, float] = (12, 4)
     seed: int = Field(10, ge=0, le=1000000)
@@ -207,7 +261,22 @@ class Control(BaseModel):
 
 @app.post("/api/control")
 def control(body: Control):
+    # Serialize mode selection with commands; none can reach the wrong worker.
+    with runtime.sim_lock:
+        return apply_control(body)
+
+def apply_control(body):
+    if body.op == 'behavior':
+        runtime.switch(body.behavior)
+        return {'accepted': True, 'behavior': runtime.behavior}
+    if body.op == 'next':
+        if runtime.behavior != 'flight':
+            raise HTTPException(409, 'Sonraki rota yalnızca uçuşta kullanılabilir.')
+        runtime.control({'op': 'next'})
+        return {'accepted': True}
     if body.op == "model":
+        if runtime.behavior != 'odor':
+            raise HTTPException(409, 'Koku modeli seçmek için Kokuya yönelme davranışına dön.')
         m = resolve_model(body.model)
         command = dict(op="model", path=str(m["path"]), id=body.model)
     elif body.op == "reset":

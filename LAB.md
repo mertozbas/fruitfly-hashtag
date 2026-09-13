@@ -7,7 +7,9 @@ rtk proxy ./ui.sh
 
 Adres: <http://127.0.0.1:8766/>. Sağ üstteki tam ekran düğmesini kullan; `Esc` tam ekrandan çıkar. Ana ekran sabit panellerden oluşur ve sayfa kaydırması yoktur. Masaüstü kullanımına göre tasarlandı (en az 1200×720 önerilir). Çok dar ekranlarda masaüstü çalışma alanının tamamı sığmayabilir.
 
-Sol panelden hedef koordinatlarını değiştirip **Hedefi uygula** ile yeni bir bölüm başlat. **Duraklat / Devam et** fizik zamanını durdurur. Gövde/Arena kamera seçimleri ve gövde kamerası döndürme/yakınlaştırma kontrolleri gerçek MuJoCo render'ını değiştirir. Başarı, 1,5 mm hedef mesafesidir; başarı veya 3 saniye sonunda aynı hedef ve tohumla yeni bölüm başlar. Bu oturum sayacı tekrarlanan aynı koşulun sayacıdır; altı hedefli değerlendirme skorundan ayrıdır.
+**Uçuşu izlemek için:** sol panelde **Davranış → Uçuş · hazır politika** seç. Aynı Full HD görünümde kanatları yavaş çekimde izle; irtifa, hız, kanat frekansı ve rota hatası canlıdır. **Sonraki uçuş rotası** farklı referansa geçer. Kokuya dönünce model, hedef ve fizik durumu korunur. Uçuş resmi FlyBody motor politikasıyla havada başlar; sağdaki MaleCNS anatomisi uçuş kontrolüne bağlı değildir. [Kurulum, fizik ve doğrulama](flight/README.md).
+
+Koku deneyinde, sol panelden hedef koordinatlarını değiştirip **Hedefi uygula** ile yeni bir bölüm başlat. **Duraklat / Devam et** fizik zamanını durdurur. Gövde/Arena kamera seçimleri ve gövde kamerası döndürme/yakınlaştırma kontrolleri gerçek MuJoCo render'ını değiştirir. Başarı, 1,5 mm hedef mesafesidir; başarı veya 3 saniye sonunda aynı hedef ve tohumla yeni bölüm başlar. Bu oturum sayacı tekrarlanan aynı koşulun sayacıdır; altı hedefli değerlendirme skorundan ayrıdır.
 
 Her iki 3B görünümde sol tuşla sürükleme döndürür; sağ tuş veya Shift + sol sürükleme kaydırır; tekerlek yakınlaştırır. Canlı görüntüye çift tıklama veya ⌖ düğmesi kamerayı sıfırlar. Beynin dikey ekseni kontrolcü kurulmadan önce sabitlenir; kutuplarda ters dönme engellenir. Kamera hareketi fizik duraklatılmışken de çalışır.
 
@@ -48,7 +50,7 @@ Metrikler gerçek simülasyon durumundan gelir: hedef mesafesi (mm), yatay hız 
 
 Arayüzün eğitim hattı 3.000 adım / seed 42 ile çalıştırıldı: yeni model 5/6 başarı, 0 devrilme. Orijinal iki checkpoint'in SHA-256 değeri değişmedi. Canlı API'de duraklatma, dururken hedef sıfırlama, yeni model yükleme, iki kamera, devam etme, girdi sınırları ve farklı origin'den yazmayı engelleme kontrol edildi. Sayısal aktivite kaydı politika çıktısıyla beş sensör koşulunda karşılaştırıldı. Kanıt: `artifacts/lab/validation.json`. İsteğe bağlı WebMCP araçları, destekleyen tarayıcılarda aynı API'yi kullanır; bu ortamda WebMCP yürütmesi ve kapsamlı tarayıcı görsel QA'sı doğrulanmadı.
 
-Servis yalnızca `127.0.0.1:8766` üzerinde çalışır; uzak bağlantı, ücretli servis veya bulut kurulumu içermez. Tek fizik süreci ve tek eğitim işi vardır. Sekme arka planda olduğunda canlı veri sorgulaması durur; 30 saniye istemci kalmazsa fizik boşta bekler. Sunucuyu terminalde `Ctrl+C` ile kapat; simülasyon ve varsa eğitim süreci de sonlandırılır. Yeni kurulumda `rtk proxy uv sync --locked` kullan. Three.js 0.180.0, lisansı ve dosya özetleri `ui/vendor/` içinde yereldir; çalışma anında CDN gerekmez.
+Servis yalnızca `127.0.0.1:8766` üzerinde çalışır; uzak bağlantı, ücretli servis veya bulut kurulumu içermez. Tek eğitim işi ve aynı anda ilerleyen tek davranış vardır. Yürüyüş ile uçuş ayrı Python süreçlerindedir; seçilmeyen davranış duraklatılarak korunur. Sekme arka planda olduğunda canlı veri sorgulaması durur; 30 saniye istemci kalmazsa fizik boşta bekler. Sunucuyu terminalde `Ctrl+C` ile kapat; simülasyon ve varsa eğitim süreci de sonlandırılır. Yeni kurulumda `rtk proxy uv sync --locked` kullan. Three.js 0.180.0, lisansı ve dosya özetleri `ui/vendor/` içinde yereldir; çalışma anında CDN gerekmez.
 
 Sonraki deneyler, ilk UI değerlendirmesinden sonra ayrı ayrı doğrulanacak:
 
@@ -58,6 +60,7 @@ Sonraki deneyler, ilk UI değerlendirmesinden sonra ayrı ayrı doğrulanacak:
 | Kokudan kaçınma | Hazırlık listesi | Kaçınma öğreticisi, uzaklaşma başarı tanımı, ayrı checkpoint |
 | Görsel yönelme | Hazırlık listesi | Görme gözlemleri, görsel devre/sensör kodlaması, görsel hedef görevi |
 | Engel / arazi | Hazırlık listesi | Arazi ve temas gözlemleri, davranış hedefi, yeni motor değerlendirmesi |
-| Uçuş / görmeyle uçuş | Kaynak araştırması yapıldı | FlyBody aerodinamik uçuş görevi ve ayrı uçuş politikası; ardından beyin–motor eşlemesi |
+| Uçuş | Resmi FlyBody hazır politika ile canlı Full HD; seçilmiş 3 rota doğrulandı | MaleCNS beyin–motor eşlemesi, uçuş eğitimi ve daha geniş değerlendirme |
+| Görmeyle uçuş | Kaynak araştırması yapıldı | Görsel politika ve görev entegrasyonu |
 
-[FlyGym](https://neuromechfly.org/) mevcut yürüme, duyusal ve hiyerarşik kontrol altyapısını; [FlyBody](https://github.com/TuragaLab/flybody) uçuş, yürüyüş ve görmeyle uçuş RL görev örneklerini sağlıyor. Görev örneğinin bulunması, MaleCNS alt ağının bu davranışı öğrendiği anlamına gelmez. Hazırlıktaki görevler UI'da eğitimi başlatmaz; o sırada canlı koku deneyi çalışmaya devam eder.
+[FlyGym](https://neuromechfly.org/) mevcut yürüme, duyusal ve hiyerarşik kontrol altyapısını; [FlyBody](https://github.com/TuragaLab/flybody) uçuş, yürüyüş ve görmeyle uçuş RL görev örneklerini sağlıyor. Görev örneğinin bulunması, MaleCNS alt ağının bu davranışı öğrendiği anlamına gelmez. Hazırlıktaki görevler UI'da eğitimi başlatmaz; o sırada seçili canlı davranış çalışmaya devam eder.
