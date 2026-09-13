@@ -9,6 +9,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      PIPX_HOME: ${{ runner.temp }}/neural-lab-pipx
+      PIPX_BIN_DIR: ${{ runner.temp }}/neural-lab-bin
+      PIPX_MAN_DIR: ${{ runner.temp }}/neural-lab-man
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -24,5 +28,5 @@ jobs:
       - run: uv run --no-sync python -m twine check dist/*
       - run: pipx install dist/*.whl
       - run: pipx runpip fruitfly-hashtag check
-      - run: ~/.local/bin/fruitfly --version
-      - run: ~/.local/bin/fruitfly --home "$RUNNER_TEMP/neural-lab" doctor
+      - run: '"$PIPX_BIN_DIR/fruitfly" --version'
+      - run: '"$PIPX_BIN_DIR/fruitfly" --home "$RUNNER_TEMP/neural-lab" doctor'
