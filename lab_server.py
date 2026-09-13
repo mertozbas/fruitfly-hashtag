@@ -66,7 +66,9 @@ class Runtime:
                 if not (ROOT / 'flight/.venv/bin/python').exists() or not (ROOT / 'data/flybody/trained-fly-policies/flight/saved_model.pb').exists():
                     raise HTTPException(503, 'Uçuş kurulumu eksik: flight/README.md')
                 commands, states = queue.Queue(32), queue.Queue(2)
-                process = FlightProcess(commands, states)
+                current = self.read()
+                selected = resolve_model(current.get('model', 'trained'))
+                process = FlightProcess(commands, states, selected['path'], selected['id'])
                 self.workers[behavior] = dict(process=process, commands=commands, states=states, paused=False)
             target = self.workers[behavior]
             if not target['process'].is_alive():
@@ -156,7 +158,8 @@ def models():
     for p in sorted(RUNS.glob("*/run.json"), reverse=True):
         meta = read_json(p)
         if meta.get("status") == "complete":
-            records.append(dict(id=p.parent.name, name=f"Koku / {meta['created'][11:19]}", path=p.parent / "trained.npz",
+            task = meta.get('task', 'odor')
+            records.append(dict(id=p.parent.name, name=f"{'Uçuş yönelme' if task=='flight' else 'Koku'} / {meta['created'][11:19]}", task=task, path=p.parent / "trained.npz",
                                 training=read_json(p.parent / "training.json"), evaluation=read_json(p.parent / "evaluation.json")))
     return records
 
@@ -172,14 +175,12 @@ def health():
 
 @app.get("/api/catalog")
 def catalog():
-    from lab_flight import metadata
-    flight = metadata()
-    return dict(models=[{k:v for k,v in m.items() if k != "path"} for m in models()]+[flight], job=runtime.job,
+    return dict(models=[{k:v for k,v in m.items() if k != "path"} for m in models()], job=runtime.job,
       experiments=[dict(id="odor", title="Kokuya yönelme", status="validated", detail="Taklit öğrenmesi · 6 fizik koşulu"),
                    dict(id="avoidance", title="Kokudan kaçınma", status="planned", detail="Ters yönlendirme hedefi ve kaçınma değerlendirmesi hazırlanacak."),
                    dict(id="vision", title="Görsel yönelme", status="planned", detail="Görsel duyusal kodlama ve yeni devre bağlantısı gerekli."),
                    dict(id="terrain", title="Engel / arazi", status="planned", detail="Dokunma gözlemleri, arazi görevleri ve ödül tasarımı gerekli."),
-                   dict(id="flight", title="Uçuş", status="pretrained", detail="FlyBody hazır politika · kanat aerodinamiği · havada başlayan rota takibi. MaleCNS devresi uçuşa bağlı değil.")])
+                   dict(id="flight", title="Beyin ile uçuş", status="connected", detail="MaleCNS koku kararı → yön hedefi → FlyBody kanat kontrolü. Canlı 7.075 nöron; yönelme eğitimi ve uçuş testleri.")])
 
 @app.get("/api/state")
 def state():
@@ -239,9 +240,13 @@ def model_details(model_id: str):
     with np.load(record["path"], allow_pickle=False) as weights:
         w = weights["weight"]
         gains = [float(w[e["row"],e["col"]] / e["weight"]) if e["layer"] == 2 else 1. for e in graph["edges"]]
+    sha = hashlib.sha256(record['path'].read_bytes()).hexdigest()
+    evaluation_task = record.get('task', 'odor')
+    flight_evaluation = record['evaluation'] if evaluation_task=='flight' else read_json(ROOT / 'artifacts/lab/flight/checkpoints' / f'{sha}.json')
     return dict(id=model_id, graph_version=graph["version"], circuit_identity=graph["circuit_identity"],
-                gains=gains, sha256=hashlib.sha256(record["path"].read_bytes()).hexdigest(),
-                training=record["training"], evaluation=record["evaluation"])
+                gains=gains, sha256=sha, training=record["training"], evaluation=record["evaluation"],
+                evaluation_task=evaluation_task, flight_evaluation=flight_evaluation,
+                walk_evaluation=record['evaluation'] if evaluation_task=='odor' else None)
 
 class Control(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
@@ -275,8 +280,6 @@ def apply_control(body):
         runtime.control({'op': 'next'})
         return {'accepted': True}
     if body.op == "model":
-        if runtime.behavior != 'odor':
-            raise HTTPException(409, 'Koku modeli seçmek için Kokuya yönelme davranışına dön.')
         m = resolve_model(body.model)
         command = dict(op="model", path=str(m["path"]), id=body.model)
     elif body.op == "reset":
@@ -295,9 +298,10 @@ class TrainingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     steps: int = Field(3000, ge=200, le=10000)
     seed: int = Field(42, ge=0, le=1000000)
+    task: Literal['odor', 'flight'] = 'odor'
 
-def training_job(directory, steps, seed):
-    meta = dict(id=directory.name, status="training", created=datetime.now(timezone.utc).isoformat(), steps=steps, seed=seed)
+def training_job(directory, steps, seed, task):
+    meta = dict(id=directory.name, status="training", created=datetime.now(timezone.utc).isoformat(), steps=steps, seed=seed, task=task)
     env = dict(os.environ, FRUITFLY_MODEL_DIR=str(directory), PYTHONUNBUFFERED="1")
     watchdog = None
     message = ""
@@ -306,7 +310,7 @@ def training_job(directory, steps, seed):
             shutil.copy2(BASE / filename, directory / filename)
         (directory / "run.json").write_text(json.dumps(meta))
         with (directory / "training.log").open("w") as log:
-            process = subprocess.Popen([sys.executable, "-u", str(ROOT / "lab_train.py"), "--steps", str(steps), "--seed", str(seed)],
+            process = subprocess.Popen([sys.executable, "-u", str(ROOT / "lab_train.py"), "--steps", str(steps), "--seed", str(seed), '--task', task],
                                        cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             runtime.job_process = process
             # Bound a stalled backend even when stdout stops producing events.
@@ -348,11 +352,13 @@ def train(body: TrainingRequest):
     with runtime.lock:
         if runtime.job.get("status") in {"training", "evaluating", "cancelling"}:
             raise HTTPException(409, "Bir deney zaten çalışıyor")
+        if body.task=='flight' and not (ROOT / 'flight/.venv/bin/python').exists():
+            raise HTTPException(503, 'Önce uçuş ortamını kur.')
         run_id = datetime.now(timezone.utc).strftime("run-%Y%m%dT%H%M%S%f")
         directory = RUNS / run_id
         directory.mkdir()
-        runtime.job = dict(id=run_id, status="training", steps=body.steps, step=0, seed=body.seed, history=[], started=time.time())
-        threading.Thread(target=training_job, args=(directory,body.steps,body.seed), daemon=True).start()
+        runtime.job = dict(id=run_id, status="training", steps=body.steps, step=0, seed=body.seed, task=body.task, history=[], started=time.time())
+        threading.Thread(target=training_job, args=(directory,body.steps,body.seed,body.task), daemon=True).start()
     return runtime.job
 
 @app.post("/api/train/cancel")

@@ -88,11 +88,11 @@ async function refreshModel(id) {
   selectedModel=result;
   updateSelectionValue();
   const item=catalog.models?.find(m=>m.id===id);
-  const t=selectedModel.training, e=selectedModel.evaluation;
+  const t=selectedModel.training, e=isFlight()?selectedModel.flight_evaluation:selectedModel.walk_evaluation;
   $('benchmark').textContent=e ? `${e.success_count} / ${e.episodes}`:'—';
   $('model-loss').textContent=t ? fmt(t.after_mse,5):'—';
   $('checkpoint').textContent='CHECKPOINT '+selectedModel.sha256.slice(0,12);
-  $('brain-model').textContent=id==='flight-pretrained'?'Anatomi · uçuşa bağlı değil':item?.name ?? id;
+  $('brain-model').textContent=item?.name ?? id;
   $('loss-value').textContent=t ? fmt(t.after_mse,5):'—';
   $('loss-change').textContent=t ? `${fmt((t.after_mse/t.before_mse-1)*100,1)}%`:'Başlangıç';
   $('loss-steps').textContent=t ? `${count(t.steps)} adım`:'Eğitim uygulanmadı';
@@ -117,16 +117,6 @@ function chart(canvas, series, {min=0,max=1}={}) {
 }
 function updateCharts(job) {
   const h=simulation.history ?? [];
-  if(isFlight()){
-    chart($('signal-chart'),[{values:h.map(x=>x[1]),color:'#62d8d0'},{values:h.map(x=>x[2]),color:'#eaa867'}],{min:0,max:Math.max(1,...h.flatMap(x=>[x[1],x[2]]))});
-    chart($('loss-chart'),[{values:h.map(x=>x[4]),color:'#62d8d0'}]);
-    $('loss-source').textContent='CANLI UÇUŞ';
-    $('loss-value').textContent=fmt(simulation.reward,3);
-    $('loss-change').textContent=`Hata ${fmt(simulation.tracking_error_mm,2)} mm`;
-    $('loss-steps').textContent=`Referans rota #${simulation.trajectory_id ?? '—'}`;
-    $('changed').textContent='Hazır politika · eğitim uygulanmıyor';
-    return;
-  }
   chart($('signal-chart'),[{values:h.map(x=>x[1]),color:'#62d8d0'},{values:h.map(x=>x[2]),color:'#eaa867'}]);
   const active=['training','evaluating','cancelling'].includes(job?.status);
   const samples=active ? job.history ?? [] : trainingHistory;
@@ -141,7 +131,7 @@ function updateCharts(job) {
 }
 async function updateJob(job) {
   const busy=['training','evaluating','cancelling'].includes(job.status);
-  $('train').disabled=busy || $('experiment').value!=='odor';
+  $('train').disabled=busy || !['odor','flight'].includes($('experiment').value);
   $('cancel').classList.toggle('hidden',!busy);
   $('cancel').disabled=job.status==='cancelling';
   const labels={idle:'Yeni deney hazır',training:'Model eğitiliyor',evaluating:'Fizik testleri çalışıyor',complete:'Deney tamamlandı',failed:'Deney başarısız',cancelled:'Deney durduruldu',cancelling:'Durduruluyor'};
@@ -167,38 +157,36 @@ function updateSimulation(s) {
   simulation=s; paused=!!s.paused; lastPacketAt=Date.now();
   if(switching){
     behavior=s.behavior;behaviorUI(isFlight());$('experiment').value=behavior;
-    if(isFlight())setMode('activity');
   }
   camera=s.camera;document.querySelectorAll('[data-camera]').forEach(b=>b.classList.toggle('active',b.dataset.camera===camera));
   $('sim-empty').classList.add('hidden');
   $('fly-image').style.visibility='visible';
   $('fly-image').src='data:image/jpeg;base64,'+s.image;
   $('render-quality').textContent=s.render?`${s.render.width} × ${s.render.height} · ${s.render.msaa}× MSAA`:'GÖRÜNTÜ AKIŞI';
-  $('distance').innerHTML=fmt(isFlight()?s.altitude_mm:s.distance_mm)+'<small> mm</small>';
+  $('distance').innerHTML=fmt(s.distance_mm)+'<small> mm</small>';
   $('speed').innerHTML=fmt(s.speed_mm_s,1)+'<small> mm/s</small>';
   $('sim-time').innerHTML=fmt(s.time_s)+'<small> s</small>';
   $('reward').textContent=fmt(s.reward,3);
   $('episode').textContent='BÖLÜM '+String(s.episode).padStart(3,'0');
   $('live-label').innerHTML=`<i></i> ${s.paused?'DURAKLATILDI':s.idle?'BOŞTA':'CANLI FİZİK'}`;
   $('pause').innerHTML=s.paused?'<span>▶</span> Devam et':'<span>Ⅱ</span> Duraklat';
-  $('episode-stats').textContent=isFlight()?`Rota #${s.trajectory_id} · ${s.successes}/${s.completed} tamamlandı · ${s.falls} kesildi`:`Bu oturum: ${s.successes}/${s.completed} hedef · ${s.falls} devrilme`;
+  $('episode-stats').textContent=isFlight()?`Bu oturum: ${s.successes}/${s.completed} hedef · ${s.falls} uçuş sınırı`:`Bu oturum: ${s.successes}/${s.completed} hedef · ${s.falls} devrilme`;
   $('rtf').textContent=fmt(s.rtf,isFlight()?3:2)+' ×';
   $('rtf').title='Simülasyon süresi / gerçek süre';
-  $('odor-left').textContent=fmt(isFlight()?s.altitude_mm:s.odor[0],3);$('odor-right').textContent=fmt(isFlight()?s.tracking_error_mm:s.odor[1],3);
-  $('steering').textContent=fmt(isFlight()?s.wing_hz:s.steering,isFlight()?1:3);
-  $('contacts').textContent=isFlight()?'Kanat aerodinamiği aktif':`Temas: ${s.contacts}`;
-  if(isFlight())for(let i=0;i<4;i++){$('layer-'+i).style.width='0%';$('layer-'+i).parentElement.title='MaleCNS uçuşa bağlı değil; aktivite verisi yok.';}
+  $('odor-left').textContent=fmt(s.odor[0],3);$('odor-right').textContent=fmt(s.odor[1],3);
+  $('steering').textContent=fmt(isFlight()?s.yaw_rate_rad_s:s.steering,3);
+  $('contacts').textContent=isFlight()?`Z ${fmt(s.altitude_mm,1)} mm · ${fmt(s.wing_hz,1)} Hz`:`Temas: ${s.contacts}`;
   s.layer_means.forEach((v,i)=>{$('layer-'+i).style.width=(v*100)+'%';$('layer-'+i).parentElement.title=`Ortalama aktivite: ${fmt(v,4)}`;});
   $('outcome').classList.toggle('hidden',s.outcome==='running');
-  $('outcome').textContent={success:isFlight()?'Uçuş rotası tamamlandı':'Hedefe ulaşıldı',fallen:'Denge kaybı',timeout:'Süre doldu'}[s.outcome]||'';
-  $('footer-status').textContent=isFlight()?'Fizik 0,05 ms · Kontrol 0,2 ms · Canlı aerodinamik':`Fizik ${fmt(s.physics_dt*1000,1)} ms · Sensör / karar 10 ms · Canlı veri`;
+  $('outcome').textContent={success:isFlight()?'Kokulu hedefe ulaşıldı':'Hedefe ulaşıldı',fallen:'Denge kaybı',timeout:'Süre doldu'}[s.outcome]||'';
+  $('footer-status').textContent=isFlight()?'Fizik 0,05 ms · Kanat 0,2 ms · Beyin kararı 10 ms':`Fizik ${fmt(s.physics_dt*1000,1)} ms · Sensör / karar 10 ms · Canlı veri`;
   $('connection').classList.add('ready');$('connection').innerHTML='<i></i> Yerel bağlantı aktif';
   sceneView?.update(s.activity);
   sceneView?.freshness();
   analyses?.update(s);
   inspector?.tick(s.activity,s.model);
   updateSelectionValue();
-  if(s.model!==lastModelId){lastModelId=s.model;$('model').value=s.model;refreshModel(s.model).catch(e=>toast(e.message));}
+  if(`${s.behavior}:${s.model}`!==lastModelId){lastModelId=`${s.behavior}:${s.model}`;$('model').value=s.model;refreshModel(s.model).catch(e=>toast(e.message));}
 }
 async function poll() {
   if(document.hidden){setTimeout(poll,1000);return;}
@@ -232,7 +220,7 @@ async function poll() {
 bind('fullscreen',async()=>{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();});
 bind('pause',()=>control({op:'pause',paused:!paused}));
 bind('reset',()=>control({op:'reset',goal:goal()}));
-bind('apply-goal',async()=>{if(isFlight()){await control({op:'next'});return;}await control({op:'reset',goal:goal()});toast('Hedef güncellendi. Aynı modelle yeni bölüm başladı.');});
+bind('apply-goal',async()=>{await control({op:'reset',goal:goal()});toast('Hedef güncellendi. Aynı modelle yeni bölüm başladı.');});
 bind('orbit-left',()=>control({op:'camera',camera,orbit:-15}));bind('orbit-right',()=>control({op:'camera',camera,orbit:15}));
 bind('zoom-in',()=>control({op:'camera',camera,zoom:-1}));bind('zoom-out',()=>control({op:'camera',camera,zoom:1}));
 bind('sim-home',()=>control({op:'camera',camera,reset_view:true}));
@@ -266,7 +254,7 @@ $('experiment').addEventListener('change',async()=>{
   catch(error){toast(error.message);$('experiment').value=behavior||'odor';}
   finally{$('experiment').disabled=false;}
 });
-bind('train',async()=>{if($('experiment').value!=='odor')return;const steps=integer('steps',200,10000),seed=integer('seed',0,1000000);$('train').disabled=true;await api('train',{steps,seed});$('load-new').classList.add('hidden');toast('Yeni eğitim başladı. Mevcut model korunuyor.');});
+bind('train',async()=>{if(!['odor','flight'].includes($('experiment').value))return;const steps=integer('steps',200,10000),seed=integer('seed',0,1000000);$('train').disabled=true;await api('train',{steps,seed,task:$('experiment').value});$('load-new').classList.add('hidden');toast('Yeni eğitim başladı. Mevcut model korunuyor.');});
 bind('cancel',()=>api('train/cancel',{}));
 bind('load-new',async()=>{if(latestRun){await control({op:'model',model:latestRun});$('model').value=latestRun;}});
 function setMode(value){mode=value;$('brain-view').classList.toggle('delta-view',value==='delta');$('activity-mode').classList.toggle('active',value==='activity');$('delta-mode').classList.toggle('active',value==='delta');$('scale-title').textContent=value==='activity'?'MODEL AKTİVİTESİ':'BAĞLANTI ÇARPANI';$('scale-low').textContent=value==='activity'?'0':'0.22×';$('scale-high').textContent=value==='activity'?'1':'4.48×';sceneView?.update(simulation.activity);}

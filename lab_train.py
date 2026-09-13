@@ -1,6 +1,8 @@
 """An isolated UI run; never overwrite the verified baseline."""
 import argparse
 import json
+import os
+from pathlib import Path
 from odor_brain import MODEL, train, load_policy
 from fly_sim import rollout, json_default
 
@@ -11,9 +13,17 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--steps",type=int,required=True)
     p.add_argument("--seed",type=int,required=True)
+    p.add_argument('--task',choices=['odor','flight'],default='odor')
     args=p.parse_args()
     train(steps=args.steps,seed=args.seed)
     event(status="evaluating", evaluated=0, evaluation_total=6)
+    if args.task=='flight':
+        root=Path(__file__).resolve().parent
+        executable=str(root/'flight/.venv/bin/python')
+        # Replace this same process so cancel and the 600 s watchdog cover the
+        # physical evaluation too; no unmanaged grandchild is left running.
+        os.execv(executable,[executable,'-u',str(root/'flight/evaluate_navigation.py'),
+                 '--model',str(MODEL/'trained.npz'),'--output',str(MODEL/'evaluation.json'),'--events'])
     policy=load_policy("trained")
     results=[]
     for i, goal in enumerate([(12,4),(12,-4),(10,5),(10,-5),(14,3),(14,-3)]):

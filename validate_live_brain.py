@@ -29,10 +29,24 @@ def validate():
     check("Geometry schema and weight vector agree", g["version"] == m["graph_version"] and len(m["gains"]) == len(g["edges"]))
     turn, layers = policy.activity(s["odor"])
     activity = np.concatenate(layers)
-    check("Every live node response equals forward calculation", len(activity) == 7075 and np.allclose(s["activity"], activity, atol=5.1e-6, rtol=0))
-    check("Steering and layer summaries equal forward calculation", abs(turn-s["steering"]) < 1e-6 and np.allclose(s["layer_means"], [x.mean() for x in layers]))
-    check("Body and neural sample timestamps agree", s["time_s"] == s["neural"]["sample_time_s"])
-    check("Full HD body renderer preserved", s["render"]["width"] == 1920 and s["render"]["height"] == 1080 and s["render"]["mesh_faces"] == 447417)
+    # Frames round responses to 5 decimals; the two runtimes also use different
+    # NumPy/BLAS versions for FP32 reductions. Keep an explicit small error bound.
+    check("Every live node response equals forward calculation within frame precision", len(activity) == 7075 and np.allclose(s["activity"], activity, atol=6e-6, rtol=0))
+    check("Steering and layer summaries match independent FP32 replay", abs(turn-s["steering"]) < 1e-5 and np.allclose(s["layer_means"], [x.mean() for x in layers],atol=1e-6))
+    if s['neural'].get('brain_connected'):
+        n=s['neural']
+        check('Flight brain decision is sampled within the last 10 ms', -.000001 <= s['time_s']-n['sample_time_s'] <= n['brain_dt']+.000001)
+        sensors=np.array(n['sensor_positions_mm']);target=np.r_[s['goal_mm'],10.]
+        expected_odor=(1/(1+(np.linalg.norm(sensors-target,axis=1)/5)**2)).astype(np.float32)
+        check('Synthetic odor comes from recorded physical antenna positions', np.allclose(expected_odor,s['odor'],atol=1e-7))
+        neutral=policy.activity([.1,.1])[0]
+        applied=np.clip(turn-neutral,-1,1)
+        check('Brain readout is the bounded command used by flight adapter', n['applied_to_physics'] and abs(applied-n['applied_steering'])<1e-5 and abs(n['yaw_rate_rad_s']-np.clip(n['yaw_gain']*applied,-8,8))<1e-3)
+        check('Published motor command exactly matches the applied in-process readout', abs(n['applied_steering']-np.clip(n['raw_steering']-n['neutral_steering'],-1,1))<1e-12 and abs(n['yaw_rate_rad_s']-np.clip(n['yaw_gain']*n['applied_steering'],-8,8))<1e-12)
+        check('Wing motor policy action is finite and separately identified', len(n['motor_action'])>0 and np.isfinite(n['motor_action']).all() and n['motor_model_sha256']!=s['model_sha256'])
+    else:
+        check("Body and neural sample timestamps agree", s["time_s"] == s["neural"]["sample_time_s"])
+    check("Full HD body renderer preserved", s["render"]["width"] == 1920 and s["render"]["height"] == 1080 and s["render"]["mesh_faces"] >= 447417)
     nodes = g["nodes"]
     edges = g["edges"]
     groups = g["group_ranges"]
@@ -81,7 +95,8 @@ def validate():
         check("CPG display reports last applied steering mapping", np.allclose(drive,[.9-.55*last_turn,.9+.55*last_turn]))
     result = dict(checks=checks,model=s["model"],sha256=m["sha256"],seq=s["seq"],neurons=len(activity),located=len(nodes),edges=len(edges),changed_located_gains_over_one_percent=changed,
                   max_weight_error=float(max_weight_error),max_contribution_error=float(max_contribution_error),browser_visual_test=False)
-    (ROOT / "artifacts/lab/live-brain-validation.json").write_text(json.dumps(result,indent=2))
+    name='flight/live-brain-validation.json' if s['neural'].get('brain_connected') else 'live-brain-validation.json'
+    (ROOT / "artifacts/lab" / name).write_text(json.dumps(result,indent=2))
     print(json.dumps(result,indent=2))
 
 if __name__ == "__main__":

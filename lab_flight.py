@@ -9,13 +9,16 @@ import time
 ROOT = Path(__file__).resolve().parent
 
 class FlightProcess:
-    def __init__(self, commands, states):
+    def __init__(self, commands, states, model_path=None, model_id='trained'):
         self.commands, self.states = commands, states
         log_path = ROOT / '.runtime/flight-worker.log'
         log_path.parent.mkdir(exist_ok=True)
+        args = [str(ROOT / 'flight/.venv/bin/python'), '-u', str(ROOT / 'flight/worker.py')]
+        if model_path is not None:
+            args += ['--model', str(model_path), '--model-id', model_id]
         with log_path.open('a') as log:
             self.process = subprocess.Popen(
-                [str(ROOT / 'flight/.venv/bin/python'), '-u', str(ROOT / 'flight/worker.py')],
+                args,
                 cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log,
                 text=True, bufsize=1)
         self.threads = [threading.Thread(target=fn, daemon=True) for fn in (self._write, self._read)]

@@ -16,16 +16,23 @@ def receive():
     commands.put({'op': 'shutdown'})
 
 def main():
+    import argparse
     import mujoco
     import numpy as np
     from PIL import Image
-    from engine import Flight, ROOT
+    from navigation import BrainFlight, ROOT
     sys.path.insert(0, str(ROOT))
     from lab_flight import metadata
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model',type=Path,default=ROOT/'models/odor_navigation/trained.npz')
+    parser.add_argument('--model-id',default='trained')
+    args = parser.parse_args()
     threading.Thread(target=receive, daemon=True).start()
-    flight = Flight()
+    flight = BrainFlight(args.model)
+    model_id = args.model_id
     policy_sha = metadata()['sha256']
-    routes, route_index, seed = [18, 57, 20], 0, 10
+    goals, goal_index, seed = [(25.,8.),(25.,-8.),(22.,6.),(22.,-6.)], 0, 10
+    goal = goals[0]
     width, height, playback = 1920, 1080, .01
     camera, paused, episode = 'body', False, 0
     successes = completed = falls = 0
@@ -45,12 +52,12 @@ def main():
     def origin(name):
         if name == 'body':
             return flight.env.physics.named.data.subtree_com['walker/'].copy()
-        return flight.env.task._ref_qpos[min(len(flight.env.task._ref_qpos)-1, flight.env.task._traj_timesteps//2), :3].copy()
+        return np.r_[np.asarray(goal)/20,1.]
     def reset():
         nonlocal renderer, episode, hold, history, trajectory, frame_steps, last_step
         if renderer:
             renderer.close()
-        flight.reset(seed, routes[route_index])
+        flight.reset(seed, goal)
         model = flight.env.physics.model.ptr
         model.vis.global_.offwidth, model.vis.global_.offheight = width, height
         model.vis.quality.offsamples = 4
@@ -83,9 +90,16 @@ def main():
                     paused = command['paused']
                 elif op == 'reset':
                     seed = command.get('seed', seed)
+                    goal = command.get('goal', goal)
                     restart = True
                 elif op == 'next':
-                    route_index = (route_index + 1) % len(routes)
+                    goal_index = (goal_index + 1) % len(goals)
+                    goal = goals[goal_index]
+                    restart = True
+                elif op == 'model':
+                    flight.load_brain(command['path'])
+                    model_id = command['id']
+                    successes = completed = falls = 0
                     restart = True
                 elif op == 'camera':
                     camera = command['camera']
@@ -106,18 +120,16 @@ def main():
                         offsets[camera][:] = np.clip(cam.lookat - origin(camera), -15, 15)
             idle = time.monotonic() - last_poll > 30
             if restart or (hold and not paused and not idle and time.monotonic() >= hold):
-                if not restart:
-                    route_index = (route_index + 1) % len(routes)
                 reset()
             now = time.monotonic()
             if not paused and not idle and not hold and now - last_step >= flight.control_dt / playback:
                 flight.step()
                 frame_steps += 1
                 last_step = now
-                if flight.ts.last():
+                if flight.success or flight.ts.last():
                     completed += 1
-                    successes += int(flight.ts.discount == 1)
-                    falls += int(flight.ts.discount == 0)
+                    successes += int(flight.success)
+                    falls += int(flight.ts.last() and flight.ts.discount == 0)
                     hold = now + 1.2
             if now - last_frame < (1 if idle else .065):
                 time.sleep(.002)
@@ -129,8 +141,10 @@ def main():
             # Track/crosshair sites distract from the close body view.
             for i in range(renderer.scene.ngeom):
                 geom = renderer.scene.geoms[i]
-                if camera == 'body' and geom.objtype == mujoco.mjtObj.mjOBJ_SITE:
-                    geom.rgba[3] = 0
+                if geom.objtype == mujoco.mjtObj.mjOBJ_SITE and geom.objid >= 0:
+                    name = mujoco.mj_id2name(flight.env.physics.model.ptr, mujoco.mjtObj.mjOBJ_SITE, geom.objid) or ''
+                    if name != 'odor_target':
+                        geom.rgba[3] = 0
                 if geom.objtype == mujoco.mjtObj.mjOBJ_GEOM and geom.objid >= 0:
                     name = mujoco.mj_id2name(flight.env.physics.model.ptr, mujoco.mjtObj.mjOBJ_GEOM, geom.objid) or ''
                     if name.startswith('ghost/'):
@@ -138,22 +152,29 @@ def main():
             pixels = renderer.render()
             jpeg = io.BytesIO()
             Image.fromarray(pixels).save(jpeg, format='JPEG', quality=96, subsampling=0)
-            history.append([t['time_s'], t['altitude_mm'], t['tracking_error_mm'], t['wing_hz'], t['reward']])
+            history.append([t['time_s'], *t['odor'], t['steering'], t['reward']])
             history = history[-120:]
             trajectory.append(t['position_mm'])
             trajectory = trajectory[-350:]
             seq += 1
             packet = dict(**t, seq=seq, wall_time=time.time(), behavior='flight',
-                image=base64.b64encode(jpeg.getvalue()).decode(), model='flight-pretrained',
-                model_sha256=policy_sha, circuit_identity=None, activity=None, layer_means=[],
-                neural=dict(source='FlyBody pretrained motor policy', kind='not_connected_to_MaleCNS', cpg_drive=None),
+                image=base64.b64encode(jpeg.getvalue()).decode(), model=model_id,
+                model_sha256=flight.brain_sha, circuit_identity=flight.brain.circuit.identity,
+                activity=np.concatenate(flight.layers).round(5).tolist(),layer_means=[float(a.mean()) for a in flight.layers],
+                neural=dict(source='Policy.activity', kind='continuous_forward_response', sample_time_s=flight.brain_sample_time,
+                    applied_steering=flight.applied_turn if flight.step_count else None,
+                    applied_to_physics=flight.step_count>0,raw_steering=flight.turn,neutral_steering=flight.neutral_turn,
+                    yaw_rate_rad_s=flight.yaw_rate, yaw_gain=flight.yaw_gain,max_yaw_rate_rad_s=8.,
+                    brain_dt=flight.brain_dt,control_dt=flight.control_dt,cpg_drive=None,
+                    adapter='trimmed MBON readout -> bounded yaw-rate reference -> FlyBody wing policy',
+                    motor_model_sha256=policy_sha,sensor_positions_mm=flight.sensor_positions.tolist(),
+                    motor_action=flight.action.tolist(),brain_connected=True),
                 paused=paused, idle=idle, camera=camera, episode=episode, seed=seed,
                 camera_pose=dict(azimuth=float(cam.azimuth), elevation=float(cam.elevation), distance=float(cam.distance),
                                  lookat=cam.lookat.tolist(), offset=offsets[camera].tolist()),
                 render=dict(width=width, height=height, msaa=4, jpeg_quality=96, mesh='FlyBody official',
                             mesh_faces=int(flight.env.physics.model.mesh_facenum.sum())),
-                distance_mm=t['tracking_error_mm'], goal_mm=None, odor=[], steering=None,
-                outcome='success' if t['success'] else 'fallen' if t['done'] else 'running',
+                outcome='success' if t['success'] else 'fallen' if flight.ts.last() and flight.ts.discount==0 else 'timeout' if t['done'] else 'running',
                 successes=successes, completed=completed, falls=falls,
                 rtf=frame_steps*flight.control_dt/(now-last_frame), playback_target=playback,
                 trajectory=trajectory, history=history, contacts=int(flight.env.physics.data.ncon))

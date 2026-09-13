@@ -155,7 +155,7 @@ export function createBrain(data, {getState, onSelect}) {
     let drawn=0;
     for(const index of candidateEdges){
       const e=data.edges[index];
-      if(simulation.behavior!=='flight'&&index!==selectedEdge&&mode==='activity'&&threshold>0&&(!ready||edgeSignal(data,e,activity,selectedModel.gains[index])<=threshold))continue;
+      if(index!==selectedEdge&&mode==='activity'&&threshold>0&&(!ready||edgeSignal(data,e,activity,selectedModel.gains[index])<=threshold))continue;
       drawnIndices[drawn++]=index*2;drawnIndices[drawn++]=index*2+1;
     }
     // Raycaster reports index-buffer offsets, not source vertex ids.
@@ -171,11 +171,11 @@ export function createBrain(data, {getState, onSelect}) {
     $('flow-value').textContent=threshold.toFixed(3);
     const context=density==='neuron'?(focusId?`Body ${focusId} giriş / çıkışları`:'Bağları görmek için bir soma seç'):mode==='delta'&&density==='overview'?'En çok değişen bağlar':density==='overview'?'Sade anatomik görünüm':'Tüm konumlu bağlar';
     $('brain-hint').textContent=`${context} · ${count(drawn/2)} / ${count(data.edges.length)} çizgi`;
-    $('brain-hint').title=simulation.behavior==='flight'?'MaleCNS anatomisi; uçuş kontrolcüsünden nöron aktivitesi hesaplanmıyor.':ready?(mode==='delta'?`${count(changed)} bağda >%1 değişim. Yeni anatomik bağ: 0.`:`${count(activeNodes)} nöron yanıtı >0,01; tüm havuzda ${count(activeEdges)} bağ sinyal eşiği üstünde.`):'Model ve canlı veri eşleştiriliyor…';
+    $('brain-hint').title=ready?(mode==='delta'?`${count(changed)} bağda >%1 değişim. Yeni anatomik bağ: 0.`:`${count(activeNodes)} nöron yanıtı >0,01; tüm havuzda ${count(activeEdges)} bağ sinyal eşiği üstünde.`):'Model ve canlı veri eşleştiriliyor…';
   }
   function freshness(stale=false){
     const {simulation:s,selectedModel:m}=getState(), ok=modelMatches(data,s,m);
-    $('brain-live').textContent=s.behavior==='flight'?'ANATOMİ · UÇUŞA BAĞLI DEĞİL':stale?'AKIŞ KESİLDİ · SON KARE':!ok?'MODEL EŞLEŞTİRİLİYOR':`${s.paused?'DURAKLATILDI':s.idle?'BOŞTA':'CANLI HESAP'} · ${Number(s.time_s).toFixed(2)} s · #${s.seq}`;
+    $('brain-live').textContent=stale?'AKIŞ KESİLDİ · SON KARE':!ok?'MODEL EŞLEŞTİRİLİYOR':`${s.paused?'DURAKLATILDI':s.idle?'BOŞTA':'CANLI HESAP'} · ${Number(s.neural?.sample_time_s??s.time_s).toFixed(2)} s · #${s.seq}`;
     $('brain-live').classList.toggle('stale',stale||!ok||s.paused||s.idle);
   }
   async function loadAtlas(){

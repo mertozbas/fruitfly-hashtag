@@ -31,8 +31,8 @@ try:
     api('control', {'op': 'behavior', 'behavior': 'flight'})
     s = until(lambda s: s.get('behavior') == 'flight' and s.get('seq'))
     assert s['render']['width'] == 1920 and s['render']['height'] == 1080 and s['render']['msaa'] == 4
-    assert s['model'] == 'flight-pretrained' and s['activity'] is None and not s['circuit_identity']
-    checks += ['Full HD flight frame', 'No fabricated MaleCNS activity']
+    assert s['model'] == before['model'] and len(s['activity']) == 7075 and s['circuit_identity']==before['circuit_identity'] and s['neural']['brain_connected']
+    checks += ['Full HD flight frame', 'Selected MaleCNS brain inherited by flight worker']
     start = s['time_s']
     s = until(lambda s: s.get('time_s', 0) > start+.002)
     assert s['altitude_mm'] > 2 and 200 < s['wing_hz'] < 240
@@ -51,22 +51,22 @@ try:
         assert s['time_s'] == paused_time
         checks.append('Mouse '+gesture+' while paused')
     api('control', {'op': 'camera', 'camera': 'body', 'reset_view': True})
-    api('control', {'op': 'next'})
-    s = until(lambda s: s.get('trajectory_id') == 57)
+    api('control', {'op': 'reset', 'goal': [25,-8]})
+    s = until(lambda s: s.get('goal_mm') == [25,-8])
     assert s['paused'] and s['time_s'] == 0
-    checks.append('Next reference route while paused')
-    model = api('model/flight-pretrained')
-    assert s['model_sha256'] == model['sha256'] and not model['gains']
+    checks.append('User odor target changes while paused')
+    model = api('model/'+s['model'])
+    assert s['model_sha256'] == model['sha256'] and len(model['gains'])==82747
     graph = api('graph'); e = graph['edges'][0]
-    edge = api(f"connection/{graph['nodes'][e['a']]['id']}/{graph['nodes'][e['b']]['id']}?model=flight-pretrained")
-    assert edge['model'] is None and edge['anatomical_contacts'] > 0
-    checks.append('Flight checkpoint identity; anatomy-only edge inspection')
-    try:
-        api('control', {'op': 'model', 'model': 'trained'})
-        raise AssertionError('Odor model applied to flight')
-    except urllib.error.HTTPError as exc:
-        assert exc.code == 409
-    checks.append('Odor checkpoint cannot control flight worker')
+    edge = api(f"connection/{graph['nodes'][e['a']]['id']}/{graph['nodes'][e['b']]['id']}?model={s['model']}")
+    assert edge['model'] is not None and edge['anatomical_contacts'] > 0
+    checks.append('Flight brain checkpoint and actual synaptic gain inspection')
+    api('control', {'op':'model','model':'untrained'})
+    s=until(lambda s:s.get('model')=='untrained')
+    assert s['paused'] and len(s['activity'])==7075
+    api('control', {'op':'model','model':before['model']})
+    s=until(lambda s:s.get('model')==before['model'])
+    checks.append('Flight brain model changes and restores while paused')
     api('control', {'op': 'behavior', 'behavior': 'odor'})
     after = until(lambda s: s.get('behavior') == 'odor' and s.get('seq'))
     for k in ['model', 'model_sha256', 'goal_mm', 'time_s', 'position_mm', 'camera_pose', 'activity']:
