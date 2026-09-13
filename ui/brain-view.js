@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { edgeSignal, modelMatches } from './neural-math.js';
+import { edgeSignal, modelMatches, displayEdgeIndices } from './neural-math.js';
 const $ = id => document.getElementById(id);
 const count = n => Number(n).toLocaleString('tr-TR');
 export function createBrain(data, {getState, onSelect}) {
-  let atlas=[], focus='circuit';
+  let atlas=[], focus='circuit', focusId=null, displayKey='', candidateEdges=[], visibleEdges=[];
+  const nodeIds=new Set(data.nodes.map(n=>n.id));
   const brightnessInput=$('brain-brightness'), brightnessKey='neural-lab.brain-brightness';
   try {
     const saved=localStorage.getItem(brightnessKey);
@@ -22,7 +23,7 @@ export function createBrain(data, {getState, onSelect}) {
   pointsGeometry.computeBoundingBox();
   const center=pointsGeometry.boundingBox.getCenter(new THREE.Vector3());
   group.position.copy(center).negate();
-  const points=new THREE.Points(pointsGeometry,new THREE.PointsMaterial({size:4.8,map:glowTexture(),vertexColors:true,transparent:true,opacity:1,sizeAttenuation:true,depthWrite:false,blending:THREE.AdditiveBlending}));group.add(points);
+  const points=new THREE.Points(pointsGeometry,new THREE.PointsMaterial({size:2.2,vertexColors:true,transparent:true,opacity:.95,sizeAttenuation:true,depthWrite:false}));group.add(points);
   const meshGeometry=new THREE.BufferGeometry();meshGeometry.setAttribute('position',new THREE.Float32BufferAttribute(data.vertices,3));meshGeometry.setIndex(data.faces);meshGeometry.computeVertexNormals();
   const surface=new THREE.Mesh(meshGeometry,new THREE.MeshPhongMaterial({color:0x375e78,transparent:true,opacity:.09,side:THREE.DoubleSide,depthWrite:false,shininess:25}));group.add(surface);
   scene.add(new THREE.AmbientLight(0x98cfe7,2));
@@ -30,17 +31,23 @@ export function createBrain(data, {getState, onSelect}) {
   const edgePositions=data.edges.flatMap(e=>[...data.nodes[e.a].position,...data.nodes[e.b].position]);
   const edgeGeometry=new THREE.BufferGeometry();edgeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(edgePositions,3));
   const edgeColors=new Float32Array(edgePositions.length);edgeColors.fill(.25);edgeGeometry.setAttribute('color',new THREE.BufferAttribute(edgeColors,3));
-  const lines=new THREE.LineSegments(edgeGeometry,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.18,depthWrite:false,blending:THREE.AdditiveBlending}));group.add(lines);
+  const lines=new THREE.LineSegments(edgeGeometry,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.23,depthWrite:false}));group.add(lines);
+  const drawnIndices=new Uint32Array(data.edges.length*2);
+  edgeGeometry.setIndex(new THREE.BufferAttribute(drawnIndices,1));edgeGeometry.setDrawRange(0,0);
+  const selectedGeometry=new THREE.BufferGeometry();selectedGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
+  const selectedLine=new THREE.LineSegments(selectedGeometry,new THREE.LineBasicMaterial({color:0xffd799,transparent:true,opacity:.95,depthWrite:false}));
+  selectedLine.visible=false;selectedLine.renderOrder=2;group.add(selectedLine);
   function applyBrightness(){
     const level=Number(brightnessInput.value)/100;
-    points.material.opacity=level;
-    lines.material.opacity=(getState().mode==='delta'?.3:.18)*level;
-    for(const obj of atlas)obj.material.opacity=(obj.userData.displayOpacity??.14)*level;
+    // Readable base strokes remain when activity emphasis is turned down.
+    points.material.opacity=.7+.25*level;
+    lines.material.opacity=(getState().mode==='delta'?.4:.23)+.15*level;
+    for(const obj of atlas)obj.material.opacity=obj.userData.selected ? .95 : .045+(obj.userData.displayOpacity??.14)*level;
     $('brain-brightness-value').textContent=`${Math.round(level*100)}%`;
     brightnessInput.setAttribute('aria-valuetext',`%${Math.round(level*100)}`);
   }
   brightnessInput.addEventListener('input',()=>{
-    applyBrightness();
+    update(getState().simulation.activity);
     try {localStorage.setItem(brightnessKey,brightnessInput.value);} catch { /* Optional preference. */ }
   });
   applyBrightness();
@@ -59,7 +66,6 @@ export function createBrain(data, {getState, onSelect}) {
   const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();};new ResizeObserver(resize).observe(host);resize();
   const ray=new THREE.Raycaster(), tooltip=$('brain-tooltip');
   function pick(event){
-    if(points.material.opacity===0)return null;
     const r=renderer.domElement.getBoundingClientRect();
     const unit=2*cam.position.distanceTo(controls.target)*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/r.height;
     ray.params.Points.threshold=unit*6;ray.params.Line.threshold=unit*4;
@@ -78,7 +84,7 @@ export function createBrain(data, {getState, onSelect}) {
       if(lines.visible){
         const hits=ray.intersectObject(lines);
         for(const hit of hits){
-          const index=Math.floor(hit.index/2),e=data.edges[index],k=index*6;
+          const index=visibleEdges[Math.floor(hit.index/2)],e=data.edges[index],k=index*6;
           if(e&&edgeColors[k]+edgeColors[k+1]+edgeColors[k+2]>0)return {kind:'edge',source:data.nodes[e.a].id,target:data.nodes[e.b].id,edgeIndex:index};
         }
       }
@@ -104,13 +110,20 @@ export function createBrain(data, {getState, onSelect}) {
   function update(activity) {
     const state=getState(), {mode,selectedModel,selectedNode,selectedEdge,simulation}=state;
     const ready=modelMatches(data,simulation,selectedModel);
-    const color=new THREE.Color(), threshold=Number($('flow-floor').value);
+    const color=new THREE.Color(), threshold=Number($('flow-floor').value), brightness=Number(brightnessInput.value)/100;
+    const density=$('connection-density').value;
+    if(state.selection?.kind==='node')focusId=nodeIds.has(state.selection.id)?state.selection.id:null;
+    const key=JSON.stringify([density,mode,ready?selectedModel.sha256:null,focusId,selectedEdge]);
+    if(key!==displayKey){
+      candidateEdges=displayEdgeIndices(data,{density,mode,gains:ready?selectedModel.gains:[],focusId,selectedEdge});
+      displayKey=key;
+    }
     let activeNodes=0, activeEdges=0, changed=0;
     data.nodes.forEach((n,i)=>{
       const value=activity?.[n.index], v=Number.isFinite(value)?Math.max(0,Math.min(1,value)):0;
       if(v>.01)activeNodes++;
       if(mode==='delta')color.setRGB(.07,.15,.18);
-      else responseColor(color,v);
+      else responseColor(color,v,brightness);
       if(n===selectedNode||(selectedEdge>=0&&(i===data.edges[selectedEdge]?.a||i===data.edges[selectedEdge]?.b)))color.setRGB(1,1,1);
       color.toArray(colors,i*3);
     });
@@ -122,24 +135,43 @@ export function createBrain(data, {getState, onSelect}) {
       if(signal>threshold)activeEdges++;
       // Fixed logarithmic scale, shared across frames and models: 0..1 input contribution.
       const v=mode==='delta'?Math.min(1,delta/1.5):Math.log1p(99*Math.min(1,signal))/Math.log(100);
-      if(!ready|| (mode==='activity'&&signal<=threshold))color.setRGB(0,0,0);
+      if(!ready)color.setRGB(.08,.13,.18);
+      else if(mode==='activity'&&signal<=threshold)color.setRGB(.035,.06,.085);
       else if(mode==='delta'){
-        if(gain>1)color.setRGB(v,.52*v,.12*v);else color.setRGB(.12*v,.65*v,v);
-      }else color.setRGB(.35*v,.85*v,v);
+        const emphasis=v*(.4+.6*brightness);
+        if(gain>1)color.setRGB(.18+.7*emphasis,.35+.2*emphasis,.16);else color.setRGB(.08,.3+.3*emphasis,.5+.35*emphasis);
+      }else color.setRGB(.1+.3*v*brightness,.3+.4*v*brightness,.4+.38*v*brightness);
       if(i===selectedEdge)color.setRGB(1,.85,.4);
       color.toArray(edgeColors,i*6);color.toArray(edgeColors,i*6+3);
     });
     for(const obj of atlas){
       const index=obj.userData.index, v=Number.isInteger(index)?activity?.[index]:null;
-      if(Number.isFinite(v)&&mode==='activity'){responseColor(obj.material.color,v);obj.material.opacity=.12+.65*v;}
+      if(Number.isFinite(v)&&mode==='activity'){responseColor(obj.material.color,v,brightness);obj.material.opacity=.08+.35*v;}
       else {obj.material.color.setHex(0x567086);obj.material.opacity=.14;}
-      if(state.selection?.kind==='node'&&state.selection.id===obj.userData.id){obj.material.color.setHex(0xffffff);obj.material.opacity=.95;}
+      obj.userData.selected=state.selection?.kind==='node'&&state.selection.id===obj.userData.id;
+      if(obj.userData.selected){obj.material.color.setHex(0xffffff);obj.material.opacity=.95;}
       obj.userData.displayOpacity=obj.material.opacity;
+    }
+    let drawn=0;
+    for(const index of candidateEdges){
+      const e=data.edges[index];
+      if(index!==selectedEdge&&mode==='activity'&&threshold>0&&(!ready||edgeSignal(data,e,activity,selectedModel.gains[index])<=threshold))continue;
+      drawnIndices[drawn++]=index*2;drawnIndices[drawn++]=index*2+1;
+    }
+    // Raycaster reports index-buffer offsets, not source vertex ids.
+    visibleEdges=Array.from(drawnIndices.subarray(0,drawn)).filter((_,i)=>i%2===0).map(i=>i/2);
+    edgeGeometry.index.needsUpdate=true;edgeGeometry.setDrawRange(0,drawn);
+    selectedLine.visible=$('edges').checked&&selectedEdge>=0;
+    if(selectedLine.visible){
+      selectedGeometry.attributes.position.array.set(edgeGeometry.attributes.position.array.subarray(selectedEdge*6,selectedEdge*6+6));
+      selectedGeometry.attributes.position.needsUpdate=true;selectedGeometry.computeBoundingSphere();
     }
     pointsGeometry.attributes.color.needsUpdate=true;edgeGeometry.attributes.color.needsUpdate=true;
     applyBrightness();
     $('flow-value').textContent=threshold.toFixed(3);
-    $('brain-hint').textContent=ready?(mode==='delta'?`${count(changed)} / ${count(data.edges.length)} konumlu bağda >%1 değişim · Yeni bağ: 0`:`${count(activeNodes)} yanıt >0,01 · ${count(activeEdges)} / ${count(data.edges.length)} bağ eşik üstünde`):'Model ve canlı veri eşleştiriliyor…';
+    const context=density==='neuron'?(focusId?`Body ${focusId} giriş / çıkışları`:'Bağları görmek için bir soma seç'):mode==='delta'&&density==='overview'?'En çok değişen bağlar':density==='overview'?'Sade anatomik görünüm':'Tüm konumlu bağlar';
+    $('brain-hint').textContent=`${context} · ${count(drawn/2)} / ${count(data.edges.length)} çizgi`;
+    $('brain-hint').title=ready?(mode==='delta'?`${count(changed)} bağda >%1 değişim. Yeni anatomik bağ: 0.`:`${count(activeNodes)} nöron yanıtı >0,01; tüm havuzda ${count(activeEdges)} bağ sinyal eşiği üstünde.`):'Model ve canlı veri eşleştiriliyor…';
   }
   function freshness(stale=false){
     const {simulation:s,selectedModel:m}=getState(), ok=modelMatches(data,s,m);
@@ -163,22 +195,17 @@ export function createBrain(data, {getState, onSelect}) {
   let lastDraw=0;
   function animate(now){requestAnimationFrame(animate);if(document.hidden||now-lastDraw<30)return;controls.update();renderer.render(scene,cam);lastDraw=now;}requestAnimationFrame(animate);
   $('brain-home').addEventListener('click',home);
-  $('edges').addEventListener('change',()=>{lines.visible=$('edges').checked;});
+  $('edges').addEventListener('change',()=>{lines.visible=$('edges').checked;selectedLine.visible=$('edges').checked&&getState().selectedEdge>=0;});
   $('located').textContent=`${count(data.nodes.length)} / ${count(data.total)} soma konumu`;
   $('anatomy').addEventListener('change',()=>{atlas.forEach(o=>o.visible=$('anatomy').checked);});
   document.querySelectorAll('[data-brain-focus]').forEach(b=>b.addEventListener('click',()=>{focus=b.dataset.brainFocus;document.querySelectorAll('[data-brain-focus]').forEach(x=>x.classList.toggle('active',x===b));home();}));
   $('flow-floor').addEventListener('input',()=>update(getState().simulation.activity));
+  $('connection-density').addEventListener('change',()=>update(getState().simulation.activity));
   loadAtlas();
   return {update,freshness,neuron:id=>atlas.find(o=>o.userData.id===id)?.userData};
 }
 
-function responseColor(color,v){
+function responseColor(color,v,brightness){
   v=Math.max(0,Math.min(1,v));
-  color.setRGB(.012+.9*v*v,.023+.8*v,.035+.72*v);
-}
-function glowTexture(){
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=64;
-  const c=canvas.getContext('2d'),g=c.createRadialGradient(32,32,0,32,32,32);
-  g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.2,'rgba(255,255,255,.95)');g.addColorStop(.5,'rgba(255,255,255,.25)');g.addColorStop(1,'rgba(255,255,255,0)');
-  c.fillStyle=g;c.fillRect(0,0,64,64);return new THREE.CanvasTexture(canvas);
+  color.setRGB(.04+.78*v*brightness,.12+.6*v*brightness,.18+.43*v*brightness);
 }

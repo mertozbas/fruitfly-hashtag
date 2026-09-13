@@ -17,3 +17,5 @@
 .delta-view .brain-scale>div{background:linear-gradient(90deg,#2ca6df,#172630,#f3a243)}.delta-view .flow-filter{display:none}.delta-view .brain-select-tools{bottom:45px}
 
 .brightness-control{position:absolute;right:15px;top:58px;width:120px;z-index:2}
+
+#connection-density{width:128px;height:27px;border:0;border-left:1px solid #294253;border-radius:0;padding:3px 6px;background:#142331;color:#b7cdd8;font-size:9px;margin:0}#connection-density:focus-visible{outline:1px solid #70d4cb;outline-offset:-2px}

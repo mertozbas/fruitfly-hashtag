@@ -28,3 +28,21 @@ export function activityGrid(nodes, activity, bounds, width=48, height=32) {
   }
   return {sums,counts,width,height};
 }
+
+// Keep source edge indices throughout filtering so picking and learned gains stay aligned.
+export function displayEdgeIndices(graph, {density='overview',mode='activity',gains=[],focusId=null,selectedEdge=-1}={}) {
+  let indices=graph.edges.map((_,i)=>i);
+  if(density==='neuron') {
+    indices=indices.filter(i=>graph.nodes[graph.edges[i].a].id===focusId||graph.nodes[graph.edges[i].b].id===focusId);
+  } else if(density!=='all') {
+    if(mode==='delta') {
+      const score=i=>Math.abs(Math.log(gains[i]??1));
+      indices=indices.filter(i=>score(i)>1e-6).sort((a,b)=>score(b)-score(a)||a-b).slice(0,520);
+    } else {
+      indices=[0,1,2].flatMap(layer=>indices.filter(i=>graph.edges[i].layer===layer)
+        .sort((a,b)=>graph.edges[b].weight-graph.edges[a].weight||a-b).slice(0,260));
+    }
+  }
+  if(Number.isInteger(selectedEdge)&&selectedEdge>=0&&selectedEdge<graph.edges.length&&!indices.includes(selectedEdge))indices.push(selectedEdge);
+  return indices;
+}
