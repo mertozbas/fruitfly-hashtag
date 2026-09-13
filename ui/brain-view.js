@@ -5,6 +5,11 @@ const $ = id => document.getElementById(id);
 const count = n => Number(n).toLocaleString('tr-TR');
 export function createBrain(data, {getState, onSelect}) {
   let atlas=[], focus='circuit';
+  const brightnessInput=$('brain-brightness'), brightnessKey='neural-lab.brain-brightness';
+  try {
+    const saved=localStorage.getItem(brightnessKey);
+    if(saved!==null&&saved.trim()!==''&&Number.isFinite(Number(saved)))brightnessInput.value=String(Math.max(0,Math.min(100,Number(saved))));
+  } catch { /* Rendering remains available when browser storage is disabled. */ }
   const host=$('brain-canvas'), scene=new THREE.Scene();
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));host.appendChild(renderer.domElement);
@@ -26,6 +31,19 @@ export function createBrain(data, {getState, onSelect}) {
   const edgeGeometry=new THREE.BufferGeometry();edgeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(edgePositions,3));
   const edgeColors=new Float32Array(edgePositions.length);edgeColors.fill(.25);edgeGeometry.setAttribute('color',new THREE.BufferAttribute(edgeColors,3));
   const lines=new THREE.LineSegments(edgeGeometry,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.18,depthWrite:false,blending:THREE.AdditiveBlending}));group.add(lines);
+  function applyBrightness(){
+    const level=Number(brightnessInput.value)/100;
+    points.material.opacity=level;
+    lines.material.opacity=(getState().mode==='delta'?.3:.18)*level;
+    for(const obj of atlas)obj.material.opacity=(obj.userData.displayOpacity??.14)*level;
+    $('brain-brightness-value').textContent=`${Math.round(level*100)}%`;
+    brightnessInput.setAttribute('aria-valuetext',`%${Math.round(level*100)}`);
+  }
+  brightnessInput.addEventListener('input',()=>{
+    applyBrightness();
+    try {localStorage.setItem(brightnessKey,brightnessInput.value);} catch { /* Optional preference. */ }
+  });
+  applyBrightness();
   const controls=new OrbitControls(cam,renderer.domElement);
   controls.enableDamping=true;controls.dampingFactor=.12;controls.rotateSpeed=.5;controls.panSpeed=.75;controls.zoomSpeed=.7;
   controls.screenSpacePanning=true;controls.minPolarAngle=.06;controls.maxPolarAngle=Math.PI-.06;
@@ -41,6 +59,7 @@ export function createBrain(data, {getState, onSelect}) {
   const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();};new ResizeObserver(resize).observe(host);resize();
   const ray=new THREE.Raycaster(), tooltip=$('brain-tooltip');
   function pick(event){
+    if(points.material.opacity===0)return null;
     const r=renderer.domElement.getBoundingClientRect();
     const unit=2*cam.position.distanceTo(controls.target)*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/r.height;
     ray.params.Points.threshold=unit*6;ray.params.Line.threshold=unit*4;
@@ -115,9 +134,10 @@ export function createBrain(data, {getState, onSelect}) {
       if(Number.isFinite(v)&&mode==='activity'){responseColor(obj.material.color,v);obj.material.opacity=.12+.65*v;}
       else {obj.material.color.setHex(0x567086);obj.material.opacity=.14;}
       if(state.selection?.kind==='node'&&state.selection.id===obj.userData.id){obj.material.color.setHex(0xffffff);obj.material.opacity=.95;}
+      obj.userData.displayOpacity=obj.material.opacity;
     }
     pointsGeometry.attributes.color.needsUpdate=true;edgeGeometry.attributes.color.needsUpdate=true;
-    lines.material.opacity=mode==='delta'?.3:.18;
+    applyBrightness();
     $('flow-value').textContent=threshold.toFixed(3);
     $('brain-hint').textContent=ready?(mode==='delta'?`${count(changed)} / ${count(data.edges.length)} konumlu bağda >%1 değişim · Yeni bağ: 0`:`${count(activeNodes)} yanıt >0,01 · ${count(activeEdges)} / ${count(data.edges.length)} bağ eşik üstünde`):'Model ve canlı veri eşleştiriliyor…';
   }
