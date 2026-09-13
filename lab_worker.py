@@ -1,6 +1,7 @@
 """Single-owner MuJoCo rendering process. No simulation state is shared across threads."""
 import base64
 import io
+import hashlib
 import queue
 import time
 from pathlib import Path
@@ -36,6 +37,8 @@ def simulate(commands, states):
         for name in cameras:
             camera_home(name)
         policy = Policy(MODEL / "trained.npz")
+        model_sha = hashlib.sha256((MODEL / "trained.npz").read_bytes()).hexdigest()
+        applied_turn = None
         model_id, camera, paused = "trained", "body", False
         goal, seed, episode = [12., 4.], 10, 1
         obs, _ = env.reset(seed=seed, options={"goal": goal})
@@ -77,6 +80,7 @@ def simulate(commands, states):
                     reset = True
                 elif op == "model":
                     policy = Policy(Path(command["path"]))
+                    model_sha = hashlib.sha256(Path(command["path"]).read_bytes()).hexdigest()
                     model_id = command["id"]
                     successes = completed = falls = 0
                     reset = True
@@ -102,15 +106,17 @@ def simulate(commands, states):
                         cam.distance = float(np.clip(cam.distance, 2.5, 65))
                         cam.elevation = float(np.clip(cam.elevation, -89, 80))
                         offsets[camera][:] = np.clip(cam.lookat - origin, -60, 60)
-            if reset or (hold and time.monotonic() >= hold):
+            if reset or (hold and not paused and time.monotonic() >= hold):
                 obs, _ = env.reset(seed=seed, options={"goal": goal})
                 distance, reward, outcome = env.previous_distance, 0., "running"
                 hold, trajectory, history = 0., [], []
                 last_position, speed = env.position, 0.
+                applied_turn = None
                 episode += 1
             idle = time.monotonic() - last_poll > 30
             if not paused and not idle and not hold:
                 turn = policy(obs)
+                applied_turn = turn
                 obs, reward, done, truncated, info = env.step([turn])
                 speed = float(np.linalg.norm(env.position[:2] - last_position[:2]) / env.control_dt)
                 last_position = env.position
@@ -140,7 +146,8 @@ def simulate(commands, states):
             history = history[-120:]
             seq += 1
             payload = dict(seq=seq, wall_time=time.time(), image=base64.b64encode(jpeg.getvalue()).decode(),
-                model=model_id, paused=paused, idle=idle, camera=camera, episode=episode,
+                model=model_id, model_sha256=model_sha, circuit_identity=policy.circuit.identity,
+                paused=paused, idle=idle, camera=camera, episode=episode, seed=seed,
                 render=dict(width=width, height=height, jpeg_quality=96, msaa=4,
                             mesh="fullsize", mesh_faces=render_assets["render_faces"]),
                 camera_pose=dict(azimuth=float(cam.azimuth), elevation=float(cam.elevation), distance=float(cam.distance),
@@ -151,6 +158,9 @@ def simulate(commands, states):
                 successes=successes, completed=completed, falls=falls,
                 rtf=frame_steps * env.control_dt / (now - last_frame),
                 activity=np.concatenate(layers).round(5).tolist(),
+                neural=dict(source="Policy.activity", sample_time_s=round(env.elapsed, 3),
+                    kind="continuous_forward_response", applied_steering=applied_turn,
+                    cpg_drive=None if applied_turn is None else [.9 - .55 * applied_turn, .9 + .55 * applied_turn]),
                 layer_means=[float(a.mean()) for a in layers],
                 trajectory=trajectory[-350:], history=history,
                 contacts=int(env.sim.mj_data.ncon), physics_dt=env.sim.timestep)

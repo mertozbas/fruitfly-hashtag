@@ -144,6 +144,14 @@ def state():
 def graph():
     return FileResponse(ROOT / "artifacts/lab/graph.json")
 
+@app.get("/api/anatomy")
+def anatomy():
+    return FileResponse(ROOT / "artifacts/lab/anatomy.json")
+
+@app.get("/api/anatomy/segments")
+def anatomy_segments():
+    return FileResponse(ROOT / "artifacts/lab/anatomy.f32", media_type="application/octet-stream")
+
 @app.get("/api/neuron/{body_id}")
 def neuron_details(body_id: int):
     from lab_details import neuron
@@ -178,7 +186,8 @@ def model_details(model_id: str):
     with np.load(record["path"], allow_pickle=False) as weights:
         w = weights["weight"]
         gains = [float(w[e["row"],e["col"]] / e["weight"]) if e["layer"] == 2 else 1. for e in graph["edges"]]
-    return dict(id=model_id, gains=gains, sha256=hashlib.sha256(record["path"].read_bytes()).hexdigest(),
+    return dict(id=model_id, graph_version=graph["version"], circuit_identity=graph["circuit_identity"],
+                gains=gains, sha256=hashlib.sha256(record["path"].read_bytes()).hexdigest(),
                 training=record["training"], evaluation=record["evaluation"])
 
 class Control(BaseModel):

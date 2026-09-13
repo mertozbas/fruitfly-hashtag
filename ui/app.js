@@ -1,6 +1,7 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createBrain } from './brain-view.js';
+import { createAnalyses } from './brain-analyses.js';
 import { createInspector } from './inspector.js';
+import { edgeSignal, modelMatches } from './neural-math.js';
 
 const $ = id => document.getElementById(id);
 const fmt = (n, digits=2) => Number.isFinite(n) ? n.toFixed(digits) : '—';
@@ -9,17 +10,18 @@ let simulation = {}, catalog = {}, selectedModel = null, graph = null, sceneView
 let lastSequence = -1, lastModelId = null, selectedNode = null, mode = 'activity', camera = 'body', latestRun = null;
 let completedJob = null, paused = false, trainingHistory = [], lastPacketAt = 0;
 let toastTimer;
+let analyses=null, modelRequest=0;
 let inspector=null, selection=null, selectedEdge=-1, pickMode='node';
 
 function selectEntity(next, open=true) {
   selection=next;
-  selectedNode=next.kind==='node'?graph?.nodes.find(n=>n.id===next.id):null;
+  selectedNode=next.kind==='node'?(graph?.nodes.find(n=>n.id===next.id)||sceneView?.neuron(next.id)):null;
   selectedEdge=next.kind==='edge'?graph?.edges.findIndex(e=>graph.nodes[e.a].id===next.source&&graph.nodes[e.b].id===next.target):-1;
   $('inspect-open').classList.remove('hidden');
   if(next.kind==='node'){
     $('node-type').textContent=selectedNode?.group||'NÖRON';
     $('node-title').textContent=selectedNode?.label||next.id;
-    $('node-description').textContent=selectedNode?'Soma: '+selectedNode.position.map(x=>fmt(x,1)).join(' / ')+' µm':'Yerel anatomik kayıt';
+    $('node-description').textContent=selectedNode?.position?'Soma: '+selectedNode.position.map(x=>fmt(x,1)).join(' / ')+' µm':'Gerçek iskelet / yerel anatomik kayıt';
     $('node-id').textContent=next.id;
     $('node-activity').textContent=fmt(simulation.activity?.[selectedNode?.index],4);
   }else{
@@ -30,8 +32,19 @@ function selectEntity(next, open=true) {
     $('node-id').textContent='Kaynak → hedef';
     $('node-activity').textContent=edge?fmt(simulation.activity?.[graph.nodes[edge.b].index],4):'—';
   }
+  updateSelectionValue();
   sceneView?.update(simulation.activity);
+  analyses?.update(simulation);
   if(open)inspector?.show(next,simulation.model||$('model').value);
+}
+
+function updateSelectionValue(){
+  const edge=selection?.kind==='edge'?graph?.edges[selectedEdge]:null;
+  $('node-value-label').textContent=selection?.kind==='edge'?'GİRDİ KATKISI':'AKTİVİTE';
+  $('node-activity').textContent=selection?.kind==='edge'?
+    (edge&&modelMatches(graph,simulation,selectedModel)?fmt(edgeSignal(graph,edge,simulation.activity,selectedModel.gains[selectedEdge]),5):'—'):
+    fmt(simulation.activity?.[selectedNode?.index],4);
+  $('node-activity').title=edge?'2 × kaynak yanıtı × mevcut ağırlık; hedefin tanh öncesi girdisine katkı':'Modelin 0–1 arası sürekli yanıtı';
 }
 
 function toast(message) {
@@ -66,7 +79,10 @@ async function refreshCatalog() {
   if (catalog.models.some(m=>m.id===current)) $('model').value=current;
 }
 async function refreshModel(id) {
-  selectedModel=await api('model/'+encodeURIComponent(id));
+  const request=++modelRequest, result=await api('model/'+encodeURIComponent(id));
+  if(request!==modelRequest)return;
+  selectedModel=result;
+  updateSelectionValue();
   const item=catalog.models?.find(m=>m.id===id);
   const t=selectedModel.training, e=selectedModel.evaluation;
   $('benchmark').textContent=e ? `${e.success_count} / ${e.episodes}`:'—';
@@ -78,7 +94,8 @@ async function refreshModel(id) {
   $('loss-steps').textContent=t ? `${count(t.steps)} adım`:'Eğitim uygulanmadı';
   $('changed').textContent=t ? `${count(t.changed_existing_synaptic_gains)} bağlantı değişti`:'Ağırlıklar başlangıç halinde';
   trainingHistory=t?.history?.map(p=>[p.step,p.validation_mse]) ?? [];
-  if(sceneView) sceneView.update(simulation.activity);
+  if(sceneView){sceneView.update(simulation.activity);sceneView.freshness();}
+  analyses?.update(simulation);
   await inspector?.modelChanged(id);
 }
 function chart(canvas, series, {min=0,max=1}={}) {
@@ -131,7 +148,9 @@ async function updateJob(job) {
   if(['cancelled','failed'].includes(job.status)&&job.id!==completedJob){completedJob=job.id;await refreshModel(simulation.model||'trained');}
 }
 function updateSimulation(s) {
+  if(!simulation.seq){$('goal-x').value=s.goal_mm[0];$('goal-y').value=s.goal_mm[1];}
   simulation=s; paused=!!s.paused; lastPacketAt=Date.now();
+  camera=s.camera;document.querySelectorAll('[data-camera]').forEach(b=>b.classList.toggle('active',b.dataset.camera===camera));
   $('sim-empty').classList.add('hidden');
   $('fly-image').style.visibility='visible';
   $('fly-image').src='data:image/jpeg;base64,'+s.image;
@@ -155,8 +174,10 @@ function updateSimulation(s) {
   $('footer-status').textContent=`Fizik ${fmt(s.physics_dt*1000,1)} ms · Sensör / karar 10 ms · Canlı veri`;
   $('connection').classList.add('ready');$('connection').innerHTML='<i></i> Yerel bağlantı aktif';
   sceneView?.update(s.activity);
-  inspector?.tick(s.activity);
-  if(selectedNode) $('node-activity').textContent=fmt(s.activity[selectedNode.index],4);
+  sceneView?.freshness();
+  analyses?.update(s);
+  inspector?.tick(s.activity,s.model);
+  updateSelectionValue();
   if(s.model!==lastModelId){lastModelId=s.model;$('model').value=s.model;refreshModel(s.model).catch(e=>toast(e.message));}
 }
 async function poll() {
@@ -173,105 +194,11 @@ async function poll() {
     $('connection').classList.remove('ready');$('connection').innerHTML='<i></i> Bağlantı bekleniyor';
     $('footer-status').textContent=e.message;
     $('live-label').innerHTML='<i></i> VERİ BEKLENİYOR';
+    sceneView?.freshness(true);analyses?.stale();
     if(!lastPacketAt) $('sim-empty').textContent=e.message;
   } finally {setTimeout(poll,120);}
 }
 
-function createBrain(data) {
-  const host=$('brain-canvas'), scene=new THREE.Scene();
-  const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));host.appendChild(renderer.domElement);
-  const cam=new THREE.PerspectiveCamera(35,1,.1,5000), group=new THREE.Group();scene.add(group);
-  // OrbitControls caches the up-vector transform in its constructor.
-  cam.up.set(0,0,-1);
-  const positions=data.nodes.flatMap(n=>n.position);
-  const pointsGeometry=new THREE.BufferGeometry();pointsGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
-  const colors=new Float32Array(positions.length);colors.fill(.3);pointsGeometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
-  pointsGeometry.computeBoundingBox();
-  const center=pointsGeometry.boundingBox.getCenter(new THREE.Vector3());
-  group.position.copy(center).negate();
-  const points=new THREE.Points(pointsGeometry,new THREE.PointsMaterial({size:2.2,vertexColors:true,transparent:true,opacity:.95,sizeAttenuation:true,depthWrite:false}));group.add(points);
-  const meshGeometry=new THREE.BufferGeometry();meshGeometry.setAttribute('position',new THREE.Float32BufferAttribute(data.vertices,3));meshGeometry.setIndex(data.faces);meshGeometry.computeVertexNormals();
-  const surface=new THREE.Mesh(meshGeometry,new THREE.MeshPhongMaterial({color:0x375e78,transparent:true,opacity:.09,side:THREE.DoubleSide,depthWrite:false,shininess:25}));group.add(surface);
-  scene.add(new THREE.AmbientLight(0x98cfe7,2));
-  const light=new THREE.DirectionalLight(0x9ad0e9,3);light.position.set(200,-200,600);scene.add(light);
-  const edgePositions=data.edges.flatMap(e=>[...data.nodes[e.a].position,...data.nodes[e.b].position]);
-  const edgeGeometry=new THREE.BufferGeometry();edgeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(edgePositions,3));
-  const edgeColors=new Float32Array(edgePositions.length);edgeColors.fill(.25);edgeGeometry.setAttribute('color',new THREE.BufferAttribute(edgeColors,3));
-  const lines=new THREE.LineSegments(edgeGeometry,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.23,depthWrite:false}));group.add(lines);
-  const extent=pointsGeometry.boundingBox.getSize(new THREE.Vector3());
-  const distance=Math.max(extent.x,extent.y,extent.z)*1.65;
-  const controls=new OrbitControls(cam,renderer.domElement);
-  controls.enableDamping=true;controls.dampingFactor=.12;controls.rotateSpeed=.5;controls.panSpeed=.75;controls.zoomSpeed=.7;
-  controls.screenSpacePanning=true;controls.minPolarAngle=.06;controls.maxPolarAngle=Math.PI-.06;
-  controls.minDistance=70;controls.maxDistance=2200;
-  controls.mouseButtons={LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};
-  function home(){controls.enableDamping=false;controls.update();cam.position.set(0,-distance,-distance*.12);controls.target.set(0,0,0);controls.update();controls.enableDamping=true;}
-  home();
-  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();};new ResizeObserver(resize).observe(host);resize();
-  const ray=new THREE.Raycaster(), tooltip=$('brain-tooltip');
-  function pick(event){
-    const r=renderer.domElement.getBoundingClientRect();
-    const unit=2*cam.position.distanceTo(controls.target)*Math.tan(THREE.MathUtils.degToRad(cam.fov/2))/r.height;
-    ray.params.Points.threshold=unit*6;ray.params.Line.threshold=unit*4;
-    ray.setFromCamera(new THREE.Vector2((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1),cam);
-    group.updateMatrixWorld(true);
-    if(pickMode==='node'){
-      const hits=ray.intersectObject(points);
-      let best=null,score=36;
-      for(const h of hits){const n=data.nodes[h.index],p=new THREE.Vector3(...n.position).applyMatrix4(group.matrixWorld).project(cam);
-        const d=((p.x+1)*r.width/2-(event.clientX-r.left))**2+((1-p.y)*r.height/2-(event.clientY-r.top))**2;
-        if(d<score){score=d;best={kind:'node',id:n.id,node:n};}}
-      if(best)return best;
-    }
-    if(lines.visible){const hits=ray.intersectObject(lines);if(hits.length){const index=Math.floor(hits[0].index/2),e=data.edges[index];if(e)return {kind:'edge',source:data.nodes[e.a].id,target:data.nodes[e.b].id,edgeIndex:index};}}
-    return null;
-  }
-  let down=null;
-  renderer.domElement.addEventListener('pointerdown',e=>{down=e.button===0&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey?[e.clientX,e.clientY]:null;tooltip.classList.add('hidden');});
-  renderer.domElement.addEventListener('pointercancel',()=>{down=null;});
-  renderer.domElement.addEventListener('pointerleave',()=>tooltip.classList.add('hidden'));
-  renderer.domElement.addEventListener('pointermove',e=>{
-    if(e.buttons){tooltip.classList.add('hidden');return;}
-    const hit=pick(e);renderer.domElement.style.cursor=hit?'pointer':'grab';
-    tooltip.classList.toggle('hidden',!hit);if(!hit)return;
-    const r=host.getBoundingClientRect();tooltip.style.left=Math.min(e.clientX-r.left+12,r.width-270)+'px';tooltip.style.top=Math.max(12,e.clientY-r.top-30)+'px';
-    tooltip.textContent=hit.kind==='node'?`${hit.node.label} · ${hit.id}`:`${data.nodes[data.edges[hit.edgeIndex].a].label} → ${data.nodes[data.edges[hit.edgeIndex].b].label}`;
-  });
-  renderer.domElement.addEventListener('pointerup',e=>{
-    const start=down;down=null;
-    if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>4)return;
-    const hit=pick(e);if(hit)selectEntity(hit);
-  });
-  function update(activity) {
-    if(!activity)return;
-    const color=new THREE.Color();
-    data.nodes.forEach((n,i)=>{const v=activity[n.index]||0;
-      if(mode==='delta') color.setRGB(.2,.42,.52);
-      else {color.setRGB(.08+.78*v,.24+.6*v,.35+.43*v);if(n.group==='MBON')color.setRGB(.55+.45*v,.3+.4*v,.13+.3*v);}
-      if(n===selectedNode||(selectedEdge>=0&&(i===data.edges[selectedEdge]?.a||i===data.edges[selectedEdge]?.b)))color.setRGB(1,1,1);
-      color.toArray(colors,i*3);
-    });
-    data.edges.forEach((e,i)=>{
-      const gain=selectedModel?.gains[i]??1;
-      if(mode==='delta'){
-        const v=Math.min(1,Math.abs(Math.log(gain))/1.5);
-        if(gain>1)color.setRGB(.35+.6*v,.4+.25*v,.2);else color.setRGB(.12,.35+.4*v,.55+.35*v);
-      } else {const v=activity[data.nodes[e.b].index]||0;color.setRGB(.1+.3*v,.3+.4*v,.4+.38*v);}
-      if(i===selectedEdge)color.setRGB(1,.9,.5);
-      color.toArray(edgeColors,i*6);color.toArray(edgeColors,i*6+3);
-    });
-    pointsGeometry.attributes.color.needsUpdate=true;edgeGeometry.attributes.color.needsUpdate=true;
-    lines.material.opacity=mode==='delta'?.65:.23;
-  }
-  let lastDraw=0;
-  function animate(now){requestAnimationFrame(animate);if(document.hidden||now-lastDraw<30)return;controls.update();renderer.render(scene,cam);lastDraw=now;}requestAnimationFrame(animate);
-  $('brain-home').addEventListener('click',home);
-  $('edges').addEventListener('change',()=>{lines.visible=$('edges').checked;});
-  $('located').textContent=`${count(data.nodes.length)} / ${count(data.total)} soma konumu`;
-  $('brain-hint').textContent=`µm · ${count(data.edges.length)} bağlantı çiziliyor · konumsuz nöronlar gizli`;
-  return {update};
-}
 
 bind('fullscreen',async()=>{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();});
 bind('pause',()=>control({op:'pause',paused:!paused}));
@@ -306,7 +233,7 @@ $('experiment').addEventListener('change',()=>{const e=catalog.experiments?.find
 bind('train',async()=>{if($('experiment').value!=='odor')return;const steps=integer('steps',200,10000),seed=integer('seed',0,1000000);$('train').disabled=true;await api('train',{steps,seed});$('load-new').classList.add('hidden');toast('Yeni eğitim başladı. Mevcut model korunuyor.');});
 bind('cancel',()=>api('train/cancel',{}));
 bind('load-new',async()=>{if(latestRun){await control({op:'model',model:latestRun});$('model').value=latestRun;}});
-function setMode(value){mode=value;$('activity-mode').classList.toggle('active',value==='activity');$('delta-mode').classList.toggle('active',value==='delta');$('scale-title').textContent=value==='activity'?'MODEL AKTİVİTESİ':'BAĞLANTI ÇARPANI';$('scale-low').textContent=value==='activity'?'0':'0.22×';$('scale-high').textContent=value==='activity'?'1':'4.48×';sceneView?.update(simulation.activity);}
+function setMode(value){mode=value;$('brain-view').classList.toggle('delta-view',value==='delta');$('activity-mode').classList.toggle('active',value==='activity');$('delta-mode').classList.toggle('active',value==='delta');$('scale-title').textContent=value==='activity'?'MODEL AKTİVİTESİ':'BAĞLANTI ÇARPANI';$('scale-low').textContent=value==='activity'?'0':'0.22×';$('scale-high').textContent=value==='activity'?'1':'4.48×';sceneView?.update(simulation.activity);}
 bind('activity-mode',()=>setMode('activity'));bind('delta-mode',()=>setMode('delta'));
 bind('scope-open',()=>$('scope-dialog').showModal());bind('scope-close',()=>$('scope-dialog').close());
 bind('inspect-open',()=>selection&&inspector.show(selection,simulation.model||$('model').value));
@@ -328,6 +255,7 @@ try {
   await refreshCatalog();
   poll();
   graph=await api('graph');
-  sceneView=createBrain(graph);
+  sceneView=createBrain(graph,{getState:()=>({simulation,selectedModel,selectedNode,selectedEdge,selection,mode,pickMode}),onSelect:selectEntity});
+  analyses=createAnalyses(graph,{getSelection:()=>selection});
   await refreshModel(simulation.model || 'trained');
 } catch(e){toast(e.message);$('brain-hint').textContent='Beyin görünümü yüklenemedi: '+e.message;}

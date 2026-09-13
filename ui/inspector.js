@@ -68,9 +68,14 @@ export function createInspector({api,onSelect}) {
       content.append(note('Tip, sınıf ve tahminler kaynak veri alanlarıdır. Eksik alanlar “Veri yok” olarak gösterilir. Bireye özgü öğrenilmiş bir biyolojik işlev varsayılmaz.'));
     }
   }
-  function tick(values){activity=values||[];const live=document.getElementById('detail-live');if(!live||!data)return;
+  let activityModel=null;
+  function tick(values,modelId=activityModel){activity=values||[];activityModel=modelId;const live=document.getElementById('detail-live');if(!live||!data)return;
     const text=n=>Number.isInteger(n?.circuit?.activity_index)?num(activity[n.circuit.activity_index],5):'Devre dışında';
     live.textContent=selection.kind==='node'?`Canlı model aktivitesi: ${text(data)}`:`Kaynak aktivitesi: ${text(data.source)} · Hedef: ${text(data.target)}`;
+    if(selection.kind==='edge'&&data.model){
+      const source=activity[data.source.circuit.activity_index];
+      live.textContent+=activityModel===model?` · Girdi katkısı (2 × a × w): ${num(2*source*data.model.current_weight,7)}`:' · Model eşleştiriliyor…';
+    }
   }
   document.getElementById('detail-close').onclick=()=>{host.classList.add('hidden');};
   document.querySelectorAll('[data-detail-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.detailTab;render();});
