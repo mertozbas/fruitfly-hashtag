@@ -11,6 +11,7 @@ veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politik
 | FlyBody politika ve veri arşivleri | [GPL 3.0+](https://www.gnu.org/licenses/gpl-3.0.html), Figshare kaydının lisansı; [Whole-body physics simulation of fruit fly locomotion destek verisi, v4](https://doi.org/10.25378/janelia.25309105.v4) | Kullanıcı indirir; yerel manifeste kaynak ve hash yazılır; wheel/Git içinde yoktur |
 | flybrains / JRCFIB2022M | [Resmi paket, kaynak ve varlık bildirimleri](https://github.com/navis-org/navis-flybrains) | Harici bağımlılık ve anatomi yüzeyi; upstream veri bildirimleri geçerlidir |
 | MuJoCo | [Apache 2.0 kaynak](https://github.com/google-deepmind/mujoco) | Ayrı ortam bağımlılığı |
+| SO-101 UVC somun yuvalı kamera adaptörü | [TheRobotStudio / SO-ARM100](https://github.com/TheRobotStudio/SO-ARM100/tree/main/Optional/SO101_Wrist_Cam_Hex-Nut_Mount_32x32_UVC_Module), Apache 2.0; [yerel lisans](so101/assets/SO-ARM100-LICENSE) | Değiştirilmemiş STL, `63eede5a636e548eb8f2854e558bd343c21db9f7` revizyonundan; `so101/assets/README.md` kaynak ve mekanik eşlemeyi içerir |
 | Three.js 0.180.0 / OrbitControls | MIT; Three.js authors; [yerel lisans](ui/vendor/THREE-LICENSE.txt), [kaynak](https://github.com/mrdoob/three.js/tree/r180) | UI JavaScript dosyaları lisansı ve checksum manifestiyle paketlenir |
 | uv | [MIT veya Apache 2.0](https://github.com/astral-sh/uv) | Hafif başlatıcı bağımlılığı; kendi paket lisanslarıyla kurulur |
 

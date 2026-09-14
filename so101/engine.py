@@ -71,22 +71,8 @@ def scene_xml():
     # 30 mm cube the task TCP is 15 mm into the opening, at the pad centre.
     fixed = world.find(".//body[@name='gripper']")
     ET.SubElement(fixed, "site", name="grasp_tcp", pos=".0071 -.000218121 -.09", quat=".5 -.5 .5 -.5", group="3")
-    # Rigid eye-in-hand mount: orientation is constant in the gripper frame.
-    # It never targets an object's ground-truth pose. Visual-only mount geometry
-    # documents the synthetic camera placement without changing contact physics.
-    camera_pos=np.array([.0071,-.055,-.02])
-    camera_z=camera_pos-np.array([.0071,0,-.115]);camera_z/=np.linalg.norm(camera_z)
-    camera_x=np.cross([0,1,0],camera_z);camera_x/=np.linalg.norm(camera_x)
-    camera_y=np.cross(camera_z,camera_x)
-    mount=ET.SubElement(fixed,'body',name='wrist_camera_mount',pos=' '.join(map(str,camera_pos)),
-        xyaxes=' '.join(map(str,[*camera_x,*camera_y])))
-    ET.SubElement(mount,'camera',name='wrist',mode='fixed',fovy='90')
-    ET.SubElement(mount,'geom',name='wrist_camera_case',type='box',pos='0 0 .011',size='.017 .012 .008',
-        rgba='.055 .075 .09 1',contype='0',conaffinity='0',mass='0',group='2')
-    ET.SubElement(mount,'geom',name='wrist_camera_lens',type='cylinder',pos='0 0 .003',size='.006 .003',
-        rgba='.12 .35 .42 1',contype='0',conaffinity='0',mass='0',group='2')
-    ET.SubElement(fixed,'geom',name='wrist_camera_bracket',type='capsule',fromto='.0071 0 .012 .0071 -.055 -.006',size='.003',
-        rgba='.12 .14 .16 1',contype='0',conaffinity='0',mass='0',group='2')
+    from .camera_mount import install
+    install(asset,fixed)
     ET.SubElement(asset, "texture", name="table_tex", type="2d", builtin="checker", width="512", height="512", rgb1=".10 .14 .18", rgb2=".12 .16 .20")
     ET.SubElement(asset, "material", name="table_mat", texture="table_tex", texrepeat="10 10", reflectance=".05")
     ET.SubElement(world, "light", pos="0 -.2 1.1", dir="0 0 -1", diffuse=".8 .8 .8", ambient=".35 .35 .35", castshadow="true")

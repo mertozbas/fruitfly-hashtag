@@ -33,7 +33,10 @@ class RetrySupervisor:
                 self.exhausted=True
                 return False
             self.attempt+=1;self.started=time_s;self.held=False;self.lost_since=None;self.attempt_lifted=False
-            self.events.append(dict(attempt=self.attempt,time_s=round(time_s,4),reason=reason))
+            tcp=obs[12:15]*.15+[.06,-.18,.06]
+            cube=tcp+obs[15:18]*.15
+            self.events.append(dict(attempt=self.attempt,time_s=round(time_s,4),reason=reason,
+                                    observed_cube_m=cube.tolist()))
             policy.reset()
             # Per-attempt sensory memory must agree with the new attempt.
             if perception:perception.lifted=False;perception.held_offset=None

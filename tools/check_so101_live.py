@@ -35,6 +35,8 @@ def check(base,model,output):
         assert s['neural']['sample_time_s']==perception['sample_time_s']
         assert perception['camera_name']==s['neural']['sensor_camera']=='wrist'
         assert perception['camera_mount']=='gripper'
+        from so101.camera_mount import PROFILE
+        assert perception['camera_profile']==s['neural']['sensor_profile']==PROFILE
         assert set(s['eyes'])=={'rgb','depth','detection'}
     details=request('/api/model/'+s['model'])
     assert details['sha256']==s['model_sha256']

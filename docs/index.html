@@ -1200,44 +1200,82 @@ geri dönebilirsiniz; aynı beyin, inceleme ve telemetri panelleri kullanılır.
 <p>Yeni aday fizik karşılaştırmasını iyileştirmezse önceki ağırlıklar korunur.
 Öğrenme kaybının azalması otomatik olarak daha iyi robot anlamına gelmez.
 İptal edilen işin günlükleri saklanır; aktif model değiştirilmez.</p>
-<h2 id="docs-so101-local--bilek-gözü-mevcut-çalışma">Bilek gözü: mevcut çalışma</h2>
-<p><img alt="Bilek kamerası, aynı kararı üreten sinir ağı ve Tekrarla kontrolü" src="media/so101-wrist.png"></p>
-<p>Seçili kayıt <strong>Bilek gözü · toparlanma deneysel</strong> olarak görünür. Sinir ağı
-checkpoint'i değişmedi; sabit ön kameranın yerine bileğe bağlı kameradan
-üretilen gözlemleri kullanır. Ana HD görüntü, mouse ile çevirdiğiniz seyirci
-kamerasıdır. <strong>Robotun gözü · Bilek kamerası</strong> penceresi robotun algısıdır.</p>
+<h2 id="docs-so101-local--bilek-gözü-resmî-montaj-ve-toparlanma">Bilek gözü: resmî montaj ve toparlanma</h2>
+<p><img alt="SO-101 UVC bilek gözü ve canlı motor etkinliği" src="media/so101-wrist.png"></p>
+<p>Yeni kayıt <strong>UVC bilek · gözetimli toparlanma</strong>:
+<code>models/lab_runs/local-so101-uvc-recovery-seed49/</code>. Resmî 32×32 UVC somun yuvalı
+adaptör kullanılır; mekanik vida eksenleri CAD ile eşlenmiştir. Lens profili
+henüz fiziksel kalibrasyon değildir. Ana HD görüntü seyirci kamerası,
+<strong>Robotun gözü · Bilek kamerası</strong> penceresi kontrolün algı kaynağıdır.</p>
 <table>
 <thead>
 <tr>
-<th>Bilek kamerası testi</th>
+<th>Bağımsız fizik testi</th>
 <th style="text-align: right;">Başarılı / toplam</th>
 <th style="text-align: right;">Sınır ihlali</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Normal yerleştirme, tohumlar 27100–27119</td>
-<td style="text-align: right;">20 / 20</td>
+<td>Normal yerleştirme, 28000–28039</td>
+<td style="text-align: right;">38 / 40</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr>
-<td>Zorla bırakma, tohumlar 27120–27127</td>
+<td>Kaldırma sonrası zorla bırakma, 28040–28063</td>
+<td style="text-align: right;">23 / 24</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Taşıma sırasında bırakma, 28080–28087</td>
 <td style="text-align: right;">3 / 8</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr>
-<td>Nöron yanıtları sıfır, tohumlar 27100–27103</td>
-<td style="text-align: right;">0 / 4</td>
+<td>Kavrama öncesi yatay itme, 28100–28107</td>
+<td style="text-align: right;">7 / 8</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>Nöron etkinliği sıfır, 28000–28007</td>
+<td style="text-align: right;">0 / 8</td>
 <td style="text-align: right;">0</td>
 </tr>
 </tbody>
 </table>
-<p>Bu, bilek görüşüne geçiş için sınırlı bir doğrulamadır; yeni bir eğitim veya
-40/24 bölümlük tam kabul testi diye sunulmaz. Toparlanma deneysel kalır.
-Canlı worker ayrıca tek görevde durma, iki otomatik başarılı bölümden sonra
-üçüncüsünü başlatma ve döngü sırasında duraklatma kontrollerini geçti.
-Ham sonuçlar <code>artifacts/so101/wrist-camera/</code> altındadır. Ön kameranın eski
-sonuçları model dizinindeki <code>evaluation-front.json</code> dosyasında korunur.</p>
+<p>Aynı resmî kamera montajı, aynı güncel algı katmanı ve aynı tohumlarla önceki
+kontrolcü <strong>35/40 normal, 20/24 düşürme</strong> başarısı elde etti. Yeni kontrolcüde
+bunlar <strong>38/40 ve 23/24</strong> oldu. Bu karşılaştırma sinir ağı ve görev gözetmenini
+birlikte değerlendirir; iyileşmenin yalnızca anatomik ağırlıklardan geldiğini
+göstermez. Önceki modelin eşleştirilmiş raporları
+<code>artifacts/so101/hexnut-context/previous-*-full.json</code> içindedir.</p>
+<p><strong>Temel 40/24 kabul testi geçti; genişletilmiş dayanıklılık testi geçmedi.</strong>
+İlk düşürme testi küp 70 mm üstüne çıktığında kavrayıcıyı 600 ms açar.
+Taşıma testi ayrıca en az 25 mm yatay hareket bekler. Bu iki koşul aynı test
+sayılmaz. Sınır ihlali görüldüğünde worker durur; gerçek donanım çalıştırılmadı.
+Kamera görüşünün kaybolması, çalışma alanı dışındaki küpler ve taşımanın
+ilerleyen kısmındaki düşmeler için her koşulda başarı iddia edilmez.</p>
+<p>Her görevde en çok 3 girişim / 60 simülasyon saniyesi vardır. Girişimler
+arasında kol ve nesne pozları değiştirilmez; gözlenen düşme konumu, yeniden
+kavrama temasları ve fizik durumunun değişmediği kontrolü rapora yazılır.
+<strong>Tekrarla</strong>, bitmiş görevin ardından yeni sahne açar; aynı küpü yeniden alma
+ile yeni görev başlatma farklı olaylardır.</p>
+<p>Model, 46 başarılı görsel bölümle 12.000 adımlık devam eğitimi aldı.
+Ardından toplam 77 başarılı bölümden sekiz motor okuması uyarlandı. XY
+hedefleri anatomik sinir ağı çıkışından hesaplanır; düz masa için aşama
+yükseklikleri ve kavrayıcı değerleri eğitim örneklerinden öğrenilen
+parametrelerdir. Deney sırasında ağırlıklar değişmez.</p>
+<p><strong>Görev gözetmeni mühendislik mantığıdır:</strong> temas, hizalama ve yükseklik
+ölçümleriyle aşama seçimlerini sınırlar; bağımsız öğrenilmiş görev mantığı
+olarak sunulmaz. Seçilen aşama aynı anatomik ağdan ikinci kez geçirilir.
+Beyin panelindeki etkinlik, uygulanan motor komutunu üreten bu ikinci geçişe
+aittir. Öğretici canlı kontrol sırasında çalışmaz; nesneye bağ veya yapay
+taşıma kuvveti eklenmez.</p>
+<p>Ham sonuçlar <code>artifacts/so101/hexnut-context/final-*.json</code>, eğitim kaynakları
+<code>artifacts/so101/hexnut-{demonstrations,training,wide}.npz</code> altındadır.
+Önceki checkpoint ve deney raporları korunur. Eski geçici bilek montajının
+20/20 normal ve 3/8 düşürme sonuçları <code>artifacts/so101/wrist-camera/</code> içindedir;
+bu ölçümler resmî adaptörün yeni ölçümleri olarak kullanılmaz.</p>
 <h2 id="docs-so101-local--ön-kamera-ile-görsel-model-sonucu">Ön kamera ile görsel model sonucu</h2>
 <p>Önceki ön kamera ölçümlerinde kullanılan kayıt:
 <code>models/lab_runs/local-so101-vision-seed44/</code>. Checkpoint SHA-256:
@@ -1463,8 +1501,16 @@ kalibrasyonu her karede bileğin dünya dönüşümüyle uygulanır. Seyirci kam
 mouse ile çevirmek robotun gözünü değiştirmez. Robot üstündeki küçük kamera
 gövdesi ve braketi bu montajı görünür kılar; görsel parçalardır, temas fiziğine
 kütle veya kavrama desteği eklemezler.</p>
-<p>Bu montajın ofseti <code>[7,1; −55; −20]</code> mm ve dikey görüş açısı 90° simülasyon
-ayarlarıdır; gerçek bilek kameranızın ölçülmüş kalibrasyonu değildir.</p>
+<p>Resmî <strong>SO-101 32×32 UVC somun yuvalı adaptörünün STL dosyası</strong> kullanılır.
+İki M3 vida ekseni ve dış montaj yüzeyi robot CAD modelindeki somun yuvalarıyla
+eşlenmiştir. PCB delikleri 27×27 mm ve kamera eğimi 25° olarak CAD geometrisinden
+alınır. <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/so101/assets/README.md">Kaynak ve mekanik eşleme</a> kayıt altındadır.</p>
+<p>Lens merkezi ofseti <code>[2,5; 64,812; −11,742]</code> mm, lens uzunluğu 16 mm ve dikey
+görüş açısı 90° nominal simülasyon profilidir. <strong>Mekanik adaptör eşlenmiştir;
+fiziksel lens kalibrasyonu yapılmamıştır.</strong> Gerçek UVC modül yalnızca RGB
+üretir, bu deneydeki derinlik MuJoCo tarafından sağlanır. Adaptörün gerçek
+kütlesi ve temas geometrisi doğrulanmadığından fiziksel yük/çarpışma
+eşdeğerliği iddia edilmez.</p>
 <ul>
 <li><strong>Algılama:</strong> renk görüntüsü ve tespit edilen kırmızı küpün işareti.</li>
 <li><strong>Renk:</strong> aynı karara giren ham RGB görüntüsü.</li>
@@ -1499,8 +1545,8 @@ bir sahne oluşturur; bu, aynı sahnedeki üç girişim sayacından ayrıdır.
 Durmuş görevin <strong>Devam et</strong> düğmesi yeni görevi başlatır.</p>
 <h3 id="docs-so101-local--görsel-eğitim">Görsel eğitim</h3>
 <p>Göz modu seçiliyken <strong>Eğitimi başlat</strong>, seçili modelin kopyasına görsel gösterim
-ve toparlanma eğitimi uygular. Bu eğitim davranış klonlama ve öğrenilmiş konum
-çıkışının ridge uyarlamasıdır; canlı izleme sırasında kendiliğinden ağırlık
+ve toparlanma eğitimi uygular. Bu eğitim davranış klonlama, aşamaya göre öğrenilmiş XY
+çıkışının ridge uyarlaması ve düz masa yüksekliklerinin eğitimden kestirimidir; canlı izleme sırasında kendiliğinden ağırlık
 güncellemesi yapılmaz. Fizik sensörleri modu önceki eğitim akışını korur.</p>
 <p>Yeni görsel veri toplama, 24 sahnede gerçek kamera gözlemi kullanır. Alternatif
 sahnelerde kavrayıcı kaldırmadan sonra 600 ms açık tutulur; öğretici aynı küpü
@@ -1508,13 +1554,13 @@ yeniden alır. Öğretici yalnızca eğitim etiketleri üretir, öğrenilmiş mo
 canlı kontrolüne girmez. Veriler bütün bölümler bazında eğitim/doğrulamaya
 ayrılır; son fizik testlerinin tohumları ayrıca ayrıdır.</p>
 <pre><code class="language-bash">.venv/bin/python -m so101.vision_training \
-  --output artifacts/so101/wrist-demonstrations.npz --episodes 24 --start-seed 3400 \
+  --output artifacts/so101/hexnut-demonstrations.npz --episodes 24 --start-seed 3500 \
   --camera wrist
 
 .venv/bin/python -m so101.train_job \
   --output models/lab_runs/my-so101-wrist --steps 10000 --seed 46 \
   --resume models/lab_runs/local-so101-vision-seed44/trained.npz \
-  --sensor camera --camera wrist --dataset artifacts/so101/wrist-demonstrations.npz
+  --sensor camera --camera wrist --dataset artifacts/so101/hexnut-demonstrations.npz
 </code></pre>
 <p>Adaylar kamera ve zorla bırakma testleriyle önceki modelle karşılaştırılır.
 Son kabul eşiği 40 yeni kamera sahnesinde en az 36 başarı, 24 yeni düşürme
@@ -1524,19 +1570,40 @@ sıfırlanmış kontrol de ayrı çalıştırılır. Sonuçlar model dizinindeki
 bitmesi kabul eşiğinin geçildiği anlamına gelmez.</p>
 <p>Öğrenilmiş modelin ulaştığı durumlardan düzeltici gösterim toplamak için:</p>
 <pre><code class="language-bash">.venv/bin/python -m so101.vision_training \
-  --output artifacts/so101/wrist-training.npz --episodes 24 --start-seed 3460 \
+  --output artifacts/so101/hexnut-training.npz --episodes 24 --start-seed 3560 \
   --learner models/lab_runs/my-so101-wrist/trained.npz --camera wrist \
-  --append-source artifacts/so101/wrist-demonstrations.npz
+  --append-source artifacts/so101/hexnut-demonstrations.npz
 </code></pre>
 <p>Bu toplamada ilk bölümü ağ sürer; öğretici daha sonra kontrolü devralıp etiketli
 gösterimi tamamlar. Yalnızca başarılı bölümler eğitim dosyasına girer; bütün
 başarısız sonuçlar JSON raporunda saklanır. Eğitim sırasında kullanılan önceki
-aşama geri bildirimi ve kamera montajı da kaydedilir. UI varsa <code>wrist-training.npz</code>
-dosyasını, yoksa <code>wrist-demonstrations.npz</code> dosyasını kullanır; veri yoksa bilek
-gösterimlerini toplar. Ön kamera verileri bilek verisine sessizce karıştırılmaz.
+aşama geri bildirimi ve kamera montajı da kaydedilir. UI sırasıyla <code>hexnut-wide.npz</code>, <code>hexnut-training.npz</code>,
+<code>hexnut-demonstrations.npz</code> dosyalarını arar; veri yoksa bilek
+gösterimlerini toplar. Ön kamera ve eski geçici bilek montajı verileri bu profile karıştırılmaz;
+<code>camera_profile</code> uyuşmazsa eğitim başlamadan hata verilir.
 Eski ön kamera deneylerini yeniden üretmek için toplama, eğitim ve
 <code>so101.evaluate</code> komutlarında <code>--camera front</code> seçin.
-Her eğitim işi en fazla bir saat sürer;
+Geniş çalışma alanındaki düşme konumları için ek gösterim toplama:</p>
+<pre><code class="language-bash">.venv/bin/python -m so101.vision_training \
+  --output artifacts/so101/hexnut-wide.npz --episodes 32 --start-seed 3640 \
+  --wide --camera wrist --append-source artifacts/so101/hexnut-training.npz
+</code></pre>
+<p>Kaydedilmiş sinir ağı üzerinde gözetimli motor okumalarını yeniden üretme:</p>
+<pre><code class="language-bash">.venv/bin/python -m so101.fit_readout \
+  artifacts/so101/hexnut-corrected/trained.npz \
+  --dataset artifacts/so101/hexnut-wide.npz --supervised-skills
+</code></pre>
+<p><code>phase-readout-0.0001.npz</code> sınanan ridge katsayısıdır. Bu uyarlama yalnızca
+<code>episode_id % 5 != 0</code> eğitim bölümlerini kullanır. Öğretici aşamasını kullanarak
+hesaplanan motor uyarlama hatası, bağımsız görev başarısı değildir.
+Taşımanın ilerleyen bölümünde düşürmeyi ayrıca ölçmek için:</p>
+<pre><code class="language-bash">.venv/bin/python -m so101.evaluate \
+  models/lab_runs/local-so101-uvc-recovery-seed49/trained.npz \
+  --sensor camera --camera wrist --episodes 8 --start-seed 28080 \
+  --max-attempts 3 --disturbance transport_release \
+  --output artifacts/so101/transport-drop-check.json
+</code></pre>
+<p>Her eğitim işi en fazla bir saat sürer;
 iptal veya zaman aşımı mevcut canlı modeli değiştirmez.</p>
 <h2 id="docs-so101-local--yerel-hazırlık">Yerel hazırlık</h2>
 <p>Var olan bilimsel <code>.venv</code> kullanılır; kökte <code>uv sync</code> çalıştırarak bu ortamı
@@ -2086,7 +2153,8 @@ anatomik ağın öğrenilmiş okuması üretir. Nesne temasla taşınır. Bu gö
 fiziksel robot kaydı değildir. Ayrıntılar: <a href="#docs-so101-local">SO-101 rehberi</a>.</p>
 <p><code>so101-wrist.png</code>, aynı yerel laboratuvarın bilek kamerası ve <strong>Tekrarla</strong>
 kontrolünü gösteren değiştirilmemiş tarayıcı ekran görüntüsüdür. Model
-<code>8e0a777881a9…</code>; küçük pencere hareketli bilek gözünün karar karesidir, büyük
+<code>cd1d23a81c54…</code>; resmî 32×32 UVC somun yuvalı adaptör modelidir. Küçük pencere
+hareketli bilek gözünün karar karesidir, büyük
 pencere bağımsız seyirci kamerasıdır. Görüntü duraklatılmış başlangıç durumunu
 gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.</p></section>
 <section id="THIRD_PARTY_NOTICES"><h1 id="THIRD_PARTY_NOTICES--kaynaklar-ve-lisans-bildirimleri">Kaynaklar ve lisans bildirimleri</h1>
@@ -2130,6 +2198,11 @@ veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politik
 <td>MuJoCo</td>
 <td><a href="https://github.com/google-deepmind/mujoco">Apache 2.0 kaynak</a></td>
 <td>Ayrı ortam bağımlılığı</td>
+</tr>
+<tr>
+<td>SO-101 UVC somun yuvalı kamera adaptörü</td>
+<td><a href="https://github.com/TheRobotStudio/SO-ARM100/tree/main/Optional/SO101_Wrist_Cam_Hex-Nut_Mount_32x32_UVC_Module">TheRobotStudio / SO-ARM100</a>, Apache 2.0; <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/so101/assets/SO-ARM100-LICENSE">yerel lisans</a></td>
+<td>Değiştirilmemiş STL, <code>63eede5a636e548eb8f2854e558bd343c21db9f7</code> revizyonundan; <code>so101/assets/README.md</code> kaynak ve mekanik eşlemeyi içerir</td>
 </tr>
 <tr>
 <td>Three.js 0.180.0 / OrbitControls</td>

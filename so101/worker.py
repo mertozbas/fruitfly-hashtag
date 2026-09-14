@@ -27,7 +27,7 @@ def simulate(commands,states,initial_path,initial_id):
         cameras={name:mujoco.MjvCamera() for name in ("body","arena")}
         def home(name):
             c=cameras[name];c.lookat[:]=[.07,-.17,.09]
-            c.distance,c.azimuth,c.elevation=(.62,125,-28) if name=="body" else (.63,90,-89)
+            c.distance,c.azimuth,c.elevation=(.62,200,-28) if name=="body" else (.63,90,-89)
         for name in cameras:home(name)
         policy=Policy(initial_path)
         recovery=RetrySupervisor(3)
@@ -145,6 +145,11 @@ def simulate(commands,states,initial_path,initial_id):
             signal=[float(env.cube[2]/.15),float(env.data.qpos[env.qadr[5]])]
             history.append([sample_time,*signal,float(action[2])]);history=history[-120:]
             phase="Tamamlandı" if env.success else "Bırakma / geri çekilme" if env.released else "Taşıma / yerleştirme" if env.lifted else "Kavrama / kaldırma" if env.grasped else "Uzanma"
+            if policy.has_memory and not env.success:
+                names={'approach':'Küpe yaklaşma','lower':'Alçalma','close':'Kavrama','lift':'Kaldırma',
+                       'transport':'Taşıma','place':'Kutuda alçalma','release':'Bırakma','retreat':'Geri çekilme'}
+                phase=names[PHASES[int(np.argmax(policy.memory))]]
+                if recovery.attempt>1 and not holding and not inside:phase='Toparlanma · '+phase
             seq+=1
             send(dict(seq=seq,behavior="so101",wall_time=time.time(),image=base64.b64encode(buffer.getvalue()).decode(),
                 eyes_image=eye_frames['detection'] if eye_frames and perception else None,
@@ -161,11 +166,15 @@ def simulate(commands,states,initial_path,initial_id):
                 neural=dict(source="so101.policy.Policy.activity",sample_time_s=sample_time,kind="continuous_forward_response",
                     sensor_frame_id=decision_frame_id,
                     sensor_camera=perception.tracker.camera_name if perception else None,
+                    sensor_profile=perception.last['camera_profile'] if perception else None,
+                    anatomical_passes=2 if policy.motor_phase_feedback else 1,
+                    displayed_pass='motor command',
                     applied_steering=float(applied[2]) if applied is not None else None,
                     applied_action=applied.tolist() if applied is not None else None,decision_applied=applied is not None,policy_connected=True),
                 robot=dict(phase=phase,observation_names=OBSERVATION_NAMES,decision_observation=decision_obs.tolist(),action=action.tolist(),
                     recovery=recovery.status(),loop_enabled=auto_loop,awaiting_next=bool(hold and auto_loop and not paused),
                     action_mode=policy.action_mode,
+                    progress_supervision=policy.progress_supervision,motor_phase_feedback=policy.motor_phase_feedback,
                     target_mm=((TARGET_CENTER+TARGET_SCALE*action[:3])*1000).tolist() if policy.action_mode=='target' else None,
                     learned_memory=policy.last_memory.tolist() if policy.has_memory else None,
                     learned_phase=PHASES[int(np.argmax(policy.memory))] if policy.has_memory else None,

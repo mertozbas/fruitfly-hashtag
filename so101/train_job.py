@@ -70,13 +70,14 @@ def run(output,steps=3000,seed=42,dataset=None,resume=None,sensor='state',camera
         from .vision_job import refine
         if dataset is None:
             artifacts=Path(__file__).resolve().parents[1]/'artifacts/so101'
-            prefix='wrist' if camera_name=='wrist' else 'visual'
-            dataset=artifacts/f'{prefix}-training.npz'
+            prefix='hexnut' if camera_name=='wrist' else 'visual'
+            dataset=artifacts/f'{prefix}-wide.npz'
+            if not dataset.exists():dataset=artifacts/f'{prefix}-training.npz'
             if not dataset.exists():dataset=artifacts/f'{prefix}-demonstrations.npz'
             if not dataset.exists():
                 from .vision_training import collect
                 event(status='training',stage='visual demonstrations',step=0,steps=steps)
-                dataset=collect(directory/f'{prefix}-demonstrations.npz',episodes=24,start_seed=3400 if camera_name=='wrist' else 3200,camera_name=camera_name)
+                dataset=collect(directory/f'{prefix}-demonstrations.npz',episodes=24,start_seed=3500 if camera_name=='wrist' else 3200,camera_name=camera_name)
         return refine(directory,dataset,steps,seed,resume,camera_name=camera_name)
     if dataset is None:
         default=Path(__file__).resolve().parents[1]/'artifacts/so101/target-demonstrations.npz'

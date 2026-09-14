@@ -6,6 +6,7 @@ the tracker. A stale estimate must stop execution, not silently use truth.
 """
 import mujoco
 import numpy as np
+from .camera_mount import PROFILE,configuration
 
 
 class RGBDCubeTracker:
@@ -27,7 +28,8 @@ class RGBDCubeTracker:
         self.position=None;self.last_seen=None;self.visible=False
         self.rgb=None;self.depth=None;self.mask=None;self.frame_id=0;self.pixels=0
 
-    def update(self,data):
+    def update(self,data,prior=None):
+        projected_prior=False
         option=mujoco.MjvOption();option.geomgroup[3]=0
         self.renderer.disable_depth_rendering()
         self.renderer.update_scene(data,camera=self.camera_name,scene_option=option)
@@ -51,6 +53,46 @@ class RGBDCubeTracker:
             top=np.percentile(points[:,2],90)
             upper=points[points[:,2]>top-.0008]
             centre=np.r_[(np.percentile(upper[:,:2],2,axis=0)+np.percentile(upper[:,:2],98,axis=0))/2,top-.015]
+            # Visible side planes constrain the centre even when a finger
+            # hides half of the top face. Use depth gradients and the known
+            # 30 mm cube size; never object orientation/segmentation truth.
+            good=(u>0)&(u<self.width-1)&(v>0)&(v<self.height-1)&(points[:,2]>.004)
+            indices=np.flatnonzero(good)[::max(1,int(good.sum()/384))]
+            if len(indices)>=12:
+                vi,ui=v[indices],u[indices]
+                interior=mask[vi,ui-1]&mask[vi,ui+1]&mask[vi-1,ui]&mask[vi+1,ui]
+                indices=indices[interior];vi,ui=v[indices],u[indices]
+                def unproject(vv,uu):
+                    zz=depth[vv,uu]
+                    return np.stack([(uu+.5-self.width/2)*zz/f,-(vv+.5-self.height/2)*zz/f,-zz],axis=1)@rotation.T
+                dx=unproject(vi,ui+1)-unproject(vi,ui-1)
+                dy=unproject(vi+1,ui)-unproject(vi-1,ui)
+                normals=np.cross(dx,dy);length=np.linalg.norm(normals,axis=1)
+                stable=(length>1e-10)&(np.linalg.norm(dx,axis=1)<.005)&(np.linalg.norm(dy,axis=1)<.005)
+                normals=normals[stable]/length[stable,None];samples=points[indices[stable]]
+                toward=data.cam_xpos[self.camera_id]-samples
+                normals*=np.where((normals*toward).sum(1)>=0,1.,-1.)[:,None]
+                planes=[];offsets=[]
+                for _ in range(3):
+                    if len(normals)<12:break
+                    votes=(normals@normals.T)>.995
+                    chosen=votes[int(np.argmax(votes.sum(1)))]
+                    if chosen.sum()<12:break
+                    normal=np.median(normals[chosen],axis=0);normal/=np.linalg.norm(normal)
+                    if all(abs(normal@other)<.15 for other in planes):
+                        planes.append(normal);offsets.append(np.median(samples[chosen]@normal)-.015)
+                    normals=normals[~chosen];samples=samples[~chosen]
+                if len(planes)>=2:
+                    if len(planes)==2:
+                        axis=np.cross(*planes);axis/=np.linalg.norm(axis)
+                        extent=np.percentile(points[points[:,2]>.004]@axis,[2,98])
+                        if .026<=extent[1]-extent[0]<=.035:
+                            centre+=axis*(extent.mean()-centre@axis)
+                        elif prior is not None or self.position is not None:
+                            prediction=self.position if prior is None else prior
+                            centre+=axis*(prediction@axis-centre@axis);projected_prior=True
+                    a=np.asarray(planes);correction=np.linalg.lstsq(a,np.asarray(offsets)-a@centre,rcond=None)[0]
+                    if np.linalg.norm(correction)<.03:centre+=correction
             self.position=centre;self.last_seen=float(data.time)
         age=float('inf') if self.last_seen is None else float(data.time)-self.last_seen
         return dict(position=None if self.position is None else self.position.copy(),visible=self.visible,
@@ -60,6 +102,8 @@ class RGBDCubeTracker:
                     camera_position_m=data.cam_xpos[self.camera_id].tolist(),
                     camera_rotation=data.cam_xmat[self.camera_id].reshape(3,3).tolist(),
                     camera_mount='gripper' if self.camera_name=='wrist' else 'world',
+                    camera_profile=PROFILE if self.camera_name=='wrist' else 'front-v1',
+                    partial_surface_prediction=projected_prior,
                     bbox=[int(u.min()),int(v.min()),int(u.max()),int(v.max())] if self.visible else None)
 
     def previews(self):
@@ -104,14 +148,17 @@ class CameraObservation:
         self.tracker.reset();self.lifted=False;self.held_offset=None;self.last=None
 
     def observation(self):
-        e=self.env;measurement=self.tracker.update(e.data)
+        e=self.env
+        contacts=set(e.contacts())
+        holding={'gripper','moving_jaw_so101_v1'}<=contacts
+        prior=e.ee+self.held_offset if holding and self.held_offset is not None else None
+        measurement=self.tracker.update(e.data,prior=prior)
         self.last=dict(source='synthetic RGB-D + joint encoders + tactile contacts + calibrated destination',
             **{k:v for k,v in measurement.items() if k!='position'},
             estimated_cube=None,kinematic_prediction=False,
             goal_source='calibrated workspace destination',width=self.tracker.width,height=self.tracker.height,
             depth_range_m=list(self.tracker.depth_range))
-        contacts=set(e.contacts())
-        holding={'gripper','moving_jaw_so101_v1'}<=contacts
+        if self.tracker.camera_name=='wrist':self.last['camera_configuration']=configuration()
         cube=measurement['position']
         if not measurement['valid']:
             raise RuntimeError('RGB-D cube measurement stale; stop this episode')

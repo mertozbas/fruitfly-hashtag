@@ -9,7 +9,7 @@ from .task import PickPlaceEnv
 
 
 def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",output=None,event=None,sensor="state",max_attempts=1,disturbance=None,camera_name='wrist'):
-    if disturbance not in {None,'forced_release','pregrasp_push'}:raise ValueError('Unknown disturbance')
+    if disturbance not in {None,'forced_release','transport_release','pregrasp_push'}:raise ValueError('Unknown disturbance')
     from .recovery import RetrySupervisor
     recovery=RetrySupervisor(max_attempts)
     if variant=='mlp':
@@ -29,6 +29,7 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
             if hasattr(policy,'reset'):policy.reset()
             transitions=[];last_phase=None
             recovery.reset();triggered=False;remaining=0;max_error=0.;visible_frames=0;frames=0
+            interventions=[];retry_checks=[];regrasps=[];last_holding=False
             if camera:camera.reset()
             for step in range(env.step_limit):
                 if camera:
@@ -38,7 +39,10 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
                     max_error=max(max_error,float(np.linalg.norm(np.asarray(camera.last['estimated_cube'])-env.cube)))
                     visible_frames+=int(camera.last['visible']);frames+=1
                 if max_attempts>1:
-                    recovery.observe(obs,float(env.data.time),policy,camera)
+                    before=env.data.qpos.copy()
+                    restarted=recovery.observe(obs,float(env.data.time),policy,camera)
+                    if not np.array_equal(before,env.data.qpos):raise AssertionError('Retry supervisor changed physical state')
+                    if restarted:retry_checks.append(dict(step=step,physical_state_unchanged=True,cube_m=env.cube.tolist()))
                     if recovery.exhausted:
                         record=env.metrics();record.update(outcome='retry_exhausted');passed=False;break
                 action=policy(obs) if variant!="silenced" else policy.activity(obs,advance=True,silenced=True)[0]
@@ -46,19 +50,26 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
                     from .policy import PHASES
                     current=PHASES[int(np.argmax(policy.memory))]
                     if current!=last_phase:transitions.append(dict(step=step,phase=current));last_phase=current
-                if not triggered and ((disturbance=='forced_release' and env.lifted) or (disturbance=='pregrasp_push' and step==8)):
-                    triggered=True;remaining=12 if disturbance=='forced_release' else 1
+                delayed=disturbance=='transport_release' and env.lifted and np.linalg.norm(env.cube[:2]-env.initial_cube[:2])>.025
+                if not triggered and ((disturbance=='forced_release' and env.lifted) or delayed or (disturbance=='pregrasp_push' and step==8)):
+                    triggered=True;remaining=1 if disturbance=='pregrasp_push' else 12
+                    interventions.append(dict(step=step,cube_m=env.cube.tolist(),tcp_m=env.ee.tolist()))
                 if remaining:
-                    if disturbance=='forced_release':action[3]=1.
+                    if disturbance in {'forced_release','transport_release'}:action[3]=1.
                     else:env.data.xfrc_applied[env.cube_id,0]=.15*(1 if i%2 else -1)
                     remaining-=1
                 obs,reward,done,record=env.step(action,action_mode=policy.action_mode)
+                holding=bool(record['holding'])
+                if recovery.attempt>1 and holding and not last_holding:
+                    regrasps.append(dict(step=step,attempt=recovery.attempt,cube_m=record['cube']))
+                last_holding=holding
                 env.data.xfrc_applied[:]=0
                 passed=record["reached"] if stage=="reach" else record["lifted"] if stage=="lift" else record["success"]
                 if passed or done:
                     break
             record["stage_success"]=bool(passed and not record["unsafe"])
-            record.update(recovery=recovery.status(),disturbance_triggered=triggered)
+            record.update(recovery=recovery.status(),disturbance_triggered=triggered,
+                interventions=interventions,retry_state_checks=retry_checks,regrasp_contacts=regrasps)
             if camera:record.update(vision_frames=frames,visible_frames=visible_frames,max_estimation_error_mm=max_error*1000)
             if transitions:record['learned_phase_transitions']=transitions
             records.append(record)
@@ -70,6 +81,7 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
             max_attempts=max_attempts,disturbance=disturbance,disturbance_triggered_count=sum(r['disturbance_triggered'] for r in records),
             recovered_successes=sum(r['stage_success'] and r['recovery']['retries']>0 for r in records),
             action_mode=policy.action_mode,
+            progress_supervision=getattr(policy,'progress_supervision',False),motor_phase_feedback=getattr(policy,'motor_phase_feedback',False),
             ablation='All four neural activity layers clamped to zero; learned decoder and memory biases, IK and servos retained' if variant=='silenced' else None,
             unsafe_count=sum(r["unsafe"] for r in records),falls=sum(r["lifted"] and not r["inside_bin"] and r["cube"][2]<.025 for r in records),
             reached=sum(r["reached"] for r in records),grasped=sum(r["grasped"] for r in records),lifted=sum(r["lifted"] for r in records),
@@ -78,6 +90,9 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
             criterion={"reach":"TCP within 4 mm horizontally and below 24 mm, OR maintained bilateral grasp for 0.2 s; original geometric_reached reported separately; no unsafe contact or physics warning", "lift":"Cube above 70 mm with bilateral finger contact; no unsafe contact or physics warning", "place":"Cube completely inside 71.2 mm cavity, released, at rest, TCP >65 mm away for 0.5 s; no unsafe contact or physics warning"}[stage],
             results=records)
         if output:
+            if camera:
+                from .camera_mount import configuration
+                summary['camera_configuration']=configuration() if camera_name=='wrist' else dict(profile='front-v1')
             Path(output).write_text(json.dumps(summary,indent=2))
         return summary
     finally:
@@ -87,6 +102,6 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
 if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("model");p.add_argument("--episodes",type=int,default=12);p.add_argument("--start-seed",type=int,default=4000);p.add_argument("--stage",choices=["reach","lift","place"],default="place");p.add_argument("--variant",choices=["trained","silenced","mlp"],default="trained");p.add_argument("--output")
     p.add_argument('--sensor',choices=['state','camera'],default='state')
-    p.add_argument('--max-attempts',type=int,default=1);p.add_argument('--disturbance',choices=['forced_release','pregrasp_push'])
+    p.add_argument('--max-attempts',type=int,default=1);p.add_argument('--disturbance',choices=['forced_release','transport_release','pregrasp_push'])
     p.add_argument('--camera',choices=['wrist','front'],default='wrist')
     a=p.parse_args();evaluate(a.model,a.episodes,a.start_seed,a.stage,a.variant,a.output,sensor=a.sensor,max_attempts=a.max_attempts,disturbance=a.disturbance,camera_name=a.camera)

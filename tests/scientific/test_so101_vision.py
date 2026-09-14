@@ -14,6 +14,18 @@ from so101.recovery import RetrySupervisor
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_progress_checks_forbid_transport_without_grasp(self):
+        from so101.phase_supervision import feasible_phases
+        obs=np.zeros(30,np.float32);obs[5]=.9
+        obs[12:15]=([.03,-.21,.08]-np.array([.06,-.18,.06]))/.15
+        obs[15:18]=[0,0,-.065/.15]
+        obs[18:21]=[.8,.3,0]
+        obs[21]=.1
+        allowed=feasible_phases(obs)
+        self.assertFalse(allowed[0]) # aligned approach has completed
+        self.assertTrue(allowed[1]);self.assertFalse(allowed[4])
+        before=obs.copy();feasible_phases(obs);np.testing.assert_array_equal(obs,before)
+
     def test_dropped_cube_restarts_memory_without_world_access(self):
         r=RetrySupervisor(3);policy=SimpleNamespace(reset=Mock())
         obs=np.zeros(30,np.float32);obs[21]=.5;obs[22]=1;obs[23]=1
@@ -52,18 +64,19 @@ class VisualSelectionTests(unittest.TestCase):
         from so101 import vision_job
         with tempfile.TemporaryDirectory() as root:
             root=Path(root);initial=root/'trained.npz';initial.write_bytes(b'original')
-            np.savez(root/'data.npz',camera_name='wrist')
+            from so101.camera_mount import PROFILE
+            np.savez(root/'data.npz',camera_name='wrist',camera_profile=PROFILE)
             (root/'training.json').write_text(json.dumps(dict(after_mse=.02,steps=16000)))
             directory=root/'candidate';directory.mkdir()
             def train(*args,**kwargs):
                 (directory/'trained.npz').write_bytes(b'bc')
                 (directory/'training.json').write_text(json.dumps(dict(after_mse=.001,steps=100,checkpoint_sha256='candidate')))
-            def fit(*args,**kwargs):(directory/'readout-0.0001.npz').write_bytes(b'ridge')
+            def fit(*args,**kwargs):(directory/'phase-readout-0.0001.npz').write_bytes(b'ridge')
             calls=[]
             def evaluate(path,episodes,start_seed,**kwargs):
                 calls.append((episodes,start_seed,kwargs.get('variant')))
                 if episodes==8 and kwargs.get('variant')!='silenced':
-                    normal,recovery={'untrained.npz':(6,1),'bc-candidate.npz':(5,8),'readout-0.0001.npz':(6,0)}[path.name]
+                    normal,recovery={'untrained.npz':(6,1),'bc-candidate.npz':(5,8),'phase-readout-0.0001.npz':(6,0)}[path.name]
                     successes=recovery if kwargs.get('disturbance') else normal
                 else:successes=0 if kwargs.get('variant')=='silenced' else 37 if episodes==40 else 12
                 import hashlib
@@ -83,6 +96,13 @@ class VisualSelectionTests(unittest.TestCase):
             root=Path(root);np.savez(root/'front.npz',camera_name='front')
             with self.assertRaisesRegex(ValueError,'camera differs'):
                 refine(root/'candidate',root/'front.npz',200,44,root/'unused.npz')
+
+    def test_old_wrist_mount_data_is_rejected_before_training(self):
+        from so101.vision_job import refine
+        with tempfile.TemporaryDirectory() as root:
+            root=Path(root);np.savez(root/'old.npz',camera_name='wrist')
+            with self.assertRaisesRegex(ValueError,'calibration profile differs'):
+                refine(root/'candidate',root/'old.npz',200,44,root/'unused.npz')
 
 
 @unittest.skipUnless(os.environ.get('SO101_TEST_ASSETS')=='1','requires local MuJoCo assets')
@@ -129,6 +149,37 @@ class CameraTests(unittest.TestCase):
         self.assertGreater(np.linalg.norm(e.data.cam_xmat[cam].reshape(3,3)-rotation),.1)
         np.testing.assert_allclose(rb.T@(e.data.cam_xpos[cam]-e.data.xpos[body]),offset,atol=1e-8)
         np.testing.assert_allclose(rb.T@e.data.cam_xmat[cam].reshape(3,3),local_rotation,atol=1e-8)
+        self.assertLess(np.linalg.norm(np.asarray(c.last['estimated_cube'])-e.cube),.008)
+
+    def test_official_mount_holes_match_actual_wrist_nut_recesses(self):
+        import trimesh
+        from so101.camera_mount import ROTATION,TRANSLATION,BOARD,BACK,EYE
+        from so101.engine import ROBOT_SOURCE
+        # Independent source STEP hole coordinates, checked against vertices
+        # of the wrist STL actually used by MuJoCo, not just another constant.
+        mesh=trimesh.load(ROBOT_SOURCE/'assets/wrist_roll_follower_so101_v1.stl')
+        holes=np.array([[-.005,-.020718214,.02435],[.0031,-.020718214,.02435]])
+        for centre in holes:
+            v=mesh.vertices
+            near=v[(np.abs(v[:,1]-centre[1])<1e-6)&(np.linalg.norm(v[:,[0,2]]-centre[[0,2]],axis=1)<.0017)]
+            self.assertGreater(len(near),10)
+            np.testing.assert_allclose(np.linalg.norm(near[:,[0,2]]-centre[[0,2]],axis=1),.0016,atol=2e-6)
+        mount_holes=np.array([[-4,-8.15,10],[-4,-8.15,18.1]])*.001
+        transformed=mount_holes@ROTATION.T+TRANSLATION
+        wrist_holes=holes*np.array([1,-1,-1])+[0,-.000218214,.000949706]
+        np.testing.assert_allclose(transformed[:,[0,2]],wrist_holes[:,[0,2]],atol=1e-8)
+        self.assertAlmostEqual(TRANSLATION[1],.024) # outer mating plane
+        np.testing.assert_allclose((BOARD-EYE)/.016,BACK,atol=1e-8)
+
+    def test_rotated_cube_estimate_uses_visible_surfaces(self):
+        import mujoco
+        from scipy.spatial.transform import Rotation
+        e=self.env;c=self.camera
+        e.reset(cube=[.03,-.21,.03])
+        q=Rotation.from_euler('xyz',[.3,.4,.6]).as_quat()
+        e.data.qpos[e.cube_qpos+3:e.cube_qpos+7]=q[[3,0,1,2]]
+        mujoco.mj_forward(e.model,e.data)
+        c.observation()
         self.assertLess(np.linalg.norm(np.asarray(c.last['estimated_cube'])-e.cube),.008)
 
     def test_spectator_orbit_does_not_change_the_robot_eye(self):

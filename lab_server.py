@@ -299,6 +299,8 @@ def model_details(model_id: str):
             input_sums=[np.asarray(learned_weights.get(i,layer).sum(axis=0)).ravel().tolist() for i,layer in enumerate(circuit.layers)]
             robot_adapter=dict(external_observations=30,learned_memory=8 if 'memory_weight' in weights else 0,
                 learned_motor_heads=int(weights['motor_heads']) if 'motor_heads' in weights else 1,
+                progress_supervision=bool(weights['progress_supervision']) if 'progress_supervision' in weights else False,
+                motor_phase_feedback=bool(weights['motor_phase_feedback']) if 'motor_phase_feedback' in weights else False,
                 trainable_anatomical_layers=sorted(learned_weights),
                 learned_transition_support=bool(np.any(weights['transition_counts'])) if 'transition_counts' in weights else False,
                 active_external_features=np.flatnonzero(weights['input_mask'][:30]).tolist() if 'input_mask' in weights else list(range(30)),

@@ -13,6 +13,7 @@ def archive(path):
     files.update({"checkpoint.npz":path.read_bytes(),"odor_policy.py":(root/"odor_policy.py").read_bytes(),
                   "so101/__init__.py":b"","so101/policy.py":(root/"so101/policy.py").read_bytes(),
                   "so101/recovery.py":(root/"so101/recovery.py").read_bytes()})
+    files['so101/phase_supervision.py']=(root/'so101/phase_supervision.py').read_bytes()
     files['infer.py']=b'''import argparse,json
 from pathlib import Path
 from so101.policy import Policy
@@ -32,6 +33,8 @@ print(json.dumps({"action":action.tolist(),"layer_means":[float(x.mean()) for x 
         target_center_m=TARGET_CENTER.tolist(),target_scale_m=TARGET_SCALE.tolist(),
         learned_memory=list(PHASES) if policy.has_memory else None,
         learned_motor_heads=policy.motor_heads,trainable_anatomical_layers=[0,1,2] if policy.all_core else [2],
+        progress_supervision=policy.progress_supervision,motor_phase_feedback=policy.motor_phase_feedback,
+        displayed_activity='Motor pass through the anatomical core; phase inference has a preceding pass when motor_phase_feedback is enabled',
         active_external_features=[name for name,enabled in zip(OBSERVATION_NAMES,policy.input_mask[:OBS_SIZE]) if enabled],
         empirical_transition_support=policy.has_transition_graph,
         memory_contract='Call policy.reset() at episode start. Keep one Policy instance and call policy(observation) each decision; its learned phase output feeds the next forward pass. Optional nonzero transition_counts constrain phase choices to transitions observed in training demonstrations; this is an engineered learned task prior, separate from anatomy.'),indent=2).encode()
@@ -58,6 +61,12 @@ bellek değerleridir; anatomik nöron değildir. Şemada
 `empirical_transition_support: true` ise gösterimlerden öğrenilmiş geçiş
 izinleri de uygulanır. Bu görev önbilgisi anatomik bağlantılardan ayrıdır;
 konum, zaman veya hazır hareket yolu içermez.
+`progress_supervision: true` ise görüş/temas/konumdan türetilen deterministik
+görev kontrolleri aşama seçimlerini sınırlar. Bu mantık bağımsız öğrenilmiş
+beyin davranışı değildir. `motor_phase_feedback: true` ise seçilen aşama aynı
+anatomik ağdan ikinci kez geçirilir; gösterilen nöron etkinliği motor komutunu
+üreten bu geçişe aittir. Aşamaların düz masa yükseklikleri ve kavrayıcı değerleri
+gösterimlerden öğrenilmiş çıkış parametreleridir; XY hedefi ağdan hesaplanır.
 Bu paket hareket komutunu hesaplar; robot sürücüsü veya fizik çalıştırmaz.
 Kamera algısı ve temas ölçümü uygulama tarafında sağlanır. Canlı laboratuvardaki
 aynı sahnede tekrar deneme için `so101.recovery.RetrySupervisor` da dahildir.

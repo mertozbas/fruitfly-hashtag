@@ -96,7 +96,7 @@ def refine(model,dataset,iterations=6,episodes=4,seed=42):
                     anchor_logits,anchor_layers,_=actor(bx[bi],details=True,phase=bp[bi] if actor.motor_heads>1 else None)
                     anchor=(torch.tanh(anchor_logits)-by[bi]).square().mean()
                     if actor.has_memory:
-                        anchor=anchor+.2*torch.nn.functional.cross_entropy(actor.memory_decoder(anchor_layers[-1]),bp[bi])
+                        anchor=anchor+.2*torch.nn.functional.cross_entropy(actor.memory_decoder(actor.last_phase_features),bp[bi])
                     loss=policy_loss+.01*(value-returns[indices]).square().mean()+.5*anchor-1e-4*dist.entropy().sum(-1).mean()
                     optimizer.zero_grad(set_to_none=True);loss.backward()
                     torch.nn.utils.clip_grad_norm_(actor.parameters(),.5);optimizer.step()

@@ -244,14 +244,15 @@ function updateEyes(s){
   $('eye-status').textContent=`${p.valid?(p.visible?'KÜP GÖRÜLÜYOR':'KISA SÜRELİ TAHMİN'):'GÖRÜŞ KAYIP'} · ${p.age_s==null?'—':fmt(p.age_s*1000,0)} ms`;
   $('eye-status').classList.toggle('lost',!p.valid);
   const xyz=p.estimated_cube?.map(v=>fmt(v*1000,1)).join(' / ')||'—';
-  $('eye-detail').textContent=eyeMode==='depth'?`DERİNLİK · ${depthRange} mm · Yakın: açık renk`:`KÜP XYZ · ${xyz} mm`;
+  $('eye-detail').textContent=eyeMode==='depth'?`SENTETİK DERİNLİK · ${depthRange} mm`:`KÜP XYZ · ${xyz} mm`;
   const sameDecision=p.frame_id===s.neural?.sensor_frame_id;
   $('eye-sync').textContent=`KARE ${p.frame_id} · ${fmt(p.sample_time_s,2)} s · ${sameDecision?'Bileğe bağlı':'Karar uygulanmadı'}`;
-  $('eye-detail').title=`Kare ${p.frame_id} · ${fmt(p.sample_time_s,3)} s · ${p.width}×${p.height} · ${fmt(1/s.control_dt,0)} Hz karar\nKutu: kalibre edilmiş hedef. ${p.kinematic_prediction?'Kavrama sırasında eklem tahmini ile birleştiriliyor.':'Konum renk ve derinlikten çıkarılıyor.'}`;
+  $('eye-detail').title=`32×32 UVC · SO-101 somun yuvalı adaptör. CAD montajı eşlendi; lens kalibrasyonu temsili. Gerçek UVC yalnızca RGB sağlar; derinlik simülasyondan gelir.\nKare ${p.frame_id} · ${fmt(p.sample_time_s,3)} s · ${p.width}×${p.height} · ${fmt(1/s.control_dt,0)} Hz karar\nKutu: kalibre edilmiş hedef. ${p.kinematic_prediction?'Kavrama sırasında eklem tahmini ile birleştiriliyor.':'Konum renk ve derinlikten çıkarılıyor.'}`;
   $('eye-image').dataset.frameId=p.frame_id;
   const r=s.robot.recovery;
-  $('eye-attempt').textContent=s.outcome==='success'?'YERLEŞTİRME TAMAM':`GİRİŞİM ${r?.attempt||1} / ${r?.max_attempts||3}`;
-  $('eye-attempt').title='Aynı sahnede en çok 3 girişim. Yeniden deneme gözetmeni ağın görev belleğini sıfırlar; hareketleri ağ üretir.';
+  $('eye-attempt').textContent=s.outcome==='success'?'YERLEŞTİRME TAMAM':`${r?.attempt>1?'AYNI KÜP':'GİRİŞİM'} ${r?.attempt||1} / ${r?.max_attempts||3}`;
+  $('eye-attempt').title='Aynı sahnede en çok 3 girişim. Sahne sıfırlanmaz; hareketleri ağ üretir.'+(s.robot.progress_supervision?' Görev gözetmeni kavrama/yerleştirme aşamalarını ölçümlerle doğrular.':' Yeniden deneme gözetmeni görev belleğini sıfırlar.');
+  if(s.robot.progress_supervision)$('eye-sync').textContent+=' · Gözetimli';
 }
 async function poll() {
   if(document.hidden){setTimeout(poll,1000);return;}
@@ -336,14 +337,17 @@ bind('scope-open',()=>$('scope-dialog').showModal());bind('scope-close',()=>$('s
 bind('validation-open',()=>{
   const e=isFlight()?selectedModel?.flight_evaluation:selectedModel?.walk_evaluation;if(!e)return;
   $('validation-criterion').textContent=e.criterion||simulation.task_contract?.success||'Kayıtlı görev başarı ölçütü';
-  const controlNames={silenced:isRobot()?'Nöron aktivitesi sıfır':'Motor çıkışı kapalı',untrained:e.recovery_evaluation?'Önceki model · geliştirme':'Eğitim öncesi',frozen_core:'Sabit anatomik ağırlıklar',mlp:'MLP referansı',camera:'RGB-D kamera',front_camera:'Ön kamera · önceki test'};
+  const controlNames={silenced:isRobot()?'Nöron aktivitesi sıfır':'Motor çıkışı kapalı',untrained:e.paired_baseline?'Önceki model · aynı sahneler':e.recovery_evaluation?'Önceki model · geliştirme':'Eğitim öncesi',previous_recovery:'Önceki model · düşürme',frozen_core:'Sabit anatomik ağırlıklar',mlp:'MLP referansı',camera:'RGB-D kamera',front_camera:'Ön kamera · önceki test'};
   const rows=[[selectedModel.before?'Eğitim öncesi':'Seçili model',e],...Object.entries(e.controls||{}).map(([k,v])=>[controlNames[k]||k,v])];
   if(e.recovery_evaluation)rows.splice(1,0,[e.camera_name==='wrist'?'Küp düşürme · bilek':'Küp düşürme · kamera',e.recovery_evaluation]);
+  for(const [key,value] of Object.entries(e.extended_evaluations||{}))rows.push([key==='transport_release'?'Taşıma sırasında düşürme':'Kavramadan önce yatay itme',value]);
   $('validation-rows').replaceChildren(...rows.map(([label,v])=>{const tr=document.createElement('tr');for(const value of [label,`${v.success_count} / ${v.episodes}`,v.falls??'—',v.unsafe_count??'—']){const td=document.createElement('td');td.textContent=value;tr.append(td);}return tr;}));
   const muted=e.controls?.silenced;
   $('validation-note').textContent=(e.recovery_evaluation&&e.acceptance_passed===false?'Toparlanma kabul eşiği henüz geçilmedi. ':'')+(muted?(e.success_count/e.episodes>muted.success_count/muted.episodes?'Bu koşullarda öğrenilmiş motor çıkışı başarıya katkı sağladı.':'Bu koşullarda ağ çıkışının başarı artışı gösterilemedi.'):'Bu kayıtta çıkış kapatma karşılaştırması yok.');
+  if(e.extended_robustness_passed===false)$('validation-note').textContent='Temel yerleştirme ve kaldırma sonrası düşürme testi geçti. Taşıma sırasında düşürme ve itme koşulları henüz güvenilir değil; sınır ihlali de gözlendi. Her koşulda başarı iddia edilmez.';
   $('validation-method').textContent=isRobot()?'Aynı başlangıç tohumları kullanılır. Susturma testinde dört katmandaki nöron yanıtları sıfırlanır; öğrenilmiş çıkış sabitleri, IK ve servolar korunur. Öğretmen değerlendirmede çalışmaz. Başarı temas fiziğinden ölçülür. Kamera testi sentetik RGB-D, eklem ve temas sensörleriyle yapılır; kutu hedefi kalibredir.':'Yeni sinek görevlerinde aynı altı ortam/tohum üç kez çalıştırılır. Çıkış kapatma, modelin motor okumasını sıfırlar; gövde ve hazır kontrolcü çalışmaya devam eder. Eğitim MSE’si ile fiziksel başarı ayrı ölçütlerdir.';
   if(e.recovery_evaluation)$('validation-method').textContent=`Normal yerleştirme ve küp düşürme, eğitimden ayrı sahnelerde sınanır. ${muted?`Nöron susturma, normal testin ilk ${muted.episodes} tohumunu kullanır. `:''}Önceki model / ön kamera satırları farklı sahnelerdir; oranlar doğrudan eşleştirilmez. Her görevde en çok 3 girişim; girişimler arasında sahne sıfırlanmaz. Tekrarla açıksa biten görevden sonra yeni sahne başlar. Öğretici değerlendirmede çalışmaz. Kutu hedefi kalibredir.`;
+  if(e.progress_supervision)$('validation-method').textContent=`İlk düşürme grubu, küp 70 mm üstüne çıktıktan sonra kavrayıcıyı 600 ms açar. Taşıma sırasında düşürme grubu yatay harekete kadar bekler. Her görev en çok 3 girişim / 60 saniye sürer; girişimler arasında dünya durumu değişmez. Görev gözetmeni aşamaları doğrular; hareket hedefleri öğrenilmiş ağdan gelir. Ekrandaki etkinlik motor komutunu üreten anatomik geçiştir. Kutu hedefi kalibredir. Susturma ilk 8 normal tohumla eşleşir; iki anatomik geçiş sıfırlanır, gözetmen ve öğrenilmiş çıkış sabitleri korunur.${e.paired_baseline?' Önceki model aynı kamera ve aynı 40 normal / 24 düşürme tohumuyla eşleştirilmiştir.':''}`;
   $('validation-sha').textContent='Checkpoint: '+selectedModel.sha256;
   $('validation-dialog').showModal();
 });

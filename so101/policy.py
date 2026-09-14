@@ -67,8 +67,12 @@ class Policy:
             self.early_weights=[s[f'weight{i}'].copy() for i in range(2)] if self.all_core else []
             self.has_memory='memory_weight' in s
             self.motor_heads=int(s['motor_heads']) if 'motor_heads' in s else 1
+            self.progress_supervision=bool(s['progress_supervision']) if 'progress_supervision' in s else False
+            self.motor_phase_feedback=bool(s['motor_phase_feedback']) if 'motor_phase_feedback' in s else False
             if self.motor_heads not in (1,MEMORY_SIZE) or (self.motor_heads>1 and not self.has_memory):
                 raise ValueError('Invalid learned motor-head schema')
+            if (self.progress_supervision or self.motor_phase_feedback) and (self.motor_heads!=MEMORY_SIZE or self.action_mode!='target'):
+                raise ValueError('Task supervision requires eight learned target heads')
             if self.has_memory:
                 self.memory_weight=s['memory_weight'].copy();self.memory_bias=s['memory_bias'].copy()
                 self.transition_counts=s['transition_counts'].copy() if 'transition_counts' in s else np.zeros((MEMORY_SIZE,MEMORY_SIZE))
@@ -117,9 +121,7 @@ class Policy:
             raise ValueError(f'Expected {OBS_SIZE} finite external robot observations')
         return x
 
-    def activity(self,observation,advance=False,silenced=False):
-        x=self.augmented(observation)
-        if self.has_memory:self.last_memory=x[OBS_SIZE:].copy()
+    def core_activity(self,x,silenced=False):
         x=np.clip((x-self.input_mean)/self.input_scale,-6,6)*self.input_mask
         h=expit(x@self.encoder+self.encoder_bias)
         if silenced:h=np.zeros_like(h)
@@ -130,7 +132,24 @@ class Policy:
             h=expit(gain*((w.T@h)/np.maximum(total,1e-8)-.5))
             if silenced:h=np.zeros_like(h)
             layers.append(h)
-        phase=int(np.argmax(self.phase_logits(h,self.last_memory))) if self.has_memory else 0
+        return layers
+
+    def activity(self,observation,advance=False,silenced=False):
+        x=self.augmented(observation)
+        if self.has_memory:self.last_memory=x[OBS_SIZE:].copy()
+        layers=self.core_activity(x,silenced)
+        logits=self.phase_logits(layers[-1],self.last_memory) if self.has_memory else np.zeros(MEMORY_SIZE)
+        if self.progress_supervision:
+            from .phase_supervision import feasible_phases
+            logits=np.where(feasible_phases(x),logits,-1e9)
+        phase=int(np.argmax(logits))
+        if self.motor_phase_feedback:
+            # The selected skill is fed through the SAME anatomical circuit.
+            # Display/replay the motor pass, whose activity actually yields the
+            # applied action. No geometry bypass around the circuit is added.
+            motor_x=np.r_[x[:OBS_SIZE],np.eye(MEMORY_SIZE,dtype=np.float32)[phase]]
+            layers=self.core_activity(motor_x,silenced)
+        h=layers[-1]
         action=np.tanh(self.motor_logits(h,phase))
         if self.has_memory and advance:
             self.memory=np.eye(MEMORY_SIZE,dtype=np.float32)[phase]
@@ -169,6 +188,7 @@ def torch_model(circuit,mean,scale,seed=42,frozen_core=False,motor_heads=1,all_c
             self.motor_heads=motor_heads
             self.all_core=all_core
             self.action_mode=action_mode
+            self.progress_supervision=False;self.motor_phase_feedback=False
             if all_core:
                 for i in range(2):
                     row_i,col_i=circuit.layers[i].nonzero()
@@ -196,17 +216,32 @@ def torch_model(circuit,mean,scale,seed=42,frozen_core=False,motor_heads=1,all_c
             weight[rows,cols]=weight[rows,cols]*torch.exp(1.5*torch.tanh(getattr(self,'raw_gain'+suffix)))
             return weight
 
-        def forward(self,x,details=False,phase=None):
-            memory=x[:,OBS_SIZE:]
+        def core_activity(self,x):
             x=((x-self.input_mean)/self.input_scale).clamp(-6,6)*self.input_mask
             h=torch.sigmoid(self.encoder(x))
             layers=[h]
             for weight,gain in zip((self.effective_weight(i) for i in range(3)),RESPONSE_GAINS):
                 h=torch.sigmoid(gain*(h@weight/weight.sum(0).clamp_min(1e-8)-.5))
                 layers.append(h)
+            return layers
+
+        def forward(self,x,details=False,phase=None):
+            memory=x[:,OBS_SIZE:]
+            layers=self.core_activity(x);h=layers[-1]
+            self.last_phase_features=h
+            if self.motor_heads>1:
+                if phase is None:
+                    scores=self.phase_logits(h,memory)
+                    if self.progress_supervision:
+                        from .phase_supervision import feasible_phases
+                        allowed=torch.as_tensor(feasible_phases(x.detach().cpu().numpy()),device=x.device)
+                        scores=scores.masked_fill(~allowed,-1e9)
+                    phase=scores.argmax(-1)
+                if self.motor_phase_feedback:
+                    motor_x=torch.cat([x[:,:OBS_SIZE],torch.nn.functional.one_hot(phase,MEMORY_SIZE).to(x.dtype)],dim=1)
+                    layers=self.core_activity(motor_x);h=layers[-1]
             logits=self.decoder(h)
             if self.motor_heads>1:
-                if phase is None:phase=self.phase_logits(h,memory).argmax(-1)
                 logits=logits.reshape(-1,self.motor_heads,4)[torch.arange(len(h),device=h.device),phase]
             return (logits,layers,self.critic(h).squeeze(-1)) if details else torch.tanh(logits)
 
@@ -223,6 +258,7 @@ def torch_model(circuit,mean,scale,seed=42,frozen_core=False,motor_heads=1,all_c
             if self.all_core:
                 for i in range(2):extra.update({f'weight{i}':array(self.effective_weight(i)),f'raw_gain{i}':array(getattr(self,f'raw_gain{i}'))})
             np.savez_compressed(path,task="so101",circuit_identity=circuit.identity,motor_heads=self.motor_heads,action_mode=self.action_mode,
+                progress_supervision=self.progress_supervision,motor_phase_feedback=self.motor_phase_feedback,
                 encoder=array(self.encoder.weight.T),encoder_bias=array(self.encoder.bias),
                 input_mean=array(self.input_mean),input_scale=array(self.input_scale),input_mask=array(self.input_mask),
                 weight=array(self.effective_weight()),decoder=array(self.decoder.weight.T),bias=array(self.decoder.bias),
@@ -231,6 +267,8 @@ def torch_model(circuit,mean,scale,seed=42,frozen_core=False,motor_heads=1,all_c
         def restore(self,path):
             s=np.load(path,allow_pickle=False)
             self.action_mode=str(s['action_mode']) if 'action_mode' in s else 'delta'
+            self.progress_supervision=bool(s['progress_supervision']) if 'progress_supervision' in s else False
+            self.motor_phase_feedback=bool(s['motor_phase_feedback']) if 'motor_phase_feedback' in s else False
             if str(s["circuit_identity"])!=circuit.identity:
                 raise ValueError("Resume circuit identity mismatch")
             with torch.no_grad():

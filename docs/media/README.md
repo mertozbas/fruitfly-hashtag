@@ -63,6 +63,7 @@ fiziksel robot kaydı değildir. Ayrıntılar: [SO-101 rehberi](../so101-local.m
 
 `so101-wrist.png`, aynı yerel laboratuvarın bilek kamerası ve **Tekrarla**
 kontrolünü gösteren değiştirilmemiş tarayıcı ekran görüntüsüdür. Model
-`8e0a777881a9…`; küçük pencere hareketli bilek gözünün karar karesidir, büyük
+`cd1d23a81c54…`; resmî 32×32 UVC somun yuvalı adaptör modelidir. Küçük pencere
+hareketli bilek gözünün karar karesidir, büyük
 pencere bağımsız seyirci kamerasıdır. Görüntü duraklatılmış başlangıç durumunu
 gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.

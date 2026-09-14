@@ -23,7 +23,8 @@ def fit(model,dataset,output):
         sequence=[PHASES.index(p) for p in labels[ids==episode]]
         if not sequence:continue
         episodes.append(int(episode));starts[sequence[0]]+=1
-        for before,after in zip([sequence[0],*sequence[:-1]],sequence):counts[before,after]+=1
+        previous=np.argmax(data['memory'][ids==episode],axis=1).tolist() if 'memory' in data else [sequence[0],*sequence[:-1]]
+        for before,after in zip(previous,sequence):counts[before,after]+=1
     if not episodes:raise ValueError('No training demonstration episodes')
     with np.load(model,allow_pickle=False) as source:weights={k:source[k].copy() for k in source.files}
     weights.update(transition_counts=counts,start_counts=starts)

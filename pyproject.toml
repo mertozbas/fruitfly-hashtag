@@ -32,8 +32,13 @@ packages = ["src/fruitfly_lab"]
 [tool.hatch.build.targets.wheel.force-include]
 "so101/__init__.py" = "fruitfly_lab/bundle/so101/__init__.py"
 "so101/engine.py" = "fruitfly_lab/bundle/so101/engine.py"
+"so101/camera_mount.py" = "fruitfly_lab/bundle/so101/camera_mount.py"
+"so101/assets/so101_uvc_hexnut.stl" = "fruitfly_lab/bundle/so101/assets/so101_uvc_hexnut.stl"
+"so101/assets/SO-ARM100-LICENSE" = "fruitfly_lab/bundle/so101/assets/SO-ARM100-LICENSE"
+"so101/assets/README.md" = "fruitfly_lab/bundle/so101/assets/README.md"
 "so101/task.py" = "fruitfly_lab/bundle/so101/task.py"
 "so101/policy.py" = "fruitfly_lab/bundle/so101/policy.py"
+"so101/phase_supervision.py" = "fruitfly_lab/bundle/so101/phase_supervision.py"
 "so101/fit_transitions.py" = "fruitfly_lab/bundle/so101/fit_transitions.py"
 "so101/fit_readout.py" = "fruitfly_lab/bundle/so101/fit_readout.py"
 "so101/robustness.py" = "fruitfly_lab/bundle/so101/robustness.py"

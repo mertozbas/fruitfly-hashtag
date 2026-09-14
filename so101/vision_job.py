@@ -7,12 +7,16 @@ import numpy as np
 from .train import train,event
 from .fit_readout import fit
 from .evaluate import evaluate
+from .camera_mount import PROFILE
 
 
 def refine(directory,dataset,steps,seed,initial,camera_name='wrist'):
     with np.load(dataset,allow_pickle=False) as data:
         source_camera=str(data['camera_name']) if 'camera_name' in data else 'front'
+        source_profile=str(data['camera_profile']) if 'camera_profile' in data else ('legacy-wrist' if source_camera=='wrist' else 'front-v1')
     if source_camera!=camera_name:raise ValueError('Training camera differs from the evaluation camera; collect matching demonstrations')
+    if source_profile!=(PROFILE if camera_name=='wrist' else 'front-v1'):
+        raise ValueError('Training camera calibration profile differs; collect matching demonstrations')
     directory=Path(directory);baseline=directory/'untrained.npz'
     shutil.copy2(initial,baseline)
     train(directory,dataset,steps=steps,seed=seed,resume=baseline,learning_rate=.0001,
@@ -20,9 +24,12 @@ def refine(directory,dataset,steps,seed,initial,camera_name='wrist'):
     candidate_report=json.loads((directory/'training.json').read_text())
     (directory/'candidate-training.json').write_text(json.dumps(candidate_report,indent=2))
     bc=directory/'bc-candidate.npz';shutil.copy2(directory/'trained.npz',bc)
-    fit(bc,dataset,ridges=(1e-4,))
+    supervised=camera_name=='wrist'
+    fit(bc,dataset,ridges=(1e-4,),phase_heads=supervised,motor_phase_feedback=supervised,
+        progress_supervision=supervised,planar_heights=supervised)
+    ridge=directory/('phase-readout-0.0001.npz' if supervised else 'readout-0.0001.npz')
     scored=[];development_seed=5000+(seed%10)*20
-    for index,path in enumerate((baseline,bc,directory/'readout-0.0001.npz')):
+    for index,path in enumerate((baseline,bc,ridge)):
         normal=evaluate(path,episodes=8,start_seed=development_seed,sensor='camera',camera_name=camera_name,max_attempts=3,
             output=directory/f'visual-gate-{index}.json',event=event)
         recovery=evaluate(path,episodes=8,start_seed=development_seed,sensor='camera',camera_name=camera_name,max_attempts=3,
@@ -57,7 +64,8 @@ def refine(directory,dataset,steps,seed,initial,camera_name='wrist'):
         selected_candidate=selected[2].name,selected_model_changed=normal['selected_model_changed'],
         candidate_checkpoint_sha256=candidate_report['checkpoint_sha256'],checkpoint_sha256=normal['checkpoint_sha256'],
         attempted_training_report='candidate-training.json',
-        sensor='camera',training_camera=source_camera,evaluation_camera=camera_name,
-        recovery_scope='Up to 3 attempts in one unchanged scene; engineered retry supervisor resets learned memory')
+        sensor='camera',training_camera=source_camera,evaluation_camera=camera_name,camera_profile=source_profile,
+        recovery_scope='Up to 3 attempts in one unchanged scene; engineered retry supervisor resets learned memory',
+        phase_supervision='deterministic geometric/contact progress checks; learned motor targets' if supervised and selected[2]==ridge else candidate_report.get('progress_supervision',False))
     (directory/'training.json').write_text(json.dumps(report,indent=2))
     return normal

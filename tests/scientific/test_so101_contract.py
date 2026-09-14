@@ -114,6 +114,36 @@ class RobotPolicyTests(unittest.TestCase):
         bad=p.early_weights[0].copy();bad[0,1]=.2;self.mutate('weight0',bad)
         with self.assertRaisesRegex(ValueError,'early anatomical'):Policy(self.path)
 
+    def test_supervised_motor_pass_matches_torch_and_displayed_activity(self):
+        import torch
+        actor=torch_model(self.circuit,np.zeros(OBS_SIZE+MEMORY_SIZE),np.ones(OBS_SIZE+MEMORY_SIZE),
+            motor_heads=MEMORY_SIZE,action_mode='target')
+        actor.progress_supervision=True;actor.motor_phase_feedback=True
+        actor.save(self.path);p=Policy(self.path)
+        x=np.random.default_rng(81).normal(size=(8,OBS_SIZE+MEMORY_SIZE)).astype(np.float32)
+        x[:,22:26]=0;x[:,5]=.9;x[:,OBS_SIZE:]=np.eye(MEMORY_SIZE)
+        with torch.no_grad():expected=actor(torch.from_numpy(x)).numpy()
+        for row,wanted in zip(x,expected):
+            action,layers=p.activity(row,advance=True)
+            np.testing.assert_allclose(action,wanted,atol=1e-5)
+            phase=int(p.memory.argmax())
+            np.testing.assert_allclose(action,np.tanh(p.motor_logits(layers[-1],phase)),atol=1e-6)
+            context=np.r_[row[:OBS_SIZE],np.eye(MEMORY_SIZE,dtype=np.float32)[phase]]
+            np.testing.assert_array_equal(layers[-1],p.core_activity(context)[-1])
+            muted,activity=p.activity(row,silenced=True)
+            self.assertTrue(all(np.count_nonzero(h)==0 for h in activity))
+
+    def test_phase_support_counts_actual_memory_after_retry(self):
+        from so101.fit_transitions import fit
+        actor=torch_model(self.circuit,np.zeros(OBS_SIZE+MEMORY_SIZE),np.ones(OBS_SIZE+MEMORY_SIZE))
+        actor.save(self.path)
+        dataset=self.root/'phases.npz'
+        np.savez(dataset,episode_ids=[1,1,1],phases=['lift','approach','lower'],
+            memory=np.eye(MEMORY_SIZE)[[3,0,0]])
+        report=fit(self.path,dataset,self.root/'graph.npz')
+        self.assertEqual(report['counts'][3][0],0) # reset isn't a learned lift -> approach edge
+        self.assertEqual(report['counts'][0][1],1)
+
     def test_empirical_transition_support_has_no_builtin_phase_order(self):
         import torch
         actor=torch_model(self.circuit,np.zeros(OBS_SIZE+MEMORY_SIZE),np.ones(OBS_SIZE+MEMORY_SIZE),motor_heads=MEMORY_SIZE)

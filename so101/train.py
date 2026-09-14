@@ -94,7 +94,7 @@ def train(directory,dataset,steps=3000,seed=42,stage="place",resume=None,frozen_
         loss=position_loss_weight*(predicted[:,:3]-ty[indices,:3]).square().mean()
         loss=loss+.2*torch.nn.functional.binary_cross_entropy_with_logits(2*logits[:,3],(ty[indices,3]+1)/2)
         loss=loss+1e-5*actor.raw_gain.square().mean()
-        if memory:loss=loss+.2*torch.nn.functional.cross_entropy(actor.memory_decoder(layers[-1]),tp[indices])
+        if memory:loss=loss+.2*torch.nn.functional.cross_entropy(actor.memory_decoder(actor.last_phase_features),tp[indices])
         optimizer.zero_grad(set_to_none=True);loss.backward()
         torch.nn.utils.clip_grad_norm_(actor.parameters(),1.)
         optimizer.step()
@@ -120,6 +120,7 @@ def train(directory,dataset,steps=3000,seed=42,stage="place",resume=None,frozen_
         sensor_adapter="30 robot features; learned encoder",motor_adapter="continuous TCP deltas + gripper; fixed IK and bounded position servos",
         scope="Artificial supervised neural controller on MaleCNS anatomical topology. Physical success is evaluated separately from validation MSE.")
     report.update(dataset=str(dataset),dataset_sha256=hashlib.sha256(Path(dataset).read_bytes()).hexdigest(),
+        progress_supervision=actor.progress_supervision,motor_phase_feedback=actor.motor_phase_feedback,
         action_mode=action_mode,
         position_loss_weight=position_loss_weight,
         checkpoint_sha256=hashlib.sha256((directory/'trained.npz').read_bytes()).hexdigest())
@@ -128,7 +129,7 @@ def train(directory,dataset,steps=3000,seed=42,stage="place",resume=None,frozen_
     if memory:
         with torch.no_grad():
             _,validation_layers,_=actor(vx,details=True)
-            predicted_phase=actor.memory_decoder(validation_layers[-1]).argmax(-1)
+            predicted_phase=actor.memory_decoder(actor.last_phase_features).argmax(-1)
             report['phase_accuracy']=float((predicted_phase==tp[val_indices]).float().mean().cpu())
     snapshots=directory/'training-history';snapshots.mkdir(exist_ok=True)
     import shutil
