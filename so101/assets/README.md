@@ -21,3 +21,8 @@ Adaptör görsel geometridir; gerçek aparat kütlesi ve çarpışma geometrisi
 ölçülmediği için fiziksel yük/çarpışma doğrulaması iddia edilmez.
 UVC modül yalnızca RGB üretir. Mevcut algılayıcının kullandığı metrik derinlik
 MuJoCo simülasyonundandır; gerçek kol için RGB poz kestirimi ayrıca gerekir.
+
+UI'daki `calibration-reference.json` orta konum şeması, aynı deponun
+`Simulation/SO101/so101_new_calib.xml` modelinde eklem aralıklarının orta noktaları
+için hesaplanan eklem merkezlerinden türetilir. Kaynak dosya özeti JSON içinde
+yer alır; Apache 2.0 lisansı geçerlidir. Bu şema canlı motor ölçümü değildir.

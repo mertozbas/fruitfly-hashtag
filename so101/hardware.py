@@ -8,15 +8,16 @@ import threading
 import time
 
 from .hardware_contract import calibration, readiness
+from .calibration_host import Commissioning
 
 
 class DiagnosticProcess:
-    def __init__(self, command, root, kind):
+    def __init__(self, command, root, kind,interactive=False):
         self.kind=kind;self.latest={};self.received=0.;self.error=None
         self.started=time.monotonic()
-        self.lock=threading.Lock();self.stopped=False
+        self.lock=threading.Lock();self.send_lock=threading.Lock();self.stopped=False
         self.process=subprocess.Popen(command,cwd=root,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
-                                      text=True,encoding='utf-8',errors='replace',bufsize=1)
+                                      text=True,encoding='utf-8',errors='replace',bufsize=1,stdin=subprocess.PIPE if interactive else subprocess.DEVNULL)
         self.reader=threading.Thread(target=self._read,daemon=True);self.reader.start()
 
     def _read(self):
@@ -41,6 +42,7 @@ class DiagnosticProcess:
             result=dict(self.latest,running=alive,fresh=fresh,age_ms=round(age*1000) if age is not None else None,
                         error=self.error or (None if alive or self.stopped else 'Tanılama sona erdi; yeniden bağlanabilirsin.'))
             if self.kind=='arm':result['connected']=fresh
+            if self.kind=='calibration' and self.latest.get('stage') in {'saved','restored','cancelled','failed'}:result['error']=self.error
             # A frozen frame must not look like live perception.
             if not fresh:result.pop('image',None)
             return result
@@ -49,9 +51,15 @@ class DiagnosticProcess:
         self.stopped=True
         if self.process.poll() is None:
             self.process.terminate()
-            try:self.process.wait(timeout=3)
+            try:self.process.wait(timeout=12 if self.kind=='calibration' else 3)
             except subprocess.TimeoutExpired:self.process.kill();self.process.wait(timeout=3)
         self.reader.join(timeout=1)
+        if self.process.stdin:self.process.stdin.close()
+
+    def send(self,command):
+        with self.send_lock:
+            if self.process.poll() is not None or not self.process.stdin:raise OSError('Donanım oturumu kapandı')
+            self.process.stdin.write(json.dumps(command,allow_nan=False)+'\n');self.process.stdin.flush()
 
 
 class HardwareLab:
@@ -65,6 +73,7 @@ class HardwareLab:
         self.last_poll=time.monotonic();self.events=deque(maxlen=20)
         self.shutdown=threading.Event();self.watchdog=None
         self.cached_inventory=dict(ports=[],versions={},cameras_opened=False,motors_opened=False)
+        self.commissioning=Commissioning(self)
 
     def start(self):
         if self.watchdog is None:
@@ -107,6 +116,7 @@ class HardwareLab:
 
     def connect(self,port,calibration_id):
         with self.lock:
+            if self.commissioning.active():raise ValueError('Önce kalibrasyon sihirbazını tamamla veya iptal et')
             if 'arm' in self.processes and self.processes['arm'].snapshot()['running']:
                 raise ValueError('Önce mevcut motor tanılama oturumunu kapat.')
             self.inventory()
@@ -121,16 +131,26 @@ class HardwareLab:
             self._event(f'Salt okuma tanılaması: {port} · kalibrasyon {saved["sha256"][:12]}')
             return self.state()
 
-    def camera(self,role,index):
+    def camera(self,role,index,profile_id=None,device_verified=False):
         if role not in ('wrist','top') or type(index) is not int or not 0<=index<=15:
             raise ValueError('Kamera rolü ve 0–15 arasında bir indeks gerekli.')
         with self.lock:
+            profile=None
+            if profile_id:
+                records=self.commissioning.camera_profiles()
+                record=next((r for r in records if r['id']==profile_id and r['role']==role),None)
+                if not record or device_verified is not True:raise ValueError('Kamera profilini ve fiziksel kamera kimliğini doğrula')
+                profile=self.commissioning.root/'cameras'/record['id']/'calibration.json'
             for key,worker in self.processes.items():
                 if key in ('wrist','top') and worker.snapshot()['running'] and worker.index==index:
                     raise ValueError('Bu kamera zaten bir önizlemede açık; önce onu durdur.')
             self.stop_camera(role)
-            worker=DiagnosticProcess(self._command('camera','--role',role,'--camera-index',index,'--duration',600),self.root,'camera')
-            worker.index=index;self.processes[role]=worker;self.last_poll=time.monotonic()
+            import uuid
+            session=uuid.uuid4().hex
+            args=['camera','--role',role,'--camera-index',index,'--duration',600,'--session',session]
+            if profile:args.extend(['--camera-profile',str(profile)])
+            worker=DiagnosticProcess(self._command(*args),self.root,'camera',interactive=True)
+            worker.index=index;worker.session=session;self.processes[role]=worker;self.last_poll=time.monotonic()
             self._event(f'Kamera önizlemesi: {role} · indeks {index}')
             return self.state()
 
@@ -142,11 +162,13 @@ class HardwareLab:
     def disconnect(self):
         with self.lock:
             for worker in self.processes.values():worker.stop()
-            self.processes.clear();self._event('Tanılama kapatıldı. Motor torkuna komut gönderilmedi.')
+            had_calibration='calibration' in self.processes
+            self.processes.clear();self._event('Bağlantılar kapatıldı. Kalibrasyon yedeği / sonucu kayıt dizininde.' if had_calibration else 'Tanılama kapatıldı. Motor torkuna komut gönderilmedi.')
 
     def state(self):
         with self.lock:
             self.last_poll=time.monotonic()
+            self.commissioning.heartbeat()
             sessions={key:worker.snapshot() for key,worker in self.processes.items()}
             arm=sessions.get('arm',{});cameras={k:sessions.get(k,{}) for k in ('wrist','top')}
             choices=self.calibrations()
@@ -159,7 +181,8 @@ class HardwareLab:
             return dict(environment_ready=environment_ready,inventory=self.cached_inventory,
                 calibrations=choices,selected_calibration=self.selected['id'] if self.selected else None,
                 arm=arm,cameras=cameras,checks=readiness(saved,arm,cameras),events=list(self.events),
-                mode='read_only',autonomous_ready=False,simulation_connected_to_hardware=False,
+                calibration_session=sessions.get('calibration',{}),calibration_history=self.commissioning.histories(),camera_profiles=self.commissioning.camera_profiles(),
+                mode='calibration' if self.commissioning.active() else 'read_only',autonomous_ready=False,simulation_connected_to_hardware=False,
                 note='Motor yürütmesi kapalı. Ana ekrandaki beyin ve hareket simülasyona bağlıdır.',
                 session_limit_seconds=600,idle_timeout_seconds=self.lease_seconds)
 

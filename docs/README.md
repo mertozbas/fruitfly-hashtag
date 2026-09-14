@@ -23,7 +23,7 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 | Beyne bağlı uçuş, zamanlama, motor adaptörü | [Uçuş README](../flight/README.md) |
 | Kaçınma, görme, engel ve taşınabilir model | [Yerel görevler](local-tasks.md) |
 | SO-101, temasla al ve yerleştir, canlı ağ ve eğitim | [Yerel robot deneyi](so101-local.md) |
-| Gerçek follower, bilek kamerası ve salt okuma tanılaması | [Gerçek SO-101 hazırlığı](so101-hardware.md) |
+| Gerçek follower tanılaması, kol kalibrasyonu ve kamera ölçümü | [Gerçek SO-101 hazırlığı](so101-hardware.md) |
 | Tic-tac-toe, kamera ile tahta okuma ve öğrenilmiş hamle seçimi | [Yerel oyun deneyi](tictactoe-local.md) |
 | Hangi veriyi, kaç GB ve neden indiriyorum? | [Veriler ve modeller](data.md) |
 | Hata, port, güncelleme, yedekleme, kaldırma | [Sorun giderme](troubleshooting.md) |

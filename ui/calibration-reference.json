@@ -1,0 +1,55 @@
+{
+  "source": "TheRobotStudio/SO-ARM100 Simulation/SO101/so101_new_calib.xml",
+  "sha256": "6996b3d8c00f81ddf760fe077a6396b7fd10da6dd8a99b850035cffa6b43a3bf",
+  "description": "Nominal model joint-range midpoints, schematic guidance only; not a physical calibration mapping.",
+  "points": [
+    {
+      "name": "shoulder_pan",
+      "position": [
+        0.0207909,
+        -0.0230745,
+        0.0948817
+      ]
+    },
+    {
+      "name": "shoulder_lift",
+      "position": [
+        0.0025131000000000944,
+        -0.05347369999999998,
+        0.14908170000000004
+      ]
+    },
+    {
+      "name": "elbow_flex",
+      "position": [
+        0.002513100000000558,
+        -0.08147370000000027,
+        0.26165169999999993
+      ]
+    },
+    {
+      "name": "wrist_flex",
+      "position": [
+        0.002513100000000595,
+        -0.2154071549102889,
+        0.27858922212673576
+      ]
+    },
+    {
+      "name": "wrist_roll",
+      "position": [
+        0.02061310000000043,
+        -0.27627465092342757,
+        0.2839144384688717
+      ]
+    },
+    {
+      "name": "gripper",
+      "position": [
+        0.03941310000000285,
+        -0.297825060687688,
+        0.3060770159135729
+      ]
+    }
+  ]
+}

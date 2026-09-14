@@ -16,7 +16,7 @@ def emit(**record):
 def inventory():
     from serial.tools.list_ports import comports
     versions={name:metadata.version(name) for name in ('pyserial','feetech-servo-sdk','numpy','opencv-python-headless')}
-    ports=[dict(device=p.device,description=p.description,vid=p.vid,pid=p.pid) for p in comports()
+    ports=[dict(device=p.device,description=p.description,vid=p.vid,pid=p.pid,serial_number=p.serial_number) for p in comports()
            if p.device.startswith(('/dev/cu.usb','/dev/ttyUSB','/dev/ttyACM','COM'))]
     emit(kind='inventory',ports=ports,versions=versions,cameras_opened=False,motors_opened=False)
 
@@ -71,8 +71,21 @@ def inspect_arm(port_name,path,expected_sha,duration):
         if port.is_open:port.closePort()
 
 
-def preview(index,role,duration):
+def preview(index,role,duration,session=None,profile=None):
     import cv2
+    import json,queue,threading,uuid
+    from pathlib import Path
+    from .calibration_camera import CameraCalibration
+    session=session or uuid.uuid4().hex
+    lens=CameraCalibration(Path(__file__).resolve().parents[1]/'.runtime/hardware/cameras'/role/session,role,index,profile)
+    commands=queue.Queue(16)
+    def receive():
+        try:
+            for line in sys.stdin:
+                if len(line)>4096:break
+                commands.put_nowait(json.loads(line))
+        except (ValueError,queue.Full):pass
+    threading.Thread(target=receive,daemon=True).start()
     backend=cv2.CAP_AVFOUNDATION if sys.platform=='darwin' else cv2.CAP_ANY
     camera=cv2.VideoCapture(index,backend)
     try:
@@ -83,11 +96,16 @@ def preview(index,role,duration):
         while time.monotonic()<deadline:
             start=time.monotonic();ok,frame=camera.read()
             if not ok or frame is None:raise OSError('Kameradan güncel kare alınamadı')
+            sequence+=1
+            frame=lens.observe(frame,sequence)
+            while not commands.empty():
+                try:lens.command(commands.get_nowait())
+                except (ValueError,cv2.error) as exc:lens.warning=str(exc)
             ok,encoded=cv2.imencode('.jpg',frame,[cv2.IMWRITE_JPEG_QUALITY,85])
             if not ok:raise OSError('Kamera karesi kodlanamadı')
-            sequence+=1
             emit(kind='camera',role=role,index=index,sequence=sequence,width=frame.shape[1],height=frame.shape[0],
                  image=base64.b64encode(encoded).decode(),source='physical_usb_rgb',depth_available=False,
+                 session=session,calibration=lens.state(),
                  note='Kamera adayı; rol ve lens/robot kalibrasyonu henüz doğrulanmadı.')
             time.sleep(max(0,.125-(time.monotonic()-start)))
     finally:camera.release()
@@ -97,6 +115,7 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('mode',choices=['inventory','arm','camera'])
     p.add_argument('--port');p.add_argument('--calibration');p.add_argument('--sha')
     p.add_argument('--camera-index',type=int);p.add_argument('--role',choices=['wrist','top'])
+    p.add_argument('--session');p.add_argument('--camera-profile')
     p.add_argument('--duration',type=int,default=600);a=p.parse_args()
     if not 1<=a.duration<=600:p.error('Tanılama oturumu 1–600 saniye olmalı')
     signal.signal(signal.SIGTERM,lambda *_:sys.exit(0))
@@ -107,7 +126,7 @@ def main():
             inspect_arm(a.port,a.calibration,a.sha,a.duration)
         else:
             if a.camera_index is None or not 0<=a.camera_index<=15 or not a.role:p.error('Kamera indeksi 0–15 ve rol gerekli')
-            preview(a.camera_index,a.role,a.duration)
+            preview(a.camera_index,a.role,a.duration,a.session,a.camera_profile)
     except Exception as exc:
         emit(kind='error',error=f'{type(exc).__name__}: {exc}');raise SystemExit(1)
 

@@ -2,7 +2,7 @@
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock,patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from so101.hardware import HardwareLab
@@ -32,6 +32,40 @@ class HardwareAPITests(unittest.TestCase):
                 self.assertEqual(self.client.post('/api/hardware/camera',json=body).status_code,422)
             self.assertEqual(self.client.post('/api/hardware/connect',json=dict(port='x',calibration_id='y',torque=True)).status_code,422)
             popen.assert_not_called()
+
+    def test_calibration_absence_paths_and_schemas_fail_closed(self):
+        with patch('subprocess.Popen') as popen:
+            self.assertEqual(self.client.post('/api/hardware/calibration/start',json=dict(port='/dev/random',robot_id='follower')).status_code,409)
+            for body in [dict(port='x',robot_id='../outside'),dict(port='x',robot_id='ok',backup_id='../x')]:
+                self.assertEqual(self.client.post('/api/hardware/calibration/start',json=body).status_code,422)
+            for body in [dict(session='a'*32,revision=1,op='torque_on'),dict(session='a'*32,revision=1,op='release',supported='true')]:
+                self.assertEqual(self.client.post('/api/hardware/calibration/command',json=body).status_code,422)
+            self.assertEqual(self.client.post('/api/hardware/camera/calibration',json=dict(session='a'*32,role='wrist',op='enable',device_label='UVC')).status_code,422)
+            self.assertEqual(self.client.post('/api/hardware/camera',json=dict(role='wrist',index=0,profile_id='../../secret',device_verified=True)).status_code,409)
+            self.assertEqual(self.client.get('/api/hardware/calibration/report',params=dict(kind='motor',record_id='../../secret')).status_code,409)
+            popen.assert_not_called()
+
+    def test_session_revision_and_one_pending_command(self):
+        worker=Mock();worker.session='a'*32;worker.pending_revision=None;worker.kind='calibration'
+        current=dict(running=True,fresh=True,revision=1);worker.snapshot.side_effect=lambda:dict(current)
+        self.hardware.processes['calibration']=worker
+        body=dict(session=worker.session,revision=1,op='release',supported=True)
+        with patch.object(self.hardware,'state',return_value={}):
+            self.assertEqual(self.client.post('/api/hardware/calibration/command',json=dict(body,session='b'*32)).status_code,409)
+            self.assertEqual(self.client.post('/api/hardware/calibration/command',json=body).status_code,200)
+            self.assertEqual(self.client.post('/api/hardware/calibration/command',json=body).status_code,409)
+            worker.send.assert_called_once()
+            current.update(revision=2,fresh=False)
+            self.assertEqual(self.client.post('/api/hardware/calibration/command',json=dict(body,revision=2)).status_code,409)
+            self.assertEqual(self.client.post('/api/hardware/calibration/command',json=dict(body,op='cancel')).status_code,200)
+        self.hardware.processes.clear()
+
+    def test_failed_backup_is_listed_for_recovery(self):
+        import json
+        d=self.hardware.commissioning.root/'motors'/('a'*32);d.mkdir(parents=True)
+        (d/'backup.json').write_text(json.dumps(dict(target='/tmp/follower.json',created=1)))
+        (d/'status.json').write_text(json.dumps(dict(stage='failed',warning='USB disconnected')))
+        self.assertTrue(self.hardware.commissioning.histories()[0]['recovery_needed'])
 
 
 if __name__=='__main__':unittest.main()

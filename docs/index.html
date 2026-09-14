@@ -332,7 +332,7 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 <td><a href="#docs-so101-local">Yerel robot deneyi</a></td>
 </tr>
 <tr>
-<td>Gerçek follower, bilek kamerası ve salt okuma tanılaması</td>
+<td>Gerçek follower tanılaması, kol kalibrasyonu ve kamera ölçümü</td>
 <td><a href="#docs-so101-hardware">Gerçek SO-101 hazırlığı</a></td>
 </tr>
 <tr>
@@ -2098,8 +2098,10 @@ LAN'a veya internete açmak bu dağıtımın hazır bir özelliği değildir.</p
 tanılamaya hazırlar. Motor konumlarını, sıcaklığı, voltajı ve mevcut tork durumunu
 okur; kaydedilmiş kalibrasyonu motor belleğiyle karşılaştırır. Bilek ve sabit kamera
 için ayrı gerçek RGB önizlemeleri sunar.</p>
-<p><strong>Bu sürüm salt okuma aşamasındadır.</strong> Fiziksel kola hedef, tork veya kalibrasyon
-yazmaz. Simülasyondaki al ve yerleştir / tic-tac-toe modelleri henüz fiziksel kolda
+<p><strong>Bağlantı tanılaması salt okunurdur; Kol kalibrasyonu ayrı bir yazma akışıdır.</strong>
+Sihirbaz, kol desteklenirken verdiğiniz onayla torku kapatır ve kalibrasyon
+ayarlarını yazar. Hedef konumu göndermez, torku açmaz.
+Simülasyondaki al ve yerleştir / tic-tac-toe modelleri henüz fiziksel kolda
 devreye alınmadı. Donanım panelini açmak, ana ekrandaki beyni gerçek kola bağlamaz;
 ana ekran simülasyonun sinir ağı hesabını göstermeye devam eder.</p>
 <h2 id="docs-so101-hardware--1-kol-bağlı-değilken-hazırlık">1. Kol bağlı değilken hazırlık</h2>
@@ -2129,12 +2131,12 @@ dizininde</strong>, bilimsel ortam kurulduktan sonra çalıştırın.</p>
 <tr>
 <td>feetech-servo-sdk</td>
 <td>1.0.0</td>
-<td>STS3215 kayıtlarının okunması</td>
+<td>STS3215 tanılaması ve sınırlı kalibrasyon yazımı</td>
 </tr>
 <tr>
 <td>opencv-python-headless</td>
 <td>4.13.0.92</td>
-<td>USB kamera görüntüsü</td>
+<td>USB görüntüsü, ChArUco lens / pano ölçümü</td>
 </tr>
 <tr>
 <td>numpy</td>
@@ -2183,6 +2185,7 @@ kimliği, mekanik dişli oranı ve simülasyonla yön eşleşmesi ayrı ölçüm
 Dosyaya veya motor belleğine otomatik düzeltme yazılmaz.</p>
 <p>İlk beş eklemin konumu LeRobot derece ölçeği, gripper konumu yüzde ölçeğidir.
 Homing offset motor tarafından uygulanır; yazılımda ikinci kez çıkarılmaz.
+Dosya / motor eşleşmiyorsa UI derece yerine ham enkoder sayımını gösterir.
 Aralık dışındaki değerler kırpılmaz. <strong>Bu değerler doğrudan MuJoCo radyanlarına
 çevrilip hareket komutu yapılamaz:</strong> sıfır noktası ve yön eşleştirmesi gerekir.</p>
 <h2 id="docs-so101-hardware--4-kameraları-gör">4. Kameraları gör</h2>
@@ -2198,11 +2201,112 @@ canlı kabul edilmez. UVC'den derinlik görüntüsü uydurulmaz.
 Paneldeki <code>ms</code> değeri son mesajın sunucuya gelişinden itibaren yaşıdır;
 kameranın pozlama zamanını veya uçtan uca kontrol gecikmesini ölçmez.</p>
 <p><strong>Durdur</strong> seçilen kamerayı; <strong>Tüm bağlantıları kapat</strong> motor tanılamasını ve iki
-kamerayı kapatır. Panel kapandığında da bağlantılar bırakılır. UI'dan 15 saniye
+kamerayı kapatır. Aktif motor kalibrasyonu varsa önce iptal / geri yükleme denenir.
+Panel kapandığında da bağlantılar bırakılır. UI'dan 15 saniye
 güncelleme gelmezse oturumlar otomatik kapanır; her oturum en fazla 10 dakikadır.
 Bağlantıyı kapatmak <strong>acil durdurma veya tork kapatma komutu değildir</strong>. Uygulama
-torku açmadığı gibi kapatmaz; fiziksel güç kesme imkânı ayrı tutulmalıdır.</p>
-<h2 id="docs-so101-hardware--5-simülasyondan-gerçek-harekete-kalan-işler">5. Simülasyondan gerçek harekete kalan işler</h2>
+salt okuma sırasında torku değiştirmez; sihirbazda bırakılmış torku yeniden açmaz.
+Fiziksel güç kesme imkânı ayrı tutulmalıdır.</p>
+<h2 id="docs-so101-hardware--5-ui-üzerinden-kol-kalibrasyonu">5. UI üzerinden kol kalibrasyonu</h2>
+<p>Bu işlem standart SO-101 follower, ID 1–6 ve STS3215 içindir. Motor ID kurulumu,
+dişli oranı değişikliği veya otomatik kol hareketi yapmaz. Başka bir uygulamanın
+seri bağlantısını kapatın. Kol masaya sabit, kıskaç boş olmalı; tork bırakırken
+kolu elinizle destekleyin. Bu fiziksel adımlar ekran başındaki operatör tarafından
+yapılır; sihirbaz mekanik durakları kendiliğinden aramaz.</p>
+<ol>
+<li><strong>Gerçek kol → Kol kalibrasyonu</strong> sekmesini açın. USB portunu ve mevcut
+   profili seçin; yeni kolsa <strong>Yeni profil oluştur</strong> ve bir kol adı kullanın.</li>
+<li><strong>Yedekle ve başla</strong> düğmesine basın. Altı motorun model ve ayarları okunur;
+   orijinal dosyanın birebir içeriği, SHA-256 özeti, USB kimliği ve motor belleği
+   diske kaydedilir. Yedek tamamlanmadan hiçbir motor yazımı yapılmaz.</li>
+<li>Kolu destekleyin, üzerindeki yükü alın ve kutucuğu işaretleyip <strong>Torku bırak</strong>
+   düğmesine basın. Motorlar serbest kalır; düşmesine izin vermeyin.</li>
+<li>Eklemleri elle hareket aralıklarının ortasına getirin. 3D rehber nominal bir
+   şemadır; canlı eklem pozu veya mekanik uygunluk kanıtı değildir. Kolu sabit
+   tutup <strong>Orta konumu kaydet</strong> ile referansı ölçün.</li>
+<li>Sırayla <strong>taban, omuz, dirsek, bilek eğimi ve kıskaç</strong> için iki hareket ucunu
+   yavaşça elle tarayın. Mekanik durakları zorlamayın. Ekran alt / üst enkoder
+   değerini ve örnek sayısını gösterir; iki ucun ölçüldüğünü her eklemde onaylayın.
+   <strong>Bilek dönüşü elle tam tur taranmaz:</strong> LeRobot yaklaşımıyla 0–4095 kullanılır.
+   Kamera kablosunu dolamayın.</li>
+<li>Altı eklemin sonuç tablosunu inceleyin. <strong>Doğrula ve kaydet</strong> motor ayarlarını
+   yazar, geri okuyup karşılaştırır, ardından profil dosyasını atomik olarak
+   değiştirir. <strong>Tork kapalı kalır.</strong> Yeni oturum açıp <strong>Motorları oku</strong> ile dosya
+   / motor eşleşmesini tekrar kontrol edin.</li>
+</ol>
+<p>Her ölçülen eklem için en az 12 örnek, 300 sayımlık açıklık ve referansın iki
+yönünde en az 50 sayım gerekir. Bunlar eksik ölçümü yakalayan yazılım eşikleridir;
+mekanik hareket sınırlarını doğru taradığınızın otomatik kanıtı değildir.
+Enkoder sarımı veya kararsız referans algılanırsa ilerleme engellenir.
+LeRobot ile uyumlu referans sayımı 2047'dir; homing offset motorun içinde uygulanır.</p>
+<h3 id="docs-so101-hardware--i̇ptal-yedek-ve-kurtarma">İptal, yedek ve kurtarma</h3>
+<p><strong>İptal et ve ayarları geri al</strong>, bu oturum başlamadan önceki motor kalibrasyonunu
+geri yükler; torku açmaz. Kaydetme, seri haberleşme veya dosya hatasında da aynı
+geri yükleme yolu denenir. Dışarıdan değiştirilmiş profilin üzerine yazılmaz.
+UI bağlantısı kaybolursa 15 saniyelik süre dolunca; süreç normal kapatılırsa veya
+10 dakikalık oturum sınırı dolarsa da geri yükleme denenir.</p>
+<p>USB kablosu çekilmişse veya güç kesilmişse motorlara geri yazmak mümkün olmayabilir.
+<strong>KURTARMA GEREKLİ</strong> durumunda kolu destekleyip gücü güvenle kesin; bağlantıyı
+düzelttikten sonra <strong>Önceki yedekler → Seçili yedeğe dön</strong> akışını kullanın.
+Önce mevcut durum tekrar yedeklenir, sonra tork bırakma ve geri yükleme onayı alınır.
+Yedek yalnızca aynı USB kimliği ve profil yoluyla eşleşirse kabul edilir.
+USB kimliği kartı tanımlar; motorların başka kola taşınmadığını kendiliğinden kanıtlamaz.</p>
+<p>Yedek ve sonuçlar yereldir:</p>
+<pre><code class="language-text">.runtime/hardware/motors/&lt;oturum&gt;/backup.json
+.runtime/hardware/motors/&lt;oturum&gt;/status.json
+.runtime/hardware/motors/&lt;oturum&gt;/candidate.json
+</code></pre>
+<p><strong>Yedek ve sonuç raporu</strong> bağlantısı bu kayıtları açar. Yedek dosyası orijinal
+kalibrasyonu birebir içerir; silmeyin. Tamamlanmış bir kaydı değiştirmek için yeni
+oturum açılır. Geçmiş kayıtlar Git / dağıtım paketine dahil edilmez.</p>
+<h2 id="docs-so101-hardware--6-kamera-lensi-ve-masa-referansı">6. Kamera lensi ve masa referansı</h2>
+<h3 id="docs-so101-hardware--lens-ölçümü">Lens ölçümü</h3>
+<ol>
+<li>Sağdaki önizlemeden doğru USB kamerayı açın. <strong>Kamera kalibrasyonu</strong> sekmesinde
+   bilek / üst rolünü ve fiziksel kameraya vereceğiniz adı seçin. Görüntüden kimliği
+   doğrulayın; odak ve lens ayarını sabitleyin.</li>
+<li><strong>A4 pano indir</strong> ile ChArUco SVG dosyasını indirin. A4'e <strong>%100 / gerçek boyut</strong>
+   ile basın; "sayfaya sığdır" kullanmayın. Cetvelle 50 mm kontrol çizgisini ölçün.
+   Pano 6×8 kare, kareler 20 mm, işaretler 14 mm ve sözlük <code>DICT_4X4_50</code>'dir.
+   Panoyu düz, bükülmeyen bir yüzeye sabitleyin.</li>
+<li><strong>Panoyu algıla</strong> düğmesine basın. Algılanan köşeler gerçek önizlemede işaretlenir.</li>
+<li>Panoyu farklı yatay / dikey konumlarda ve iki eksende farklı eğimlerde gösterin;
+   her net pozda <strong>Kareyi al</strong> ile en az 18, en fazla 30 kare toplayın.
+   Bulanık, küçük, eski veya önceki poza çok benzeyen kare reddedilir.</li>
+<li><strong>Hesapla</strong> ile lens matrisi ve bozulma katsayılarını hesaplayın. Her altıncı
+   kare hesaplamanın dışında tutulup ayrı doğrulamada kullanılır. 18 karede
+   15 hesap + 3 doğrulama; 24 karede 20 + 4 kullanılır.</li>
+<li>RMS en fazla 0,8 px, ayrı kare hatalarının her biri en fazla 1,2 px olmalı;
+   görüş alanı kapsamı, eğim çeşitliliği ve matris sınırları da kontrol edilir.
+   Sonuçları / baskı ölçeğini doğrulayıp <strong>Lens profilini kaydet</strong> düğmesine basın.</li>
+</ol>
+<p>Bu eşikler geçse bile baskı ölçeği ve doğru kamera seçimi operatörün doğrulamasına
+bağlıdır. Lens / odak / görüntü çözünürlüğü değişirse ölçümü yenileyin.
+Önceki profili <strong>Profille aç</strong> ile yüklemek, fiziksel kamera kimliği onayı ister;
+çözünürlük uyuşmazsa geometri kullanılmaz. Kamera indeksi kalıcı cihaz kimliği değildir.</p>
+<h3 id="docs-so101-hardware--masa-robot-referansı">Masa / robot referansı</h3>
+<p>Kaydedilmiş lens profili varken panoyu masaya sabitleyin. Önizlemede güncel pano
+köşeleri ve koordinat eksenleri görünmelidir. <strong>Masa / robot referansı</strong> sekmesinde
+güncel pano–kamera pozunu kaydedin. Pano koordinatı: başlangıç sol üst dış köşe,
+X sağa, Y aşağı, Z bu ikisiyle sağ el sistemi oluşturur.</p>
+<p>Robot tabanına göre pano pozunu gerçekten ölçtüyseniz ilgili kutuyu seçip
+X / Y / Z'yi <strong>mm</strong>, roll / pitch / yaw değerlerini <strong>derece</strong> olarak girin.
+Dönüş sırası <code>Rz(yaw) · Ry(pitch) · Rx(roll)</code>'dur. Altı alan da doldurulmalıdır;
+ölçmediğiniz değerleri sıfır varsaymayın. Taban ölçümü olmadan yalnız pano–kamera
+dönüşümü kaydedilir. Matrisler kayıt içinde metre kullanır:</p>
+<pre><code class="language-text">base_from_camera = base_from_board × inverse(camera_from_board)
+</code></pre>
+<p><strong>Bilek kamerası hareket edince bu pozu sabit dönüşüm olarak kullanamazsınız.</strong>
+Güncel pano görünürlüğü veya ayrıca doğrulanmış el–göz montaj kalibrasyonu gerekir.
+Bu akış lensi ve görünen pano pozunu ölçer; <code>hand_eye_calibrated</code> ve
+<code>physical_alignment_verified</code> alanlarını <strong>false</strong> bırakır. Robotun gerçek eklem
+kinematiğiyle eşleştirme tamamlanmadan hareket izni verilmez. Üst kamera / pano
+yerinden oynarsa onun pozu da yeniden ölçülmelidir.</p>
+<p>RGB pano ölçümü bir derinlik sensörü değildir; küpün yüksekliği, kavrama ve düşme
+algısı ayrıca doğrulanır. Lens kayıtları <code>.runtime/hardware/cameras/&lt;rol&gt;/&lt;oturum&gt;/</code>
+altında <code>calibration.json</code>, köşe gözlemleri <code>observations.json</code>, masa kaydı
+<code>workspace.json</code> olarak tutulur. Tam kamera kareleri bu ölçüm akışında diske kaydedilmez.</p>
+<h2 id="docs-so101-hardware--7-simülasyondan-gerçek-harekete-kalan-işler">7. Simülasyondan gerçek harekete kalan işler</h2>
 <p>Bağlantı tanılamasından sonra gerçek koldan ölçüm alarak şu aşamalar tamamlanır:</p>
 <table>
 <thead>
@@ -2252,11 +2356,23 @@ bir robot koluna doğrudan aynı hareket olarak aktarılamaz.</p>
 .venv/bin/python -m unittest discover -s tests/scientific -p test_hardware_api.py -v
 .runtime/hardware-venv/bin/python -m unittest discover -s tests/hardware -v
 </code></pre>
-<p>Testler sahte seri taşıma / süreçler kullanır; fiziksel motoru veya kamerayı açmaz.
-Kurulu Feetech SDK'sının yazma çağrılarının seri sınıra ulaşmadan reddedildiği de
-sınanır. Standart LeRobot <code>connect(calibrate=False)</code> çağrısı yapılandırma / tork
-yazabildiğinden bu tanılama yolunda kullanılmaz. Seri sınır yalnızca altı motor
-ID'sine PING ve sınırlı READ paketlerine izin verir.</p>
+<p>Testler sahte seri taşıma / süreçler ve bilinen kamera projeksiyonları kullanır;
+fiziksel motoru veya kamerayı açmaz. Kurulu Feetech SDK'sıyla tam ölçüm / kayıt /
+geri yükleme, yarım kalan EEPROM yazımı, dosya hatası, eski komutlar, bağlantı
+kaybı ve 15 saniyelik gözetim süresi sınanır. Kamera testleri bilinen lens matrisini
+geri elde etmeyi, ayrı kare hatalarını, pano köşelerini ve dönüşüm yönünü kontrol eder.
+Tarayıcı kontrolü tüm donanım uçlarını sahte yanıtlarla değiştirir:</p>
+<pre><code class="language-bash">.runtime/dev-venv/bin/python tools/check_calibration_ui.py --base http://127.0.0.1:8772
+</code></pre>
+<p>Bu komut Playwright ve Chrome bulunan geliştirme ortamı ile ayrı bir test sunucusu
+bekler; fiziksel kalibrasyon yapmaz. Standart LeRobot <code>connect(calibrate=False)</code>
+çağrısı yapılandırma / tork yazabildiğinden kullanılmaz. Salt okuma yolu yalnızca
+PING ve sınırlı READ; sihirbaz yolu ise açık adım onayıyla tork <strong>kapatma</strong>, mod,
+EEPROM kilidi ve kalibrasyon kayıtlarına tek kullanımlık yazma izni verir.
+Hedef konum, tork açma, ID değiştirme ve toplu motor yazımı seri sınırda reddedilir.</p>
+<p>Yöntem kaynakları: <a href="https://huggingface.co/docs/lerobot/en/so101#calibrate">LeRobot SO-101 kalibrasyonu</a>,
+<a href="https://docs.opencv.org/4.13.0/dc/dbb/tutorial_py_calibration.html">OpenCV lens kalibrasyonu</a>,
+<a href="https://docs.opencv.org/4.13.0/df/d4a/tutorial_charuco_detection.html">ChArUco algılama</a>.</p>
 <p><a href="#docs-so101-local">← SO-101 simülasyonu</a> · <a href="#docs-tictactoe-local">Tic-tac-toe</a> · <a href="#docs-README">Rehber dizini</a></p></section>
 <section id="docs-troubleshooting"><h1 id="docs-troubleshooting--sorun-giderme-bakım-ve-yedekleme">Sorun giderme, bakım ve yedekleme</h1>
 <p>Önce çalışan terminalin günlüğünü ve <code>fruitfly doctor</code> çıktısını inceleyin.

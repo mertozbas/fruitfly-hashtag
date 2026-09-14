@@ -45,6 +45,9 @@ class WorkspaceTests(unittest.TestCase):
             self.assertFalse((home / "models").exists())
             self.assertTrue((home / "docs/index.html").is_file())
             self.assertTrue((home / "ui/vendor/THREE-LICENSE.txt").is_file())
+            for relative in ('ui/calibration.js','ui/calibration.css','ui/calibration-board.svg','ui/calibration-reference.json',
+                             'so101/calibration_motor.py','so101/calibration_camera.py','so101/calibration_host.py','so101/calibration_contract.py'):
+                self.assertTrue((home / relative).is_file(),relative)
 
     def test_upgrade_preserves_models_and_blocks_modified_code(self):
         with tempfile.TemporaryDirectory() as directory:
