@@ -1,7 +1,7 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rehber · Hashtag Neural Lab</title><link rel="icon" href="data:,"><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#0c121b;color:#d9e5ee;font:16px/1.75 system-ui,sans-serif}aside{position:fixed;inset:0 auto 0 0;width:220px;padding:28px 22px;overflow-y:auto;border-right:1px solid #263744;background:#101923}aside b{display:block;font-size:14px;letter-spacing:.08em;margin-bottom:25px}aside a{display:block;margin:10px 0}a{color:#7ee3c3}main{margin-left:220px;max-width:1440px;padding:36px 48px}section{padding:0 0 44px;margin-bottom:44px;border-bottom:1px solid #324653}h1{font-size:30px;line-height:1.3}h2{font-size:23px;margin-top:32px}h3{font-size:18px}pre{padding:18px;border:1px solid #2e4455;border-radius:7px;background:#060c13;overflow:auto;line-height:1.5}code{font:13px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}blockquote{border-left:3px solid #7ee3c3;margin-left:0;padding:3px 20px;color:#b6c8d7}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px;border:1px solid #293b4a;vertical-align:top}th{background:#162332}li{margin:7px 0}.meta{color:#98adbd;font-size:13px}@media(max-width:760px){aside{position:static;width:auto}aside a{display:inline-block;margin-right:18px}main{margin:0;padding:24px}table{display:block;overflow:auto}}@media print{aside{display:none}main{margin:0;padding:0}body{background:white;color:black}a{color:#064f44}pre{background:#eee}}
 
 img,video{max-width:100%;height:auto;border-radius:8px}p:has(>img){margin:26px 0}h1,h2,h3{color:#ecf3f6}section{scroll-margin-top:24px}a{overflow-wrap:anywhere}aside a{font-size:14px;margin:7px 0}summary{cursor:pointer}.meta{line-height:1.7}
-</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-so101-local">SO-101 robot deneyi</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
+</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-so101-local">SO-101 robot deneyi</a><a href="#docs-tictactoe-local">Tic-tac-toe laboratuvarı</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
 
 <h1 id="README--hashtag-neural-lab">Hashtag Neural Lab</h1>
 <p><strong>Gerçek sinek anatomisinden çıkarılan bir devreyi eğitin; yön kararını, canlı nöron yanıtlarını ve fizik simülasyonunu tek ekranda inceleyin.</strong></p>
@@ -27,6 +27,14 @@ artışı gösterilmedi. <a href="#docs-local-tasks">Üçlü kontrol deneyleri v
 temas tabanlı al ve yerleştirme simülasyonunu gösterir. Ayrı 100 başlangıçta
 94 başarı ve sıfır sınır ihlali ölçüldü. <a href="#docs-so101-local">Kurulum, kullanım, eğitim ve sınırlar</a>.
 Bu yerel ek henüz GitHub/PyPI'ye yayımlanmamıştır.</p>
+<p>Yerel <strong>tic-tac-toe</strong> deneyi kamera ile tahtayı okur ve hamleyi aynı anatomik alt ağda
+eğitilmiş bir strateji modeliyle seçer. Son model 4.520 geçerli karar durumunun tamamında
+optimal hamle seçti; bu sanal oyun ölçümü robot yerleştirme başarısından ayrıdır.
+Ayrı MuJoCo motor testinde 30 mm X işaretli eğitim küpleriyle 9/9 hedef ve beş robot
+hamleli tam oyun tamamlandı. O hamlelerini sanal rakip yerleştirir; özgün ince X/O
+parçalarıyla motor başarı iddiası yoktur.
+<a href="#docs-tictactoe-local">Oynama, eğitim, kamera ve robot deneyinin sınırları</a>.</p>
+<p><img alt="SO-101 tic-tac-toe: bilek kamerası, temasla taşıma ve aynı ağın canlı motor hesabı" src="media/tictactoe-lab.png"></p>
 <h2 id="README--bir-anatomik-haritadan-çalışan-deneye">Bir anatomik haritadan çalışan deneye</h2>
 <p>Başlangıç sorusu basitti: “İndirilen sinir sistemi verisinden bir devre seçip,
 onun parametrelerini değiştirince davranıştaki farkı görebilir miyiz?”
@@ -322,6 +330,10 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 <tr>
 <td>SO-101, temasla al ve yerleştir, canlı ağ ve eğitim</td>
 <td><a href="#docs-so101-local">Yerel robot deneyi</a></td>
+</tr>
+<tr>
+<td>Tic-tac-toe, kamera ile tahta okuma ve öğrenilmiş hamle seçimi</td>
+<td><a href="#docs-tictactoe-local">Yerel oyun deneyi</a></td>
 </tr>
 <tr>
 <td>Hangi veriyi, kaç GB ve neden indiriyorum?</td>
@@ -1653,6 +1665,183 @@ eklem sırası, derece/radyan dönüşümü, kavrayıcı yönü, mevcut kalibras
 çalışma alanı, hız sınırları, gecikme, bağlantı kesilince durma ve acil durdurma
 ayrıca doğrulanmalıdır. Simülasyondaki kusursuz nesne durumunun gerçek karşılığı
 bir algılama sistemi gerektirir. Fiziksel denemeler bu yerel çalışmanın dışındadır.</p></section>
+<section id="docs-tictactoe-local"><h1 id="docs-tictactoe-local--so-101-tic-tac-toe-laboratuvarı">SO-101 · Tic-tac-toe laboratuvarı</h1>
+<p>Bu yerel deney iki ayrı yeteneği ölçer: <strong>hamleyi seçmek</strong> ve <strong>taşı yerleştirmek</strong>.
+Sanal tahtadaki başarı robotun taş yerleştirme başarısı değildir.</p>
+<p><img alt="Yerel tic-tac-toe laboratuvarı ve canlı motor hesabı" src="media/tictactoe-lab.png"></p>
+<h2 id="docs-tictactoe-local--kullanım">Kullanım</h2>
+<p>Laboratuvarda <strong>Davranış → SO-101 · Tic-tac-toe</strong> seç.
+Yerel hazır model <strong>Tic-tac-toe · strateji + robot</strong>. İki yerleştirme modu bulunur:</p>
+<ul>
+<li><strong>Robot · eğitim küpleri:</strong> SO-101, X işaretli 30 mm küpleri temas fiziğiyle taşır. Ağ X oynar;
+  insan veya otomatik rakibin O taşı sanal olarak yerleştirilir.</li>
+<li><strong>Sanal tahta · özgün X/O:</strong> özgün basılı parçalar gösterilir; taş konumları yazılımla atanır.
+  Bu modda ağın X veya O olmasını seçebilirsin.</li>
+</ul>
+<p><strong>Rakip → Ben oynayayım</strong> seç ve <strong>Yeni oyun</strong> düğmesine bas.
+X başlar. Sıra sana geldiğinde simülasyon üzerindeki dokuz kareden birine tıkla.
+Rastgele rakip ve ağın kendisiyle oynaması seçenekleri de vardır. <strong>Tekrarla</strong>, otomatik
+rakiple biten oyunlardan sonra yeni oyun başlatır; insanlı oyunda yeni oyunu sen başlatırsın.</p>
+<p>Sağdaki nöronlar, gösterilen kararın gerçek ileri hesaplamasından gelir. İnsan sırasındayken
+gösterilen skorlar o taraf için ağın analizidir; insanın yerine hamle uygulanmaz.
+<strong>Algılama / Üst kamera</strong> sekmeleri son strateji kararına giren kareyi gösterir.
+<strong>Bilek</strong> sekmesi kolun bileğine bağlı kameranın güncel görüntüsüdür. Kare numaraları ayrı gösterilir.
+Üst kamera stratejinin tahta gözlemidir; bilek ve üst RGB-D motor deneyinde nesne takibi için kullanılır.
+Motor hareketi sırasında gösterilen nöronlar motor hesabına, hamle seçerken strateji hesabına aittir.
+Grafikte giriş ve motor katmanlarının ortalama aktivitesi, robot modunda uç nokta hızı ve gerçek
+simülasyon zamanı görünür. Görüş kapandığında kısa süreli temas/son konum tahmini açıkça etiketlenir.</p>
+<h2 id="docs-tictactoe-local--gerçekte-ne-eğitiliyor">Gerçekte ne eğitiliyor?</h2>
+<p>MaleCNS verisindeki <strong>3.488 nöron / 81.104 mevcut bağlantı</strong> içeren Touch → VNC → Motor
+alt grafiği yapay bir görev için yeniden kullanılır. Bu yaşayan beyin veya tam sinek beyni değildir.
+Tahtadaki kendi taşı / boş / rakip taşı durumları 27 girişe kodlanır. Döndürme ve yansıtma
+eşdeğerleri aynı koordinat düzenine taşınır. Kodlayıcı, üç anatomik katmanın bağlantı kazançları
+ve dokuz karelik çıkış okuması eğitilir. Yeni anatomik bağlantı eklenmez.</p>
+<p>Canlı strateji <code>tictactoe/policy.py</code> içindedir. Burada minimax, LLM, hamle tablosu veya
+taktik düzeltme bulunmaz. Dokuz öğrenilmiş skor boş kare maskesinden geçer; en yüksek skor seçilir.
+Kurallar sırayı, dolu kareleri ve oyun sonunu doğrular; strateji üretmez.</p>
+<p>Minimax yalnızca <code>teacher.py</code> ve eğitim/değerlendirmede kullanılır. Önce simetri grupları
+ayrılmış eğitim/doğrulama, ardından sonlu oyun uzayının tamamıyla eğitim yapılır.
+Son modelin tam tahta kapsamı, görülmemiş veri genellemesi diye sunulmaz.
+Canlı oyun sırasında ağırlıklar sabittir. <strong>Stratejiyi eğit</strong> yeni bir model dosyası oluşturur;
+küp taşıma modeli ve önceki oyun modelleri korunur.</p>
+<h2 id="docs-tictactoe-local--yerelde-yeniden-eğitme">Yerelde yeniden eğitme</h2>
+<p>Mevcut bilimsel Python ortamını kullan. Kök ortamda <code>uv sync</code> çalıştırma; yerel robot/sinek
+bağımlılıkları paketleme ortamından ayrıdır.</p>
+<pre><code class="language-bash">.venv/bin/python -m tictactoe.train \
+  --output models/lab_runs/my-tictactoe \
+  --steps 6000 --seed 51
+</code></pre>
+<p>200–10.000 adım sınırı vardır. Çıktılar: <code>trained.npz</code>, <code>untrained.npz</code>, <code>circuit.json</code>,
+<code>training.json</code>, <code>evaluation.json</code> ve <code>boards.npz</code>. UI'daki <strong>Yeni modeli simülasyona al</strong>
+düğmesi veya model seçimi ile karşılaştır. CLI üzerinden eğitim tamamlandıysa sayfayı yenile.
+UI'nın oyun için başlangıç ayarı 6.000 adım / tohum 51'dir. Eğitim seçili canlı modeli değiştirmez.
+Yeni stratejinin motor bağlantısı otomatik devralınmaz; değişen ağ için motor okuması yeniden
+öğrenilmeli ve temas testleri geçmelidir:</p>
+<pre><code class="language-bash">.venv/bin/python -m tictactoe.motor \
+  --source models/lab_runs/my-tictactoe \
+  --output models/lab_runs/my-tictactoe-robot --seed 52
+
+.venv/bin/python tools/evaluate_tictactoe_motor.py \
+  --model models/lab_runs/my-tictactoe-robot/trained.npz \
+  --output models/lab_runs/my-tictactoe-robot/acceptance.json --register
+</code></pre>
+<p><code>--register</code>, dokuz hedef, ardışık tam oyun ve motor susturma kontrolü geçerse modeli UI'ya ekler.
+Geçmezse rapor ve aday dosyaları korunur. Her eğitim için yeni dizin kullan; mevcut modelin üstüne
+yazmak reddedilir. Motor doğrulaması simülasyon çalıştırır ve birkaç dakika sürebilir.</p>
+<p><strong>Modeli indir</strong> yalnızca taşınabilir strateji çıkarımını ZIP olarak verir; robot sürücüsü içermez:</p>
+<pre><code class="language-bash">python -m pip install numpy scipy
+python infer.py 0 0 0 0 0 0 0 0 0
+</code></pre>
+<p>Kareler satır sırasındadır: 0 boş, 1 X, -1 O. Sonuç sıfır ve bir tabanlı kare numarasıdır.
+Taşınabilir çıkarımda öğretmen dosyası bulunmaz. Paket dağıtımı yerel eğitilmiş modelleri içermez.</p>
+<h2 id="docs-tictactoe-local--kaydedilen-strateji-deneyi">Kaydedilen strateji deneyi</h2>
+<p><code>local-tictactoe-seed51</code>, 6.000 adım:</p>
+<table>
+<thead>
+<tr>
+<th>Ölçüm</th>
+<th>Sonuç</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>İlk aşama: ayrı tutulan 125 simetri grubunda optimal hamle</td>
+<td>%96,8</td>
+</tr>
+<tr>
+<td>Son model: 4.520 geçerli karar durumunda optimal hamle</td>
+<td>4.520 / 4.520</td>
+</tr>
+<tr>
+<td>Rastgele rakip, iki rol, 400 oyun</td>
+<td>352 galibiyet / 48 beraberlik / 0 yenilgi</td>
+</tr>
+<tr>
+<td>Minimax rakip, iki rol, 400 oyun</td>
+<td>400 beraberlik / 0 yenilgi</td>
+</tr>
+<tr>
+<td>Bütün olası rakip cevapları, boş tahtadan X ve O</td>
+<td>İki rolde de en kötü sonuç beraberlik</td>
+</tr>
+<tr>
+<td>Dört nöron katmanı sıfır, rastgele rakip, 400 oyun</td>
+<td>96 galibiyet / 37 beraberlik / 267 yenilgi</td>
+</tr>
+<tr>
+<td>Eğitimsiz ağ, aynı rastgele rakip koşulları, 400 oyun</td>
+<td>185 galibiyet / 18 beraberlik / 197 yenilgi</td>
+</tr>
+</tbody>
+</table>
+<p>İlk aşamadaki ölçüm model seçimi için kullanılan doğrulama kümesidir. Son model bu grupları da
+eğitimde görür. Susturma deneyinde öğrenilmiş çıkış sabitleri ve boş kare maskesi korunur.
+Bu sonuçlar bu sonlu oyun, kurallar ve kayıtlı modele aittir; genel zekâ kanıtı değildir.</p>
+<p>Yerel motor modeli <code>local-tictactoe-robot-seed53</code>, aynı stratejiyi aynen korur
+(motor okumasının eğitim tohumu 52'dir). Sabit çalışma alanında kaydedilen MuJoCo deneyi:</p>
+<table>
+<thead>
+<tr>
+<th>Ölçüm</th>
+<th>Sonuç</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>İlk X taşını dokuz hedef kareye ayrı ayrı yerleştirme</td>
+<td>9 / 9, ilk girişimde</td>
+</tr>
+<tr>
+<td>Ardışık öz-oyun: beş ayrı X taşını taşıma</td>
+<td>5 / 5, ilk girişimde; dokuz hamlede beraberlik</td>
+</tr>
+<tr>
+<td>Motorun dört nöron katmanı susturulduğunda merkez hedef</td>
+<td>Başarısız; geçersiz hedef çalışma sınırında durduruldu</td>
+</tr>
+</tbody>
+</table>
+<p>Tekrarlanabilir sabit yerleşim testleridir. Bütün oyun dizileri, karışık taş yerleşimleri,
+keyfî düşürmeler veya gerçek robot üzerinde genel başarı oranı olarak yorumlanmamalıdır.
+UI'nın test karşılaştırması, seçili modelin strateji ve motor raporlarını ayrı gösterir.</p>
+<h2 id="docs-tictactoe-local--robot-ve-geometri-sınırı">Robot ve geometri sınırı</h2>
+<p>Özgün 240 mm tahta ve 52 × 52 × 8 mm X/O çizimleri Mert'in tic-tac-toe projesinden,
+kaynak SCAD ve CERN-OHL-P-2.0 lisansıyla alınmıştır. <code>tictactoe/assets/provenance.json</code>
+kaynak revizyonu ve dosya özetlerini taşır. STL'ler çalışma zamanında geometrileri korunarak
+MuJoCo'nun okuyabildiği ikili STL biçimine çevrilir.</p>
+<p><strong>Sanal tahta</strong> modunda taş konumları hamle uygulamasıyla atanır; bu motor becerisi değildir.
+Özgün ince X taşlarında temas oluşmasına karşın kaldırma denemeleri başarısız oldu.
+Bu geometriye otomatik motor başarısı atfedilmez. Motor deneyi 30 mm eğitim küpleri ve
+X/O işaretleriyle ayrı yürütülür; parçaların geometrisi UI'da açıkça belirtilmelidir.
+Eğitim küplerinin besleme alanı kolun sol tarafındadır. Sabit renk paleti ve son görülen konum
+birlikte nesne eşleştirmesi yapar; bu genel nesne tanıma veya keyfî dağınıklıkta kavrama değildir.</p>
+<p>Robot motor adaptörü aynı anatomik ağırlıklardan geçer; sentetik hedef örnekleriyle ayrı
+bir konum okuması öğrenir. Dokuz görev aşamasını belirleyen gözetmen, ters kinematik,
+hız sınırları, temas kontrolü ve tekrar sınırı deterministik yazılımdır.
+Bu nedenle tüm hareket sıralamasının bağımsız öğrenildiği iddia edilmez.
+Motor girdisi kamera konum kestirimi, kalibre hedef ve görev aşamasıdır. Aynı 3.488 nöronlu
+çekirdekten geçen ayrı kodlayıcı ve konum okuması kullanılır; anatomik ağırlıklar strateji
+eğitiminden sonra motor uyarlamasında sabit kalır. Kodlayıcı rastgele sabittir; motor çıkış
+okuması 4.000 sentetik geometri örneğiyle öğrenilir ve 1.000 ayrı örnekte ölçülür.</p>
+<p>Kontrol edilen X taşının konumu hareket boyunca atanmaz; kavrama, taşıma ve bırakma temasla
+oluşur. Başarı için taşın beklenen karede durması, kolun uzaklaşması ve kameranın tahtayı
+doğrulaması gerekir. Kamera konum kestirimine gizli nesne koordinatı verilmez; simülatörün
+nesne koordinatı yalnızca bağımsız son durum ve güvenlik kontrolündedir. Üç girişim / 60
+simülasyon saniyesi sınırı vardır. Park dönüşünde kalibre eklem çözümü, hareket boyunca
+servo hız/kuvvet ve çarpışma sınırları kullanılır.</p>
+<p>Kamera görüntüleri MuJoCo'dan gelir. Derinlik sentetiktir; gerçek UVC modülü yalnızca RGB
+sağlar. Gerçek robotta tahta/lens kalibrasyonu, algılama, kuvvet ve hız sınırları, kamera
+gecikmeleri ve düşük güç denemeleri ayrıca doğrulanmalıdır. Bu deney fiziksel robotu açmaz.</p>
+<h2 id="docs-tictactoe-local--kontroller">Kontroller</h2>
+<pre><code class="language-bash">.venv/bin/python -m unittest discover -s tests/scientific -p test_tictactoe.py -v
+
+SO101_TEST_ASSETS=1 .venv/bin/python -m unittest discover \
+  -s tests/scientific -p test_tictactoe.py -v
+</code></pre>
+<p>Kurallar, geçersiz hamleler, simetri dönüşümü, Torch/NumPy eşleşmesi, anatomik maske,
+öğretmensiz taşınabilir çıkarım ve eski tahta üstüne gönderilen hamlelerin reddi sınanır.
+İkinci komut kameranın iki geometride tüm kareleri okumasını ve benzer renkli, önceden
+yerleştirilmiş taşları sıradaki taşla karıştırmamasını da sınar.</p></section>
 <section id="docs-experiments"><h1 id="docs-experiments--deney-kayıtları-ve-kanıtlar">Deney kayıtları ve kanıtlar</h1>
 <p><strong>Önce koşulu, sonra sonucu okuyun.</strong> Aşağıdaki sayılar küçük sentetik koku
 hedef kümelerine aittir. Fizik simülasyonunda ölçülmüştür; biyolojik doğrulama,
@@ -2156,7 +2345,12 @@ kontrolünü gösteren değiştirilmemiş tarayıcı ekran görüntüsüdür. Mo
 <code>cd1d23a81c54…</code>; resmî 32×32 UVC somun yuvalı adaptör modelidir. Küçük pencere
 hareketli bilek gözünün karar karesidir, büyük
 pencere bağımsız seyirci kamerasıdır. Görüntü duraklatılmış başlangıç durumunu
-gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.</p></section>
+gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.</p>
+<p><code>tictactoe-lab.png</code>, aynı gün 8766 adresindeki Chrome arayüzünden alınmış,
+1728×1050 boyutunda değiştirilmemiş ekran görüntüsüdür. Model <code>cd704b86be32…</code>;
+SO-101 X işaretli 30 mm eğitim küpünü taşıyor. Bilek penceresi motor girdisinin
+kamera karesi, sağdaki aktivite aynı checkpoint'in motor ileri hesabıdır.
+Orijinal 240 mm tahta korunur; O sanal rakiptir. Kayıt gerçek donanım videosu değildir.</p></section>
 <section id="THIRD_PARTY_NOTICES"><h1 id="THIRD_PARTY_NOTICES--kaynaklar-ve-lisans-bildirimleri">Kaynaklar ve lisans bildirimleri</h1>
 <p>Neural Lab bağımsız bir Hashtag projesidir; aşağıdaki projelerle resmi bağlantı
 veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politikaları kapsamaz.</p>
@@ -2203,6 +2397,11 @@ veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politik
 <td>SO-101 UVC somun yuvalı kamera adaptörü</td>
 <td><a href="https://github.com/TheRobotStudio/SO-ARM100/tree/main/Optional/SO101_Wrist_Cam_Hex-Nut_Mount_32x32_UVC_Module">TheRobotStudio / SO-ARM100</a>, Apache 2.0; <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/so101/assets/SO-ARM100-LICENSE">yerel lisans</a></td>
 <td>Değiştirilmemiş STL, <code>63eede5a636e548eb8f2854e558bd343c21db9f7</code> revizyonundan; <code>so101/assets/README.md</code> kaynak ve mekanik eşlemeyi içerir</td>
+</tr>
+<tr>
+<td>Tic-tac-toe tahta ve X/O parçaları</td>
+<td>Hashtag Robotics / Mert Özbaş, <code>Hashtag-Robotics/so101-tic-tac-toe</code>; <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/tictactoe/assets/LICENSE">CERN-OHL-P-2.0 lisansı</a></td>
+<td><code>73292400ad72ea895db233715e3a093e491563f9</code> revizyonu; kaynak SCAD, özgün STL ve SHA-256 kayıtları <code>tictactoe/assets/</code> içindedir</td>
 </tr>
 <tr>
 <td>Three.js 0.180.0 / OrbitControls</td>

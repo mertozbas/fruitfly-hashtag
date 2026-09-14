@@ -102,8 +102,8 @@ def scene_xml():
 
 
 class ArmEnv:
-    def __init__(self, seed=0, render=False):
-        self.model = mujoco.MjModel.from_xml_string(scene_xml())
+    def __init__(self, seed=0, render=False, xml=None):
+        self.model = mujoco.MjModel.from_xml_string(scene_xml() if xml is None else xml)
         self.data = mujoco.MjData(self.model)
         self.ik_data = mujoco.MjData(self.model)
         self.gravity_data = mujoco.MjData(self.model)
@@ -135,7 +135,7 @@ class ArmEnv:
     def goal(self):
         return self.model.body_pos[self.bin_id].copy() + [0,0,.0174]
 
-    def ik(self, target, q=None, iterations=40):
+    def ik(self, target, q=None, iterations=40, tool_rotation=None):
         """Position + downward tool-axis IK; only the five arm DOFs participate."""
         d = self.ik_data
         d.qpos[:] = self.data.qpos
@@ -144,7 +144,7 @@ class ArmEnv:
         for _ in range(iterations):
             mujoco.mj_forward(self.model,d)
             rotation = d.site_xmat[self.site].reshape(3,3)
-            desired=np.array([[0,0,1],[-1,0,0],[0,-1,0]])
+            desired=np.array([[0,0,1],[-1,0,0],[0,-1,0]]) if tool_rotation is None else np.asarray(tool_rotation)
             rotation_error=.5*sum(np.cross(rotation[:,i],desired[:,i]) for i in range(3))
             error = np.r_[np.asarray(target)-d.site_xpos[self.site], .06*rotation_error]
             if np.linalg.norm(error) < 2e-5:

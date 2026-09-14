@@ -67,3 +67,9 @@ kontrolünü gösteren değiştirilmemiş tarayıcı ekran görüntüsüdür. Mo
 hareketli bilek gözünün karar karesidir, büyük
 pencere bağımsız seyirci kamerasıdır. Görüntü duraklatılmış başlangıç durumunu
 gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.
+
+`tictactoe-lab.png`, aynı gün 8766 adresindeki Chrome arayüzünden alınmış,
+1728×1050 boyutunda değiştirilmemiş ekran görüntüsüdür. Model `cd704b86be32…`;
+SO-101 X işaretli 30 mm eğitim küpünü taşıyor. Bilek penceresi motor girdisinin
+kamera karesi, sağdaki aktivite aynı checkpoint'in motor ileri hesabıdır.
+Orijinal 240 mm tahta korunur; O sanal rakiptir. Kayıt gerçek donanım videosu değildir.

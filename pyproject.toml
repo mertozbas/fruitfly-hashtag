@@ -30,6 +30,30 @@ dev = ["build==1.3.0", "twine==6.2.0", "Markdown==3.8.2"]
 packages = ["src/fruitfly_lab"]
 
 [tool.hatch.build.targets.wheel.force-include]
+"docs/media/tictactoe-lab.png" = "fruitfly_lab/bundle/docs/media/tictactoe-lab.png"
+"tools/check_tictactoe_ui.py" = "fruitfly_lab/bundle/tools/check_tictactoe_ui.py"
+"tools/probe_tictactoe_motor.py" = "fruitfly_lab/bundle/tools/probe_tictactoe_motor.py"
+"tools/evaluate_tictactoe_motor.py" = "fruitfly_lab/bundle/tools/evaluate_tictactoe_motor.py"
+"tools/audit_tictactoe_live.py" = "fruitfly_lab/bundle/tools/audit_tictactoe_live.py"
+"tictactoe/__init__.py" = "fruitfly_lab/bundle/tictactoe/__init__.py"
+"tictactoe/export.py" = "fruitfly_lab/bundle/tictactoe/export.py"
+"tictactoe/motor.py" = "fruitfly_lab/bundle/tictactoe/motor.py"
+"tictactoe/policy.py" = "fruitfly_lab/bundle/tictactoe/policy.py"
+"tictactoe/rules.py" = "fruitfly_lab/bundle/tictactoe/rules.py"
+"tictactoe/scene.py" = "fruitfly_lab/bundle/tictactoe/scene.py"
+"tictactoe/teacher.py" = "fruitfly_lab/bundle/tictactoe/teacher.py"
+"tictactoe/train.py" = "fruitfly_lab/bundle/tictactoe/train.py"
+"tictactoe/vision.py" = "fruitfly_lab/bundle/tictactoe/vision.py"
+"tictactoe/worker.py" = "fruitfly_lab/bundle/tictactoe/worker.py"
+"tictactoe/assets/LICENSE" = "fruitfly_lab/bundle/tictactoe/assets/LICENSE"
+"tictactoe/assets/board.stl" = "fruitfly_lab/bundle/tictactoe/assets/board.stl"
+"tictactoe/assets/hashtag-tic-tac-toe.scad" = "fruitfly_lab/bundle/tictactoe/assets/hashtag-tic-tac-toe.scad"
+"tictactoe/assets/o-token.stl" = "fruitfly_lab/bundle/tictactoe/assets/o-token.stl"
+"tictactoe/assets/provenance.json" = "fruitfly_lab/bundle/tictactoe/assets/provenance.json"
+"tictactoe/assets/x-token.stl" = "fruitfly_lab/bundle/tictactoe/assets/x-token.stl"
+"ui/tictactoe.js" = "fruitfly_lab/bundle/ui/tictactoe.js"
+"ui/tictactoe.css" = "fruitfly_lab/bundle/ui/tictactoe.css"
+"docs/tictactoe-local.md" = "fruitfly_lab/bundle/docs/tictactoe-local.md"
 "so101/__init__.py" = "fruitfly_lab/bundle/so101/__init__.py"
 "so101/engine.py" = "fruitfly_lab/bundle/so101/engine.py"
 "so101/camera_mount.py" = "fruitfly_lab/bundle/so101/camera_mount.py"
@@ -139,5 +163,5 @@ packages = ["src/fruitfly_lab"]
 "docs/media/manifest.json" = "fruitfly_lab/bundle/docs/media/manifest.json"
 
 [tool.hatch.build.targets.sdist]
-only-include = ["so101", "docs/media/so101-lab.jpg", "docs/media/so101-wrist.png", "docs/so101-local.md", "task_circuit.py", "lab_tasks.py", "brain_export.py", "docs/local-tasks.md", "docs/PYPI.md", "tools/record_media.py", "LAB.md", "SIMULATION.md", "docs/README.md", "docs/experiments.md", "docs/guide.css", "docs/media/README.md", "docs/media/anatomy-atlas.jpg", "docs/media/experiments.json", "docs/media/flight-lab.jpg", "docs/media/flight.gif", "docs/media/flight.mp4", "docs/media/hero.svg", "docs/media/learning-delta.jpg", "docs/media/neural-lab.jpg", "docs/media/neuron-inspector.jpg", "docs/media/pipeline.svg", "docs/media/walking-comparison.gif", "docs/media/walking-comparison.mp4", "docs/media/manifest.json", "src/fruitfly_lab", "tests", "tools/build_docs.py", "tools/check_dist.py", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "brain.py", "prepare.py", "odor_policy.py", "odor_brain.py", "fly_sim.py", "evaluate_odor.py", "lab_server.py", "lab_worker.py", "lab_render.py", "lab_graph.py", "lab_details.py", "lab_train.py", "lab_flight.py", "bootstrap_runtime.py", "flight/engine.py", "flight/navigation.py", "flight/worker.py", "flight/download_assets.py", "flight/evaluate_navigation.py", "flight/validate.py", "flight/bootstrap_check.py", "flight/pyproject.toml", "flight/uv.lock", "flight/README.md", "ui/brain.css", "ui/index.html", "ui/inspector.js", "ui/inspection.css", "ui/brain-analyses.js", "ui/brain-view.js", "ui/style.css", "ui/neural-math.js", "ui/flight-ui.js", "ui/app.js", "ui/vendor/three.module.js", "ui/vendor/THREE-LICENSE.txt", "ui/vendor/three.core.js", "ui/vendor/manifest.json", "ui/vendor/OrbitControls.js", "docs/troubleshooting.md", "docs/training.md", "docs/usage.md", "docs/data.md", "docs/development.md", "docs/installation.md", "docs/index.html", "environments/walking/pyproject.toml", "environments/walking/uv.lock"]
+only-include = ["docs/media/tictactoe-lab.png", "tools/check_tictactoe_ui.py", "tools/probe_tictactoe_motor.py", "tools/evaluate_tictactoe_motor.py", "tools/audit_tictactoe_live.py", "tictactoe", "ui/tictactoe.js", "ui/tictactoe.css", "docs/tictactoe-local.md", "so101", "docs/media/so101-lab.jpg", "docs/media/so101-wrist.png", "docs/so101-local.md", "task_circuit.py", "lab_tasks.py", "brain_export.py", "docs/local-tasks.md", "docs/PYPI.md", "tools/record_media.py", "LAB.md", "SIMULATION.md", "docs/README.md", "docs/experiments.md", "docs/guide.css", "docs/media/README.md", "docs/media/anatomy-atlas.jpg", "docs/media/experiments.json", "docs/media/flight-lab.jpg", "docs/media/flight.gif", "docs/media/flight.mp4", "docs/media/hero.svg", "docs/media/learning-delta.jpg", "docs/media/neural-lab.jpg", "docs/media/neuron-inspector.jpg", "docs/media/pipeline.svg", "docs/media/walking-comparison.gif", "docs/media/walking-comparison.mp4", "docs/media/manifest.json", "src/fruitfly_lab", "tests", "tools/build_docs.py", "tools/check_dist.py", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "brain.py", "prepare.py", "odor_policy.py", "odor_brain.py", "fly_sim.py", "evaluate_odor.py", "lab_server.py", "lab_worker.py", "lab_render.py", "lab_graph.py", "lab_details.py", "lab_train.py", "lab_flight.py", "bootstrap_runtime.py", "flight/engine.py", "flight/navigation.py", "flight/worker.py", "flight/download_assets.py", "flight/evaluate_navigation.py", "flight/validate.py", "flight/bootstrap_check.py", "flight/pyproject.toml", "flight/uv.lock", "flight/README.md", "ui/brain.css", "ui/index.html", "ui/inspector.js", "ui/inspection.css", "ui/brain-analyses.js", "ui/brain-view.js", "ui/style.css", "ui/neural-math.js", "ui/flight-ui.js", "ui/app.js", "ui/vendor/three.module.js", "ui/vendor/THREE-LICENSE.txt", "ui/vendor/three.core.js", "ui/vendor/manifest.json", "ui/vendor/OrbitControls.js", "docs/troubleshooting.md", "docs/training.md", "docs/usage.md", "docs/data.md", "docs/development.md", "docs/installation.md", "docs/index.html", "environments/walking/pyproject.toml", "environments/walking/uv.lock"]
 exclude = ["**/__pycache__/**", "**/*.pyc"]

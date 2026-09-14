@@ -40,6 +40,16 @@ temas tabanlı al ve yerleştirme simülasyonunu gösterir. Ayrı 100 başlangı
 94 başarı ve sıfır sınır ihlali ölçüldü. [Kurulum, kullanım, eğitim ve sınırlar](docs/so101-local.md).
 Bu yerel ek henüz GitHub/PyPI'ye yayımlanmamıştır.
 
+Yerel **tic-tac-toe** deneyi kamera ile tahtayı okur ve hamleyi aynı anatomik alt ağda
+eğitilmiş bir strateji modeliyle seçer. Son model 4.520 geçerli karar durumunun tamamında
+optimal hamle seçti; bu sanal oyun ölçümü robot yerleştirme başarısından ayrıdır.
+Ayrı MuJoCo motor testinde 30 mm X işaretli eğitim küpleriyle 9/9 hedef ve beş robot
+hamleli tam oyun tamamlandı. O hamlelerini sanal rakip yerleştirir; özgün ince X/O
+parçalarıyla motor başarı iddiası yoktur.
+[Oynama, eğitim, kamera ve robot deneyinin sınırları](docs/tictactoe-local.md).
+
+![SO-101 tic-tac-toe: bilek kamerası, temasla taşıma ve aynı ağın canlı motor hesabı](docs/media/tictactoe-lab.png)
+
 ## Bir anatomik haritadan çalışan deneye
 
 Başlangıç sorusu basitti: “İndirilen sinir sistemi verisinden bir devre seçip,

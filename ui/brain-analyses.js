@@ -58,6 +58,14 @@ export function createAnalyses(graph,{getSelection}){
       $('motor-drive').textContent=action?`${target?'Hedef':'ΔXYZ'} ${values.map(x=>x.toFixed(1)).join(' / ')} mm`:'Henüz hareket uygulanmadı';
       $('motor-drive').title='Bu nöron hesabından çıkan konum komutu; ardından sınırlı IK ve servo kontrolü uygulanır.';
     }
+    if(current.behavior==='tictactoe'){
+      $('motor-drive').textContent=`Kare ${(current.game?.decision?.chosen_cell??0)+1} · strateji`;
+      $('motor-drive').title='Gösterilen aktiviteden çıkan dokuz skor ve yasal kare maskesi. Motor komutu değildir.';
+      if(current.neural?.displayed_pass==='motor'&&current.game?.motor){
+        $('motor-drive').textContent=current.game.motor.action.slice(0,3).map(v=>(v*1000).toFixed(1)).join(' / ')+' mm';
+        $('motor-drive').title='Görüntüden nesne konumu → aynı anatomik ağırlıklar → öğrenilmiş motor okuması → sınırlı IK ve servo.';
+      }
+    }
     const region=setup($('region-map'),allBounds);
     if(region){
       background(region,surface,allBounds);

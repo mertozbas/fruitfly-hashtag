@@ -2,7 +2,9 @@ import { createBrain } from './brain-view.js';
 import { createAnalyses } from './brain-analyses.js';
 import { createInspector } from './inspector.js';
 import { edgeSignal, modelMatches } from './neural-math.js';
-import { behaviorUI } from './flight-ui.js';
+import { behaviorUI as baseBehaviorUI } from './flight-ui.js';
+import { bindGame, gameUI, updateGame, gameEyes } from './tictactoe.js';
+function behaviorUI(task){baseBehaviorUI(task);gameUI(task==='tictactoe');}
 
 const $ = id => document.getElementById(id);
 const fmt = (n, digits=2) => Number.isFinite(n) ? n.toFixed(digits) : '—';
@@ -17,6 +19,7 @@ let behavior=null;
 let eyeMode='detection';
 const isFlight=()=>simulation.behavior==='flight';
 const isRobot=()=>simulation.behavior==='so101';
+const isGame=()=>simulation.behavior==='tictactoe';
 
 function selectEntity(next, open=true) {
   selection=next;
@@ -73,6 +76,7 @@ function integer(id,min,max) {
   return value;
 }
 function goal() {
+  if(isGame())return [0,0];
   const value=[Number($('goal-x').value),Number($('goal-y').value)];
   if(isRobot()){
     if(!value.every(Number.isFinite)||value[0]<125||value[0]>160||value[1]<-180||value[1]>-135)throw Error('Kutu merkezi: X 125–160 mm, Y −180…−135 mm.');
@@ -125,10 +129,10 @@ async function refreshModel(id) {
   $('checkpoint').textContent='CHECKPOINT '+selectedModel.sha256.slice(0,12);
   $('brain-model').textContent=item?.name ?? id;
   $('loss-value').textContent=t ? fmt(t.after_mse,5):'—';
-  $('loss-change').textContent=t ? `${fmt((t.after_mse/t.before_mse-1)*100,1)}%`:'Başlangıç';
+  $('loss-change').textContent=t?.before_mse ? `${fmt((t.after_mse/t.before_mse-1)*100,1)}%`:isGame()?'Strateji':'Başlangıç';
   $('loss-steps').textContent=t ? `${count(t.cumulative_steps??t.steps)} adım`:'Eğitim uygulanmadı';
   $('changed').textContent=t ? `${count(t.changed_existing_synaptic_gains)} bağlantı değişti`:'Ağırlıklar başlangıç halinde';
-  trainingHistory=t?.history?.map(p=>[p.step,p.validation_mse]) ?? [];
+  trainingHistory=t?.history?.map(p=>Array.isArray(p)?p:[p.step,p.validation_mse]) ?? [];
   if(sceneView){sceneView.update(simulation.activity);sceneView.freshness();}
   analyses?.update(simulation);
   await inspector?.modelChanged(id);
@@ -157,7 +161,7 @@ function updateCharts(job) {
     $('loss-value').textContent=fmt(job.loss,5);
     $('loss-change').textContent='';
     $('loss-steps').textContent=`${count(job.step||0)} / ${count(job.steps)} adım`;
-    $('changed').textContent=job.status==='evaluating'?`${job.evaluated||0} / ${job.evaluation_total||6} fizik testi`:'Model eğitiliyor';
+    $('changed').textContent=job.status==='evaluating'?(job.task==='tictactoe'?'Tüm tahta durumları ve rakipler sınanıyor':`${job.evaluated||0} / ${job.evaluation_total||6} fizik testi`):'Model eğitiliyor';
   } else $('loss-source').textContent='SEÇİLİ MODEL';
 }
 async function updateJob(job) {
@@ -171,13 +175,13 @@ async function updateJob(job) {
   $('job-percent').textContent=`${Math.round(percent)}%`;
   $('job-progress').style.width=percent+'%';
   if(job.status==='training') $('job-note').textContent=`${count(job.step||0)} / ${count(job.steps)} adım · Canlı görünüm seçili modelle devam eder.`;
-  else if(job.status==='evaluating') $('job-note').textContent=`Test ${job.evaluated||0} / ${job.evaluation_total||6} · ${{trained:'Eğitimli',untrained:'Eğitimsiz',silenced:'Çıkış kapalı'}[job.variant]||'Hedef'}: ${job.success_count||0} başarılı.`;
+  else if(job.status==='evaluating') $('job-note').textContent=job.task==='tictactoe'?'4.520 tahta durumu, rakip oyunları ve nöron susturma kontrolü sınanıyor.':`Test ${job.evaluated||0} / ${job.evaluation_total||6} · ${{trained:'Eğitimli',untrained:'Eğitimsiz',silenced:'Çıkış kapalı'}[job.variant]||'Hedef'}: ${job.success_count||0} başarılı.`;
   else if(job.message&&!isFlight()) $('job-note').textContent=job.message;
   if(job.status==='complete'&&job.id!==completedJob){
     completedJob=latestRun=job.id;
     await refreshCatalog();
     $('load-new').classList.remove('hidden');
-    toast('Eğitim ve fizik testleri tamamlandı. Yeni modeli seçerek karşılaştırabilirsin.');
+    toast(job.task==='tictactoe'?'Strateji eğitimi ve oyun testleri tamamlandı. Yeni modeli seçerek karşılaştırabilirsin.':'Eğitim ve fizik testleri tamamlandı. Yeni modeli seçerek karşılaştırabilirsin.');
     if(simulation.model)await refreshModel(simulation.model);
   }
   if(['cancelled','failed'].includes(job.status)&&job.id!==completedJob){completedJob=job.id;if(simulation.model)await refreshModel(simulation.model);}
@@ -223,6 +227,7 @@ function updateSimulation(s) {
   $('footer-status').textContent=isFlight()?'Fizik 0,05 ms · Kanat 0,2 ms · Beyin kararı 10 ms':`Fizik ${fmt(s.physics_dt*1000,1)} ms · Sensör / karar 10 ms · Canlı veri`;
   if(isRobot())$('footer-status').textContent=`Fizik ${fmt(s.physics_dt*1000,1)} ms · Beyin kararı ${fmt(s.control_dt*1000,0)} ms · ${s.robot.sensor_source}`;
   if(isRobot()){$('robot-sensor').value=s.robot.sensor_mode||'state';$('robot-loop').checked=!!s.robot.loop_enabled;}
+  if(isGame())updateGame(s);
   $('connection').classList.add('ready');$('connection').innerHTML='<i></i> Yerel bağlantı aktif';
   sceneView?.update(s.activity);
   sceneView?.freshness();
@@ -233,6 +238,7 @@ function updateSimulation(s) {
   if(`${s.behavior}:${s.model}`!==lastModelId){lastModelId=`${s.behavior}:${s.model}`;$('model').value=s.model;refreshModel(s.model).catch(e=>toast(e.message));}
 }
 function updateEyes(s){
+  if(s.behavior==='tictactoe'){gameEyes(s,eyeMode);return;}
   const robot=s.behavior==='so101',p=s.robot?.perception;
   $('eye-preview').classList.toggle('hidden',robot?!p:s.behavior!=='vision');
   const frame=robot?s.eyes?.[eyeMode]:s.eyes_image;
@@ -332,9 +338,27 @@ bind('eye-expand',()=>{const expanded=$('eye-preview').classList.toggle('expande
 bind('robot-next',()=>control({op:'next'}));
 bind('load-new',async()=>{if(latestRun){const m=catalog.models.find(m=>m.id===latestRun);if(m?.task&&m.task!==simulation.behavior)await control({op:'behavior',behavior:m.task});await control({op:'model',model:latestRun});$('model').value=latestRun;}});
 function setMode(value){mode=value;$('brain-view').classList.toggle('delta-view',value==='delta');$('activity-mode').classList.toggle('active',value==='activity');$('delta-mode').classList.toggle('active',value==='delta');$('scale-title').textContent=value==='activity'?'MODEL AKTİVİTESİ':'BAĞLANTI ÇARPANI';$('scale-low').textContent=value==='activity'?'0':'0.22×';$('scale-high').textContent=value==='activity'?'1':'4.48×';sceneView?.update(simulation.activity);}
+function showGameValidation(){
+  const e=selectedModel?.evaluation;if(!e)return;
+  const dialog=$('validation-dialog');dialog.querySelector('.dialog-head .tiny').textContent='SANAL TAHTA / STRATEJİ';
+  dialog.querySelector('h2').textContent='Hamle seçimi ve nöron etkisi';
+  dialog.querySelectorAll('thead th').forEach((el,i)=>el.textContent=['Rakip / koşul','Galibiyet','Beraberlik','Yenilgi'][i]);
+  $('validation-criterion').textContent=`${e.optimal_decisions??'—'} / ${e.reachable_decision_boards??'—'} geçerli tahta durumunda optimal hamle.`;
+  const rows=[['Rastgele rakip',e.random_opponent],['Minimax rakip',e.minimax_opponent],['Nöronlar sıfır / rastgele',e.controls?.silenced],['Eğitim öncesi / rastgele',e.controls?.untrained]].filter(([,v])=>v);
+  $('validation-rows').replaceChildren(...rows.map(([label,v])=>{const tr=document.createElement('tr');for(const value of [label,v.wins,v.draws,v.losses]){const td=document.createElement('td');td.textContent=value??'—';tr.append(td);}return tr;}));
+  const motor=e.motor_evaluation;
+  $('validation-note').textContent=`Tüm rakip cevapları: X ${e.worst_case_by_role?.X===0?'kaybetmiyor':'kabul geçmedi'}, O ${e.worst_case_by_role?.O===0?'kaybetmiyor':'kabul geçmedi'}. `+(motor?`Ayrı MuJoCo motor testi: ${motor.success_count}/${motor.episodes} hedef kare; ardışık oyun ${motor.games?.[0]?.complete?'tamamlandı':'tamamlanmadı'}. Motor nöronları susturulduğunda yerleştirme ${motor.silenced?.success?'başarılı':'başarısız'}. 30 mm eğitim küpleri; O sanal rakip. İnce X/O parçaları doğrulanmadı.`:'Bu sonuç robotun taş yerleştirme başarısı değildir.');
+  const v=e.generalization;
+  $('validation-method').textContent=`Minimax yalnızca öğretmen ve test rakibidir. Canlı hamleleri ağ üretir. Nöron susturma dört katmanı sıfırlar; öğrenilmiş çıkış sabitleri ve yasal hamle maskesi kalır. ${v?`İlk aşamada ${v.heldout_canonical_boards} ayrı simetri grubunda ${(100*v.optimal_fraction).toFixed(1)}% optimal hamle. `:''}Son model tüm geçerli tahta gruplarıyla eğitildi; tam kapsama testi görülmemiş veri başarısı olarak sunulmaz.`;
+  $('validation-sha').textContent='Checkpoint: '+selectedModel.sha256;dialog.showModal();
+}
 bind('activity-mode',()=>setMode('activity'));bind('delta-mode',()=>setMode('delta'));
 bind('scope-open',()=>$('scope-dialog').showModal());bind('scope-close',()=>$('scope-dialog').close());
 bind('validation-open',()=>{
+  if(isGame()){showGameValidation();return;}
+  $('validation-dialog').querySelector('.dialog-head .tiny').textContent='EŞLEŞTİRİLMİŞ FİZİK KOŞULLARI';
+  $('validation-dialog').querySelector('h2').textContent='Öğrenme ve motor etkisi';
+  $('validation-dialog').querySelectorAll('thead th').forEach((el,i)=>el.textContent=['Koşul','Başarı','Denge kaybı','Tehlike'][i]);
   const e=isFlight()?selectedModel?.flight_evaluation:selectedModel?.walk_evaluation;if(!e)return;
   $('validation-criterion').textContent=e.criterion||simulation.task_contract?.success||'Kayıtlı görev başarı ölçütü';
   const controlNames={silenced:isRobot()?'Nöron aktivitesi sıfır':'Motor çıkışı kapalı',untrained:e.paired_baseline?'Önceki model · aynı sahneler':e.recovery_evaluation?'Önceki model · geliştirme':'Eğitim öncesi',previous_recovery:'Önceki model · düşürme',frozen_core:'Sabit anatomik ağırlıklar',mlp:'MLP referansı',camera:'RGB-D kamera',front_camera:'Ön kamera · önceki test'};
@@ -356,6 +380,7 @@ bind('inspect-open',()=>selection&&inspector.show(selection,simulation.model||$(
 function setPickMode(value){pickMode=value;$('pick-node').classList.toggle('active',value==='node');$('pick-edge').classList.toggle('active',value==='edge');}
 bind('pick-node',()=>setPickMode('node'));bind('pick-edge',()=>setPickMode('edge'));
 inspector=createInspector({api,onSelect:next=>selectEntity(next,false)});
+bindGame(api,toast);
 
 // Optional browser tool contract uses the same validated endpoint as the visible controls.
 if(document.modelContext?.registerTool){

@@ -1,0 +1,12 @@
+{
+  "source": "Hashtag-Robotics/so101-tic-tac-toe",
+  "revision": "73292400ad72ea895db233715e3a093e491563f9",
+  "license": "CERN-OHL-P-2.0",
+  "files": {
+    "LICENSE": "6e471d647db50527d0c75ee5f1a55a74012ab177c73282bef0bdc7f6562b7ded",
+    "board.stl": "5f090cd59d1ba358fc59181de822164b28736f800624c7025442232a0a8c0444",
+    "hashtag-tic-tac-toe.scad": "8425794e211e6da60be223a61f7209d14170841ebdbf1a6a6812244863e49268",
+    "o-token.stl": "1e65c3361e84b4fe49befa9f97d5b0cd874ecf60f5c08ae62194eedc7bff8b0f",
+    "x-token.stl": "7d8d64600bf13f79438937903baf8a8ce5ff98a12e7d40471164a16a40840a7d"
+  }
+}

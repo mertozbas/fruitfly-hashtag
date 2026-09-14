@@ -68,7 +68,7 @@ class Runtime:
                 if not compatible(behavior, selected.get('task', 'odor')):
                     available = [m for m in models() if compatible(behavior, m.get('task', 'odor')) and not m.get('before')]
                     if not available:
-                        if behavior == 'so101':
+                        if behavior in {'so101','tictactoe'}:
                             raise HTTPException(503, 'Önce yerel SO-101 eğitimini tamamla: docs/so101-local.md')
                         from task_circuit import initialize
                         initialize(behavior)
@@ -76,7 +76,8 @@ class Runtime:
                     def rank(m):
                         e=m.get('evaluation') or {}
                         visual_accepted=behavior=='so101' and e.get('sensor')=='camera' and e.get('acceptance_passed') is True
-                        return (visual_accepted,e.get('success_count',-1)/max(1,e.get('episodes',1)))
+                        robot_accepted=behavior=='tictactoe' and e.get('motor_evaluation',{}).get('acceptance_passed') is True
+                        return (visual_accepted or robot_accepted,e.get('success_count',-1)/max(1,e.get('episodes',1)))
                     selected = max(available, key=rank)
                 if behavior == 'flight':
                     from lab_flight import FlightProcess
@@ -84,8 +85,9 @@ class Runtime:
                         raise HTTPException(503, 'Uçuş kurulumu eksik: flight/README.md')
                     commands, states = queue.Queue(32), queue.Queue(2)
                     process = FlightProcess(commands, states, selected['path'], selected['id'])
-                elif behavior == 'so101':
-                    from so101.worker import simulate as robot_simulate
+                elif behavior in {'so101','tictactoe'}:
+                    if behavior=='tictactoe':from tictactoe.worker import simulate as robot_simulate
+                    else:from so101.worker import simulate as robot_simulate
                     ctx = mp.get_context('spawn')
                     commands, states = ctx.Queue(32), ctx.Queue(2)
                     process = ctx.Process(target=robot_simulate, args=(commands,states,str(selected['path']),selected['id']), daemon=True)
@@ -199,7 +201,7 @@ def models():
             task = meta.get('task', 'odor')
             records.append(dict(id=p.parent.name, name=meta.get('name') or f"{TASKS[task]['title']} / {meta['created'][11:19]}", task=task, path=p.parent / "trained.npz",
                                 training=read_json(p.parent / "training.json"), evaluation=read_json(p.parent / "evaluation.json")))
-            if task in {'avoidance','vision','terrain','so101'} and (p.parent / 'untrained.npz').exists():
+            if task in {'avoidance','vision','terrain','so101','tictactoe'} and (p.parent / 'untrained.npz').exists():
                 evaluation = read_json(p.parent / 'evaluation.json')
                 records.append(dict(id=p.parent.name+'~before', name=f"{TASKS[task]['title']} / eğitim öncesi", task=task,
                     before=True, path=p.parent / 'untrained.npz', training=None,
@@ -228,7 +230,7 @@ def catalog():
       experiments=[dict(id="odor", title="Kokuya yönelme", status="validated", detail="Taklit öğrenmesi · 6 fizik koşulu"),
                    *[dict(id=t, title=TASKS[t]['title'], status="experimental", detail=TASKS[t]['sensor']+' → '+TASKS[t]['motor']) for t in ('avoidance','vision','terrain')],
                    dict(id="flight", title="Beyin ile uçuş", status="connected", detail="MaleCNS koku kararı → yön hedefi → FlyBody kanat kontrolü. Canlı 7.075 nöron; yönelme eğitimi ve uçuş testleri."),
-                   dict(id="so101",title=TASKS['so101']['title'],status="experimental",detail=TASKS['so101']['sensor'])])
+                   *[dict(id=t,title=TASKS[t]['title'],status="experimental",detail=TASKS[t]['sensor']) for t in ('so101','tictactoe')]])
 
 @app.get("/api/state")
 def state():
@@ -293,7 +295,7 @@ def model_details(model_id: str):
         gains = [float(learned_weights[e['layer']][e["row"],e["col"]] / e["weight"]) if e["layer"] in learned_weights else 1. for e in graph["edges"]]
         input_sums=None
         robot_adapter=None
-        if record.get('task')=='so101':
+        if record.get('task') in {'so101','tictactoe'}:
             from odor_policy import Circuit
             circuit=Circuit(record['path'].parent)
             input_sums=[np.asarray(learned_weights.get(i,layer).sum(axis=0)).ravel().tolist() for i,layer in enumerate(circuit.layers)]
@@ -306,6 +308,9 @@ def model_details(model_id: str):
                 active_external_features=np.flatnonzero(weights['input_mask'][:30]).tolist() if 'input_mask' in weights else list(range(30)),
                 action_mode=str(weights['action_mode']) if 'action_mode' in weights else 'delta',
                 outputs=['x','y','z','gripper'],teacher_in_rollout=False)
+            if record.get('task')=='tictactoe':
+                robot_adapter.update(external_observations=27,active_external_features=list(range(27)),
+                    action_mode='cell',outputs=list(range(9)),learned_motor_heads=9 if 'motor_encoder' in weights else 0)
     sha = hashlib.sha256(record['path'].read_bytes()).hexdigest()
     evaluation_task = record.get('task', 'odor')
     flight_evaluation = record['evaluation'] if evaluation_task=='flight' else read_json(ROOT / 'artifacts/lab/flight/checkpoints' / f'{sha}.json')
@@ -321,13 +326,15 @@ def export_model(model_id: str):
     record = resolve_model(model_id)
     if record.get('task')=='so101':
         from so101.export import archive
+    elif record.get('task')=='tictactoe':
+        from tictactoe.export import archive
     return Response(archive(record['path']), media_type='application/zip',
                     headers={'Content-Disposition':f'attachment; filename="{model_id}-inference.zip"'})
 
 class Control(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     op: Literal["pause", "reset", "model", "camera", "behavior", "next", "sensor", "loop"]
-    behavior: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101'] = 'odor'
+    behavior: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101', 'tictactoe'] = 'odor'
     paused: bool = False
     goal: tuple[float, float] = (12, 4)
     seed: int = Field(10, ge=0, le=1000000)
@@ -353,7 +360,7 @@ def apply_control(body):
         runtime.switch(body.behavior)
         return {'accepted': True, 'behavior': runtime.behavior}
     if body.op == 'next':
-        if runtime.behavior not in {'flight','so101'}:
+        if runtime.behavior not in {'flight','so101','tictactoe'}:
             raise HTTPException(409, 'Sonraki bölüm bu davranışta kullanılamaz.')
         runtime.control({'op': 'next'})
         return {'accepted': True}
@@ -362,7 +369,7 @@ def apply_control(body):
         runtime.control(dict(op='sensor',sensor=body.sensor))
         return {'accepted': True}
     if body.op=='loop':
-        if runtime.behavior!='so101':raise HTTPException(409,'Görev döngüsü SO-101 için kullanılabilir.')
+        if runtime.behavior not in {'so101','tictactoe'}:raise HTTPException(409,'Görev döngüsü SO-101 için kullanılabilir.')
         runtime.control(dict(op='loop',enabled=body.enabled))
         return {'accepted': True}
     if body.op == "model":
@@ -374,7 +381,7 @@ def apply_control(body):
         if runtime.behavior=='so101':
             if not (125<=body.goal[0]<=160 and -180<=body.goal[1]<=-135):
                 raise HTTPException(422,'SO-101 kutu merkezi: X 125–160 mm, Y −180…−135 mm')
-        elif not all(-30 <= x <= 30 for x in body.goal):
+        elif runtime.behavior!='tictactoe' and not all(-30 <= x <= 30 for x in body.goal):
             raise HTTPException(422, "Hedef koordinatları -30 ile 30 mm arasında olmalı")
         command = dict(op="reset", goal=list(body.goal), seed=body.seed)
     elif body.op == "pause":
@@ -385,11 +392,47 @@ def apply_control(body):
     runtime.control(command)
     return {"accepted": True}
 
+class GameSettings(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    opponent: Literal['human','random','self']='human'
+    agent: Literal[1,-1]=1
+    execution: Literal['virtual_board','robot']='virtual_board'
+
+class GameMove(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    cell: int=Field(ge=0,le=8,strict=True)
+    episode: int=Field(ge=1,strict=True)
+    board: tuple[int,...]=Field(min_length=9,max_length=9)
+
+@app.post('/api/tictactoe/settings')
+def game_settings(body:GameSettings):
+    with runtime.sim_lock:
+        if runtime.behavior!='tictactoe':raise HTTPException(409,'Önce tic-tac-toe görevini seç.')
+        if body.execution=='robot':
+            current=runtime.read()
+            if not current.get('game',{}).get('robot_ready'):raise HTTPException(409,'Seçili model motor okuması içermiyor.')
+            if body.agent!=1:raise HTTPException(422,'Robot modunda SO-101 X tarafını oynar.')
+        runtime.control(dict(op='game',**body.model_dump()))
+    return {'accepted':True}
+
+@app.post('/api/tictactoe/move')
+def game_move(body:GameMove):
+    from tictactoe.rules import play
+    with runtime.sim_lock:
+        if runtime.behavior!='tictactoe':raise HTTPException(409,'Önce tic-tac-toe görevini seç.')
+        state=runtime.read();game=state.get('game',{})
+        if not game.get('waiting_for_human') or state.get('paused'):raise HTTPException(409,'Şu anda senin sıran değil.')
+        if body.episode!=state.get('episode') or list(body.board)!=game.get('board'):raise HTTPException(409,'Tahta değişti; güncel kareyi seç.')
+        try:play(body.board,body.cell,-game['agent'])
+        except ValueError as exc:raise HTTPException(422,str(exc))
+        runtime.control(dict(op='game_move',**body.model_dump()))
+    return {'accepted':True}
+
 class TrainingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     steps: int = Field(3000, ge=200, le=10000)
     seed: int = Field(42, ge=0, le=1000000)
-    task: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101'] = 'odor'
+    task: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101', 'tictactoe'] = 'odor'
 
 def training_job(directory, steps, seed, task, initial_model=None, sensor='state'):
     meta = dict(id=directory.name, status="training", created=datetime.now(timezone.utc).isoformat(), steps=steps, seed=seed, task=task,owner_pid=os.getpid())
@@ -397,7 +440,10 @@ def training_job(directory, steps, seed, task, initial_model=None, sensor='state
     watchdog = None
     message = ""
     try:
-        if task=='so101':
+        if task=='tictactoe':
+            from tictactoe.policy import prepare
+            prepare(directory)
+        elif task=='so101':
             from so101.policy import prepare
             prepare(directory)
         else:
@@ -409,6 +455,7 @@ def training_job(directory, steps, seed, task, initial_model=None, sensor='state
         with (directory / "training.log").open("w") as log:
             command=([sys.executable,'-u','-m','so101.train_job','--output',str(directory),'--steps',str(steps),'--seed',str(seed)]
                      if task=='so101' else [sys.executable, "-u", str(ROOT / "lab_train.py"), "--steps", str(steps), "--seed", str(seed), '--task', task])
+            if task=='tictactoe':command=[sys.executable,'-u','-m','tictactoe.train','--output',str(directory),'--steps',str(steps),'--seed',str(seed)]
             if task=='so101' and initial_model is not None:command.extend(['--resume',str(initial_model)])
             if task=='so101':command.extend(['--sensor',sensor])
             process = subprocess.Popen(command,
@@ -438,6 +485,9 @@ def training_job(directory, steps, seed, task, initial_model=None, sensor='state
         status = "cancelled" if cancelled else "complete" if code == 0 else "failed"
         meta["status"] = status
         message = "Model kaydedildi; fizik sonuçları ve varsa çıkış kapatma kontrolü raporda." if status == "complete" else "İşlem durduruldu." if cancelled else "Deney tamamlanamadı; training.log kaydını incele."
+        if status=='complete' and task=='tictactoe':
+            result=read_json(directory/'evaluation.json') or {}
+            message=f"Strateji: {result.get('optimal_decisions',0)} / {result.get('reachable_decision_boards',0)} optimal hamle. Robot motor eğitimi ayrıdır."
         if status=='complete' and task=='so101':
             result=read_json(directory/'evaluation.json') or {}
             meta['acceptance_passed']=result.get('acceptance_passed',False)

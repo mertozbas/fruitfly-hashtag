@@ -1,5 +1,8 @@
 """Shared task contracts; all scientific scope is explicit and task-specific."""
 TASKS = {
+    "tictactoe": dict(title="SO-101 · Tic-tac-toe", goal=[0.,0.],
+        sensor="Üst kamera RGB → dokuz kare → MaleCNS alt devresi",motor="Öğrenilmiş dokuz hamle skoru → geçerli kare maskesi",
+        success="Sanal tahtada minimax karşısında iki rolde kaybetmeme; robot yerleştirme ayrı ölçülür"),
     "so101": dict(title="SO-101 · Al ve yerleştir", goal=[145.,-155.],
         sensor="Robot konumu ve fiziksel temas → 30 özellik → MaleCNS alt devresi",
         motor="ΔXYZ ve kavrayıcı → sınırlandırılmış ters kinematik",

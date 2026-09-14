@@ -71,6 +71,11 @@
       "file": "so101-wrist.png",
       "bytes": 564600,
       "sha256": "a08aed4c6890b3df14fd43f4959aea57c4255f107a5d8139aebc858eb30e7775"
+    },
+    {
+      "file": "tictactoe-lab.png",
+      "bytes": 558925,
+      "sha256": "83eb5eab0352dfc7a230b9847231019232b35aa3190ecde38aa4a95cff715f59"
     }
   ]
 }

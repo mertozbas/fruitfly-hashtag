@@ -10,11 +10,12 @@ from .camera_mount import PROFILE,configuration
 
 
 class RGBDCubeTracker:
-    def __init__(self,model,width=640,height=480,camera='wrist'):
+    def __init__(self,model,width=640,height=480,camera='wrist',mask_function=None):
         self.model=model
         self.width,self.height=width,height
         self.renderer=mujoco.Renderer(model,height=height,width=width)
-        if camera not in {'wrist','front'}:raise ValueError('Expected wrist or front camera')
+        if camera not in {'wrist','front','top'}:raise ValueError('Expected wrist, front or top camera')
+        self.mask_function=mask_function
         self.camera_name=camera
         self.camera_id=model.camera(self.camera_name).id
         self.depth_range=(.02,.45) if camera=='wrist' else (.2,1.)
@@ -28,17 +29,20 @@ class RGBDCubeTracker:
         self.position=None;self.last_seen=None;self.visible=False
         self.rgb=None;self.depth=None;self.mask=None;self.frame_id=0;self.pixels=0
 
-    def update(self,data,prior=None):
+    def update(self,data,prior=None,frames=None):
         projected_prior=False
         option=mujoco.MjvOption();option.geomgroup[3]=0
-        self.renderer.disable_depth_rendering()
-        self.renderer.update_scene(data,camera=self.camera_name,scene_option=option)
-        self.rgb=self.renderer.render().copy()
+        if frames is None:
+            self.renderer.disable_depth_rendering()
+            self.renderer.update_scene(data,camera=self.camera_name,scene_option=option)
+            self.rgb=self.renderer.render().copy()
+            self.renderer.enable_depth_rendering()
+            depth=self.renderer.render().copy()
+            self.renderer.disable_depth_rendering()
+        else:self.rgb,depth=(a.copy() for a in frames)
         rgb=self.rgb.astype(float)
-        self.renderer.enable_depth_rendering()
-        depth=self.renderer.render().copy()
-        self.renderer.disable_depth_rendering()
-        mask=(rgb[:,:,0]>75)&(rgb[:,:,0]>1.65*rgb[:,:,1])&(rgb[:,:,0]>1.5*rgb[:,:,2])&np.isfinite(depth)&(depth<1.)
+        color=(rgb[:,:,0]>75)&(rgb[:,:,0]>1.65*rgb[:,:,1])&(rgb[:,:,0]>1.5*rgb[:,:,2]) if self.mask_function is None else self.mask_function(self.rgb)
+        mask=color&np.isfinite(depth)&(depth<1.)
         self.depth=depth;self.mask=mask;self.frame_id+=1;self.sample_time_s=float(data.time)
         v,u=np.nonzero(mask);self.pixels=len(u);self.visible=len(u)>=8
         if self.visible:
