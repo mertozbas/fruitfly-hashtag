@@ -14,6 +14,7 @@ let toastTimer;
 let analyses=null, modelRequest=0;
 let inspector=null, selection=null, selectedEdge=-1, pickMode='node';
 let behavior=null;
+let eyeMode='detection';
 const isFlight=()=>simulation.behavior==='flight';
 const isRobot=()=>simulation.behavior==='so101';
 
@@ -120,6 +121,7 @@ async function refreshModel(id) {
   $('export-model').href='/api/model/'+encodeURIComponent(id)+'/export';
   $('validation-open').disabled=!e;
   $('model-loss').textContent=t ? fmt(t.after_mse,5):'—';
+  $('model-loss').title=$('loss-value').title=t?.mse_scope?'Gösterim öğrenme hatası; son konum okuması uyarlamasından önce. Görev başarısı fizik testinde ölçülür.':'Kayıtlı öğrenme doğrulama hatası';
   $('checkpoint').textContent='CHECKPOINT '+selectedModel.sha256.slice(0,12);
   $('brain-model').textContent=item?.name ?? id;
   $('loss-value').textContent=t ? fmt(t.after_mse,5):'—';
@@ -191,7 +193,7 @@ function updateSimulation(s) {
   $('sim-empty').classList.add('hidden');
   $('fly-image').style.visibility='visible';
   $('fly-image').src='data:image/jpeg;base64,'+s.image;
-  if(s.eyes_image)$('eye-image').src='data:image/jpeg;base64,'+s.eyes_image;
+  updateEyes(s);
   $('render-quality').textContent=s.render?`${s.render.width} × ${s.render.height} · ${s.render.msaa}× MSAA`:'GÖRÜNTÜ AKIŞI';
   $('distance').innerHTML=fmt(s.distance_mm)+'<small> mm</small>';
   $('speed').innerHTML=fmt(s.speed_mm_s,1)+'<small> mm/s</small>';
@@ -217,7 +219,7 @@ function updateSimulation(s) {
   }
   s.layer_means.forEach((v,i)=>{$('layer-'+i).style.width=(v*100)+'%';$('layer-'+i).parentElement.title=`Ortalama aktivite: ${fmt(v,4)}`;});
   $('outcome').classList.toggle('hidden',s.outcome==='running');
-  $('outcome').textContent={success:isRobot()?'Küp bırakıldı · fiziksel başarı':s.behavior==='avoidance'?'Kaynaktan uzaklaşıldı':s.behavior==='terrain'?'Engel geçildi':isFlight()?'Kokulu hedefe ulaşıldı':'Hedefe ulaşıldı',fallen:'Denge kaybı',sensor_stale:'Kamera izini kaybetti · hareket durduruldu',timeout:'Süre doldu',unsafe:isRobot()?'Deney sınır nedeniyle durdu':'Tehlike alanına girildi'}[s.outcome]||'';
+  $('outcome').textContent={success:isRobot()?'Küp kutuda · görev tamamlandı':s.behavior==='avoidance'?'Kaynaktan uzaklaşıldı':s.behavior==='terrain'?'Engel geçildi':isFlight()?'Kokulu hedefe ulaşıldı':'Hedefe ulaşıldı',fallen:'Denge kaybı',sensor_stale:'Kamera izini kaybetti · hareket durduruldu',retry_exhausted:'3 girişim tamamlandı · görev durdu',timeout:'Süre doldu',unsafe:isRobot()?'Deney sınır nedeniyle durdu':'Tehlike alanına girildi'}[s.outcome]||'';
   $('footer-status').textContent=isFlight()?'Fizik 0,05 ms · Kanat 0,2 ms · Beyin kararı 10 ms':`Fizik ${fmt(s.physics_dt*1000,1)} ms · Sensör / karar 10 ms · Canlı veri`;
   if(isRobot())$('footer-status').textContent=`Fizik ${fmt(s.physics_dt*1000,1)} ms · Beyin kararı ${fmt(s.control_dt*1000,0)} ms · ${s.robot.sensor_source}`;
   if(isRobot())$('robot-sensor').value=s.robot.sensor_mode||'state';
@@ -229,6 +231,26 @@ function updateSimulation(s) {
   inspector?.tick(matches?s.activity:null,s.model);
   updateSelectionValue();
   if(`${s.behavior}:${s.model}`!==lastModelId){lastModelId=`${s.behavior}:${s.model}`;$('model').value=s.model;refreshModel(s.model).catch(e=>toast(e.message));}
+}
+function updateEyes(s){
+  const robot=s.behavior==='so101',p=s.robot?.perception;
+  $('eye-preview').classList.toggle('hidden',robot?!p:s.behavior!=='vision');
+  const frame=robot?s.eyes?.[eyeMode]:s.eyes_image;
+  if(frame)$('eye-image').src='data:image/jpeg;base64,'+frame;
+  else $('eye-image').removeAttribute('src');
+  if(!robot||!p)return;
+  $('eye-image').alt=eyeMode==='depth'?'Algılama kamerasının 0,2–1 metre derinlik haritası':'Ağın kararına giren kamera karesi'+(eyeMode==='detection'?' ve kırmızı küp işareti':'');
+  $('eye-status').textContent=`${p.valid?(p.visible?'KÜP GÖRÜLÜYOR':'KISA SÜRELİ TAHMİN'):'GÖRÜŞ KAYIP'} · ${p.age_s==null?'—':fmt(p.age_s*1000,0)} ms`;
+  $('eye-status').classList.toggle('lost',!p.valid);
+  const xyz=p.estimated_cube?.map(v=>fmt(v*1000,1)).join(' / ')||'—';
+  $('eye-detail').textContent=eyeMode==='depth'?`DERİNLİK · 200–1000 mm · Yakın: açık renk`:`KÜP XYZ · ${xyz} mm`;
+  const sameDecision=p.frame_id===s.neural?.sensor_frame_id;
+  $('eye-sync').textContent=`KARE ${p.frame_id} · ${fmt(p.sample_time_s,2)} s · ${sameDecision?'Kutu: kalibre':'Karar uygulanmadı'}`;
+  $('eye-detail').title=`Kare ${p.frame_id} · ${fmt(p.sample_time_s,3)} s · ${p.width}×${p.height} · ${fmt(1/s.control_dt,0)} Hz karar\nKutu: kalibre edilmiş hedef. ${p.kinematic_prediction?'Kavrama sırasında eklem tahmini ile birleştiriliyor.':'Konum renk ve derinlikten çıkarılıyor.'}`;
+  $('eye-image').dataset.frameId=p.frame_id;
+  const r=s.robot.recovery;
+  $('eye-attempt').textContent=s.outcome==='success'?'YERLEŞTİRME TAMAM':`GİRİŞİM ${r?.attempt||1} / ${r?.max_attempts||3}`;
+  $('eye-attempt').title='Aynı sahnede en çok 3 girişim. Yeniden deneme gözetmeni ağın görev belleğini sıfırlar; hareketleri ağ üretir.';
 }
 async function poll() {
   if(document.hidden){setTimeout(poll,1000);return;}
@@ -298,6 +320,13 @@ $('experiment').addEventListener('change',async()=>{
 bind('train',async()=>{const steps=integer('steps',200,10000),seed=integer('seed',0,1000000);$('train').disabled=true;await api('train',{steps,seed,task:$('experiment').value});$('load-new').classList.add('hidden');toast('Yeni eğitim başladı. Mevcut model korunuyor.');});
 bind('cancel',()=>api('train/cancel',{}));
 $('robot-sensor').addEventListener('change',async()=>{try{await control({op:'sensor',sensor:$('robot-sensor').value});}catch(e){toast(e.message);}});
+document.querySelectorAll('[data-eye]').forEach(button=>button.addEventListener('click',()=>{
+  eyeMode=button.dataset.eye;
+  document.querySelectorAll('[data-eye]').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button));});
+  updateEyes(simulation);
+}));
+bind('eye-expand',()=>{const expanded=$('eye-preview').classList.toggle('expanded');$('eye-expand').setAttribute('aria-expanded',String(expanded));$('eye-expand').title=expanded?'Göz görüntüsünü küçült':'Göz görüntüsünü büyüt';$('eye-expand').setAttribute('aria-label',$('eye-expand').title);});
+bind('robot-next',()=>control({op:'next'}));
 bind('load-new',async()=>{if(latestRun){const m=catalog.models.find(m=>m.id===latestRun);if(m?.task&&m.task!==simulation.behavior)await control({op:'behavior',behavior:m.task});await control({op:'model',model:latestRun});$('model').value=latestRun;}});
 function setMode(value){mode=value;$('brain-view').classList.toggle('delta-view',value==='delta');$('activity-mode').classList.toggle('active',value==='activity');$('delta-mode').classList.toggle('active',value==='delta');$('scale-title').textContent=value==='activity'?'MODEL AKTİVİTESİ':'BAĞLANTI ÇARPANI';$('scale-low').textContent=value==='activity'?'0':'0.22×';$('scale-high').textContent=value==='activity'?'1':'4.48×';sceneView?.update(simulation.activity);}
 bind('activity-mode',()=>setMode('activity'));bind('delta-mode',()=>setMode('delta'));
@@ -305,12 +334,14 @@ bind('scope-open',()=>$('scope-dialog').showModal());bind('scope-close',()=>$('s
 bind('validation-open',()=>{
   const e=isFlight()?selectedModel?.flight_evaluation:selectedModel?.walk_evaluation;if(!e)return;
   $('validation-criterion').textContent=e.criterion||simulation.task_contract?.success||'Kayıtlı görev başarı ölçütü';
-  const controlNames={silenced:isRobot()?'Nöron aktivitesi sıfır':'Motor çıkışı kapalı',untrained:'Eğitim öncesi',frozen_core:'Sabit anatomik ağırlıklar',mlp:'MLP referansı',camera:'RGB-D kamera'};
+  const controlNames={silenced:isRobot()?'Nöron aktivitesi sıfır':'Motor çıkışı kapalı',untrained:e.recovery_evaluation?'Önceki model · geliştirme':'Eğitim öncesi',frozen_core:'Sabit anatomik ağırlıklar',mlp:'MLP referansı',camera:'RGB-D kamera'};
   const rows=[[selectedModel.before?'Eğitim öncesi':'Seçili model',e],...Object.entries(e.controls||{}).map(([k,v])=>[controlNames[k]||k,v])];
+  if(e.recovery_evaluation)rows.splice(1,0,['Küp düşürme · kamera',e.recovery_evaluation]);
   $('validation-rows').replaceChildren(...rows.map(([label,v])=>{const tr=document.createElement('tr');for(const value of [label,`${v.success_count} / ${v.episodes}`,v.falls??'—',v.unsafe_count??'—']){const td=document.createElement('td');td.textContent=value;tr.append(td);}return tr;}));
   const muted=e.controls?.silenced;
-  $('validation-note').textContent=muted?(e.success_count>muted.success_count?'Bu koşullarda öğrenilmiş motor çıkışı başarıya katkı sağladı.':'Bu koşullarda ağ çıkışının başarı artışı gösterilemedi.'):'Bu kayıtta çıkış kapatma karşılaştırması yok.';
+  $('validation-note').textContent=(e.recovery_evaluation&&e.acceptance_passed===false?'Toparlanma kabul eşiği henüz geçilmedi. ':'')+(muted?(e.success_count/e.episodes>muted.success_count/muted.episodes?'Bu koşullarda öğrenilmiş motor çıkışı başarıya katkı sağladı.':'Bu koşullarda ağ çıkışının başarı artışı gösterilemedi.'):'Bu kayıtta çıkış kapatma karşılaştırması yok.');
   $('validation-method').textContent=isRobot()?'Aynı başlangıç tohumları kullanılır. Susturma testinde dört katmandaki nöron yanıtları sıfırlanır; öğrenilmiş çıkış sabitleri, IK ve servolar korunur. Öğretmen değerlendirmede çalışmaz. Başarı temas fiziğinden ölçülür. Kamera testi sentetik RGB-D, eklem ve temas sensörleriyle yapılır; kutu hedefi kalibredir.':'Yeni sinek görevlerinde aynı altı ortam/tohum üç kez çalıştırılır. Çıkış kapatma, modelin motor okumasını sıfırlar; gövde ve hazır kontrolcü çalışmaya devam eder. Eğitim MSE’si ile fiziksel başarı ayrı ölçütlerdir.';
+  if(e.recovery_evaluation)$('validation-method').textContent='Normal yerleştirme ve küp düşürme, eğitimden ayrı sahnelerde sınanır. Nöron susturma, normal testin ilk 8 tohumunu kullanır. Önceki model satırı ayrı geliştirme sahneleridir; oranlar doğrudan son testle eşleştirilmez. En çok 3 girişim; sahne sıfırlanmaz. Öğretici değerlendirmede çalışmaz. Kutu hedefi kalibredir.';
   $('validation-sha').textContent='Checkpoint: '+selectedModel.sha256;
   $('validation-dialog').showModal();
 });

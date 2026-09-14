@@ -73,7 +73,11 @@ class Runtime:
                         from task_circuit import initialize
                         initialize(behavior)
                         available = [m for m in models() if m.get('task') == behavior]
-                    selected = max(available, key=lambda m:(m.get('evaluation') or {}).get('success_count', -1))
+                    def rank(m):
+                        e=m.get('evaluation') or {}
+                        visual_accepted=behavior=='so101' and e.get('sensor')=='camera' and e.get('acceptance_passed') is True
+                        return (visual_accepted,e.get('success_count',-1)/max(1,e.get('episodes',1)))
+                    selected = max(available, key=rank)
                 if behavior == 'flight':
                     from lab_flight import FlightProcess
                     if not (ROOT / 'flight/.venv/bin/python').exists() or not (ROOT / 'data/flybody/trained-fly-policies/flight/saved_model.pb').exists():
@@ -193,7 +197,7 @@ def models():
         meta = read_json(p)
         if meta.get("status") == "complete":
             task = meta.get('task', 'odor')
-            records.append(dict(id=p.parent.name, name=f"{TASKS[task]['title']} / {meta['created'][11:19]}", task=task, path=p.parent / "trained.npz",
+            records.append(dict(id=p.parent.name, name=meta.get('name') or f"{TASKS[task]['title']} / {meta['created'][11:19]}", task=task, path=p.parent / "trained.npz",
                                 training=read_json(p.parent / "training.json"), evaluation=read_json(p.parent / "evaluation.json")))
             if task in {'avoidance','vision','terrain','so101'} and (p.parent / 'untrained.npz').exists():
                 evaluation = read_json(p.parent / 'evaluation.json')
@@ -380,7 +384,7 @@ class TrainingRequest(BaseModel):
     seed: int = Field(42, ge=0, le=1000000)
     task: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101'] = 'odor'
 
-def training_job(directory, steps, seed, task, initial_model=None):
+def training_job(directory, steps, seed, task, initial_model=None, sensor='state'):
     meta = dict(id=directory.name, status="training", created=datetime.now(timezone.utc).isoformat(), steps=steps, seed=seed, task=task,owner_pid=os.getpid())
     env = dict(os.environ, FRUITFLY_MODEL_DIR=str(directory), PYTHONUNBUFFERED="1")
     watchdog = None
@@ -399,11 +403,12 @@ def training_job(directory, steps, seed, task, initial_model=None):
             command=([sys.executable,'-u','-m','so101.train_job','--output',str(directory),'--steps',str(steps),'--seed',str(seed)]
                      if task=='so101' else [sys.executable, "-u", str(ROOT / "lab_train.py"), "--steps", str(steps), "--seed", str(seed), '--task', task])
             if task=='so101' and initial_model is not None:command.extend(['--resume',str(initial_model)])
+            if task=='so101':command.extend(['--sensor',sensor])
             process = subprocess.Popen(command,
                                        cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             runtime.job_process = process
             # Bound a stalled backend even when stdout stops producing events.
-            watchdog = threading.Timer(1800 if task=='so101' else 600, lambda: process.terminate() if process.poll() is None else None)
+            watchdog = threading.Timer((3600 if sensor=='camera' else 1800) if task=='so101' else 600, lambda: process.terminate() if process.poll() is None else None)
             watchdog.daemon = True
             watchdog.start()
             if runtime.job.get("status") == "cancelling":
@@ -430,6 +435,8 @@ def training_job(directory, steps, seed, task, initial_model=None):
             result=read_json(directory/'evaluation.json') or {}
             meta['acceptance_passed']=result.get('acceptance_passed',False)
             message=f"Fizik testi: {result.get('success_count',0)} / {result.get('episodes',100)}. "+('Kabul ölçütü geçti. ' if meta['acceptance_passed'] else 'Kabul ölçütü henüz geçmedi. ')
+            if result.get('recovery_evaluation'):
+                r=result['recovery_evaluation'];message+=f"Küp düşürme: {r['success_count']} / {r['episodes']}. "
             if result.get('selected_model_changed') is False:message+='Yeni adaylar iyileştirmedi; önceki model korundu.'
     except Exception as exc:
         meta["status"] = "failed"
@@ -452,14 +459,15 @@ def train(body: TrainingRequest):
         directory = RUNS / run_id
         directory.mkdir()
         runtime.job = dict(id=run_id, status="training", steps=body.steps, step=0, seed=body.seed, task=body.task, history=[], started=time.time())
-        initial_model=None
+        initial_model=None;sensor='state'
         if body.task=='so101':
             current=runtime.read()
             if current.get('behavior')=='so101' and current.get('model'):
+                sensor=current.get('robot',{}).get('sensor_mode','state')
                 candidate=resolve_model(current['model'])
                 from so101.policy import Policy
                 if Policy(candidate['path']).action_mode=='target':initial_model=candidate['path']
-        threading.Thread(target=training_job, args=(directory,body.steps,body.seed,body.task,initial_model), daemon=True).start()
+        threading.Thread(target=training_job, args=(directory,body.steps,body.seed,body.task,initial_model,sensor), daemon=True).start()
     return runtime.job
 
 @app.post("/api/train/cancel")

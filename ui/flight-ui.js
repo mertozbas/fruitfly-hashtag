@@ -42,12 +42,17 @@ export function behaviorUI(task='odor'){
   $('goal-x').min=task==='so101'?125:-30;$('goal-x').max=task==='so101'?160:30;
   $('goal-y').min=task==='so101'?-180:-30;$('goal-y').max=task==='so101'?-135:30;
   $('eye-preview').classList.toggle('hidden',task!=='vision');
+  $('eye-preview').classList.toggle('robot-eye',task==='so101');
+  $('eye-preview').classList.remove('expanded');
+  $('eye-expand').setAttribute('aria-expanded','false');
+  $('eye-title').textContent=task==='so101'?'ROBOTUN GÖRDÜĞÜ · SİM KAMERA':'GÖZ GİRDİSİ · SOL / SAĞ';
+  for(const id of ['eye-tabs','eye-expand','eye-status','eye-detail','eye-sync','eye-task'])$(id).classList.toggle('hidden',task!=='so101');
   $('robot-sensor').classList.toggle('hidden',task!=='so101');
   $('reward-label').textContent=task==='so101'?'BÖLÜM ÖDÜLÜ':'ANLIK ÖDÜL';
   $('signal-title').closest('.signal-panel').classList.toggle('robot-telemetry',task==='so101');
   $('train').innerHTML=flight?'<span>▶</span> Yönelme ağını eğit':'<span>▶</span> Eğitimi başlat';
   $('apply-goal').textContent='Hedefi uygula ↗';
-  $('reset').title=flight?'Aynı kokulu hedefe uçuşu yeniden başlat':'Aynı hedefi yeniden dene';
+  $('reset').title=flight?'Aynı kokulu hedefe uçuşu yeniden başlat':task==='so101'?'Sahneyi sıfırla ve görevi yeniden başlat':'Aynı hedefi yeniden dene';
   $('reset').setAttribute('aria-label',$('reset').title);
   $('experiment-note').textContent=extra?.note||(flight?'Beyin yönü seçer · FlyBody kanatları dengeler':'Koku alt ağı · taklit öğrenmesi');
   $('job-note').textContent=extra?'Yeni model ayrı kaydedilir. 6 koşul × eğitimli / eğitimsiz / çıkış kapalı karşılaştırması yapılır.':flight?'Koku yönelme ağı eğitilir; ardından altı uçuş hedefinde test edilir. Kanat politikası sabittir.':'Yeni model ayrı kaydedilir. Eğitim sonrası 6 hedefte otomatik sınanır.';
@@ -56,7 +61,7 @@ export function behaviorUI(task='odor'){
     $('benchmark-label').textContent='Yerleştirme testi';
     $('signal-title').textContent='Robot telemetrisi';
     $('footer-scope').textContent='MaleCNS anatomik alt ağı · Yapay robot adaptörleri · Yalnızca simülasyon';
-    $('job-note').textContent='Seçili modelin kopyasıyla gösterim + ödül eğitimi. Fizik karşılaştırması iyileşme göstermezse önceki model korunur.';
+    $('job-note').textContent='Göz modunda görsel ve toparlanma eğitimi. Canlı denemede ağırlıklar sabit; eğitim yeni model kaydeder ve kamera testleriyle karşılaştırır.';
     $('apply-goal').textContent='Kutu hedefini uygula ↗';
     $('signal-chart').setAttribute('aria-label','Normalize küp yüksekliği ve kavrayıcı açıklığı');
   }

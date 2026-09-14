@@ -49,11 +49,38 @@ def check(base,output,train_cancel=False):
         until(lambda s:abs(s['simulation']['camera_pose']['azimuth']-before)>1)
         checks['mouse_camera']=True
         page.locator('#sim-home').click()
+        sensor_episode=state()['simulation']['episode']
         page.locator('#robot-sensor').select_option('camera')
-        camera=until(lambda s:s['simulation'].get('robot',{}).get('sensor_mode')=='camera')['simulation']
+        camera=until(lambda s:s['simulation'].get('robot',{}).get('sensor_mode')=='camera' and s['simulation']['episode']>sensor_episode)['simulation']
         checks['camera_observation']=bool(camera['robot']['perception'])
+        page.wait_for_function("document.querySelector('#eye-image').naturalWidth===640")
+        checks['eye_preview_visible']=page.locator('#eye-preview').is_visible()
+        checks['eye_has_actual_camera_resolution']=page.locator('#eye-image').evaluate('(e)=>e.naturalHeight===480')
+        before_frame=camera['robot']['perception']['frame_id'];before_time=camera['robot']['perception']['sample_time_s']
+        page.wait_for_timeout(300)
+        frozen=state()['simulation']['robot']['perception']
+        checks['paused_eye_is_not_rerendered']=frozen['frame_id']==before_frame and frozen['sample_time_s']==before_time
+        detection=page.locator('#eye-image').get_attribute('src')
+        page.locator('[data-eye="depth"]').click()
+        checks['depth_toggle_changes_image']=page.locator('#eye-image').get_attribute('src')!=detection
+        page.locator('[data-eye="rgb"]').click()
+        checks['raw_rgb_toggle']=page.locator('[data-eye="rgb"]').get_attribute('aria-pressed')=='true'
+        page.locator('#eye-expand').click()
+        checks['eye_enlargement']=page.locator('#eye-expand').get_attribute('aria-expanded')=='true'
+        page.screenshot(path=str(output/'robot-eyes-expanded.png'))
+        page.set_viewport_size(dict(width=1280,height=800));page.wait_for_timeout(150)
+        checks['expanded_eye_fits_small_viewport']=page.evaluate("""()=>{
+            const e=document.querySelector('#eye-preview').getBoundingClientRect(),v=document.querySelector('#sim-view').getBoundingClientRect();
+            return e.left>=v.left && e.right<=v.right && e.top>=v.top && e.bottom<=v.bottom;
+        }""")
+        page.screenshot(path=str(output/'robot-eyes-small.png'))
+        page.set_viewport_size(dict(width=1728,height=1050))
+        page.locator('#eye-expand').click();page.locator('[data-eye="detection"]').click()
+        page.screenshot(path=str(output/'robot-eyes.png'))
         page.locator('#robot-sensor').select_option('state')
         until(lambda s:s['simulation'].get('robot',{}).get('sensor_mode')=='state')
+        page.wait_for_function("document.querySelector('#eye-preview').classList.contains('hidden')")
+        checks['state_mode_hides_eye']=True
         page.locator('#analyses-tab').click();page.screenshot(path=str(output/'analyses.png'))
         checks['analyses_visible']=page.locator('#heat-map').is_visible() and page.locator('#xray-map').is_visible()
         page.locator('#metrics-tab').click();page.locator('#delta-mode').click()
@@ -86,6 +113,9 @@ def check(base,output,train_cancel=False):
             page.locator('#train').click();page.locator('#cancel').wait_for(state='visible')
             page.locator('#cancel').click();until(lambda s:s['job'].get('status')=='cancelled',30)
             checks['training_cancel_preserves_model']=state()['simulation']['model_sha256']==before
+        page.locator('#robot-sensor').select_option('camera')
+        until(lambda s:s['simulation'].get('robot',{}).get('sensor_mode')=='camera')
+        page.wait_for_function("document.querySelector('#eye-image').naturalWidth===640")
         page.screenshot(path=str(output/'laboratory.png'))
         checks['no_javascript_errors']=not errors
         (output/'report.json').write_text(json.dumps(dict(checks=checks,errors=errors),indent=2))

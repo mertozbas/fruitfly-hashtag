@@ -16,7 +16,8 @@ bulunduğunda laboratuvar robotla açılır. Görev menüsünden sinek deneyleri
 geri dönebilirsiniz; aynı beyin, inceleme ve telemetri panelleri kullanılır.
 
 1. **SO-101 · Al ve yerleştir** görevini seçin. Robot 30 mm küpü kavrar,
-   kaldırır, kutuya taşır, bırakır ve elini geri çeker. Bölümler otomatik yenilenir.
+   kaldırır, kutuya taşır, bırakır ve elini geri çeker. Görev sonunda durur;
+   **Yeni görev** ile yeni sahne başlatılır.
 2. Görüntüyü mouse ile döndürün, kaydırın ve yakınlaştırın. **Duraklat** hem
    fizik adımını hem ağ kararını durdurur. Görüntü 1920 × 1080 üretilir.
 3. Beyindeki nörona veya bağlantıya tıklayın. Aktivite, bağlantı çarpanı,
@@ -33,9 +34,40 @@ Yeni aday fizik karşılaştırmasını iyileştirmezse önceki ağırlıklar ko
 Öğrenme kaybının azalması otomatik olarak daha iyi robot anlamına gelmez.
 İptal edilen işin günlükleri saklanır; aktif model değiştirilmez.
 
-## Doğrulanmış yerel sonuç
+## Görsel model: mevcut sonuç
 
-Seçilen kayıt: `models/lab_runs/local-so101-validated-seed42/`.
+UI'daki **Görsel küp · toparlanma deneysel** kaydı:
+`models/lab_runs/local-so101-vision-seed44/`. Checkpoint SHA-256:
+`8e0a777881a9e88847875cc44b6dd7f510001ead55e21e6c900673873f18bbb2`.
+
+| Kamera ile son test | Başarılı / toplam | Sınır ihlali |
+| --- | ---: | ---: |
+| Kırmızı küpü kutuya yerleştirme | 38 / 40 | 0 |
+| Kaldırmada kavrayıcının zorla açıldığı senaryolar | 12 / 24 | 0 |
+| Nöron yanıtları sıfır; normal testin ilk 8 sahnesi | 0 / 8 | 0 |
+
+Normal sahneler 24400–24439, düşürme sahneleri 24440–24463 tohumlarıdır.
+Düşürme grubunda 22 sahnede müdahale tetiklendi; iki sahnede robot ilk
+kavramayı yapamadı. Toparlanan 12 sahnede aynı küp, sahne sıfırlanmadan
+yeniden kavranıp yerleştirildi. Normal gruptaki dört başarı da yeniden girişim
+içerir. **Normal görev eşiği geçti; toparlanmanın 18/24 kabul eşiği geçmedi.**
+Bu nedenle model deneysel olarak etiketlidir; her düşüşten kurtulduğu iddia edilmez.
+
+Bu model, önceki checkpoint üzerine 24 başarılı RGB-D gösterimi / 11.553 kare
+ile 10.000 optimizasyon adımı ve XYZ ridge uyarlaması kullanır. Gösterimlerin
+12'sinde zorla bırakmadan toparlanma vardır. 19 bölüm eğitim, 5 bölüm doğrulama
+içindir. Kayıtlı öğrenme grafiği ridge öncesi davranış klonlama hatasıdır;
+görev başarısı yukarıdaki fizik testlerinden gelir. Sonradan toplanan 19 başarılı
+düzeltici gösterimle ve yalnızca aşama okumasıyla eğitilen iki aday, geliştirme
+testlerinde iyileşme sağlamadı; canlı model olarak seçilmedi.
+
+Ham ölçümler `artifacts/so101/vision-final-*.json`, aday özeti
+`artifacts/so101/vision-summary.json` ve modelin `evaluation.json` dosyasındadır.
+Test sonuçları bu simülasyonun nesne, kamera ve çalışma alanı dağılımına aittir.
+
+## Önceki modelin doğrulanmış sonucu
+
+Görsel eğitime başlangıç olan kayıt: `models/lab_runs/local-so101-validated-seed42/`.
 Checkpoint SHA-256:
 `31ed4107db97458838319e4b789c259426e33a4a680b5a40348a970f6226f374`.
 
@@ -67,7 +99,7 @@ anatomik ağların genel olarak üstün olduğuna dair kanıt sayılmaz.
 
 Ham sonuçlar `artifacts/so101/holdout-*.json`, başarısız geliştirme denemeleri
 aynı dizinde, seçili sonuç özeti modelin `evaluation.json` dosyasındadır.
-Zorla düşürülen küpü yeniden kavrama bu sürümde öğrenilmiş değildir.
+Bu önceki model, zorla düşürülen küpü yeniden kavrama testini geçemedi.
 
 ## Kullanılan parçalar ve fizik
 
@@ -102,8 +134,9 @@ Sekizli öğrenilmiş aşama okuması, bir sonraki kararın girişine geri besle
 Bu bellek mühendislik ekidir; anatomik nöron sayısına katılmaz. Dört katmandaki
 nöron yanıtları bağımsız sigmoid hesaplarıdır. Seçilen modelde üç anatomik
 katmanın mevcut bağlantı çarpanları, giriş adaptörü ve hareket okuması eğitilir.
-Çarpanlar exp(−1,5)–exp(1,5) aralığındadır. 80.598 bağlantının çarpanı
-başlangıca göre %0,1'den fazla değişmiştir. **Yeni anatomik bağlantı eklenmez.**
+Çarpanlar exp(−1,5)–exp(1,5) aralığındadır. Önceki modelde 80.598, görsel
+modelde 80.646 bağlantının çarpanı anatomik başlangıca göre %0,1'den fazla
+değişmiştir. **Yeni anatomik bağlantı eklenmez.**
 İç devreyi atlayarak hareket üreten bir yan yol yoktur.
 
 Seçilen modelin çıktısı dört değerdir: **uç noktanın hedef X/Y/Z konumu ve
@@ -139,7 +172,7 @@ kaldırma ve tam yerleştirme sırasıyla öğrenilir ve fizik içinde ayrıca s
 Ağın ziyaret ettiği hatalı durumlar için açıkça işaretlenmiş öğretmen
 müdahaleleriyle düzeltme verisi toplanabilir (DAgger).
 
-Seçilen son modelin eğitimi: 98 başarılı temiz gösterim + 159 başarılı,
+Başlangıç modelinin eğitimi: 98 başarılı temiz gösterim + 159 başarılı,
 küçük hareket sapmaları içeren gösterim; toplam 92.683 kare. 16.000 optimizasyon
 adımından sonra yalnızca XYZ okuması, eğitim bölümlerindeki hedef konumlarına
 ridge regresyonuyla uyduruldu (λ = 0,0001). Anatomik çekirdek, kavrayıcı ve
@@ -152,7 +185,7 @@ ceza. Şeker maddesi kullanılmaz. PPO ile gerçek ödül gradyanı denemeleri a
 adaylara kaydedilir. Son seçili checkpoint gösterim + konum okuması eğitimidir;
 ödül güncellemesi uygulanmış adayla karıştırılmamalıdır.
 
-UI'daki devam eğitimi mevcut modelin kopyasını alır, uzanma/kaldırma kontrolü,
+**Fizik sensörleri** modundaki devam eğitimi mevcut modelin kopyasını alır, uzanma/kaldırma kontrolü,
 gösterim eğitimi, konum okuması uydurma ve 3 × 4 bölümlük PPO denemesi yapar.
 Adaylar aynı 12 geliştirme konumunda karşılaştırılır; eşitlikte eski model
 korunur. Ardından 100 konumda seçilen model, eğitim öncesi kopya ve susturulan
@@ -171,6 +204,20 @@ seçiminde kullanılan tohumlardan ayrı olmalıdır.
 
 ## Kamera gözlemi
 
+SO-101 canlı görünümü artık **Göz · RGB-D kamera** modunda açılır. Sol simülasyon
+alanındaki **Robotun gördüğü** penceresi, karar için gerçekten kullanılan ön
+kamera karesini gösterir. Ana HD görüntü bağımsız seyirci kamerasıdır.
+
+- **Algılama:** renk görüntüsü ve tespit edilen kırmızı küpün işareti.
+- **Renk:** aynı karara giren ham RGB görüntüsü.
+- **Derinlik:** aynı karenin sabit 200–1000 mm ölçekli derinlik görünümü.
+- **⤢:** göz penceresini simülasyon alanı içinde büyütür; beyin paneli yerinde kalır.
+- Kare numarası ve simülasyon zamanı, aynı paketteki sinir ağı kararına bağlıdır.
+  Duraklatmada yeni algı karesi üretilmez. Önizleme ek bir render çağrısı yapmaz.
+
+Ana görüntü 1920×1080, algı kamerası 640×480'dir. Kamera kaynağı **sentetik
+RGB-D** olarak belirtilir; fiziksel USB kameranın görüntüsü değildir.
+
 Kamera modunda kırmızı küp RGB görüntüsünde bulunur; **sentetik derinlik** ve
 kamera kalibrasyonuyla 3B merkez tahmin edilir. Küpün 30 mm olduğu bilinir.
 Kavrama sırasında görünmeyen yüzler için eklem konumundan hareket tahmini ve
@@ -184,6 +231,64 @@ tek RGB kamera ile gerçek robota hazır algılama çözümü değildir.
 
 Başarı ve hata metrikleri kamera modunda da fizik durumundan ölçülür; bu
 değerlendirme değerleri nesne konumu olarak politikaya geri verilmez.
+
+### Aynı sahnede yeniden deneme
+
+Görev en fazla **3 girişim / 60 simülasyon saniyesi** sürer. Küp düşerse veya
+12 saniyede kavrama oluşmazsa bir gözlem gözetmeni ağın görev belleğini
+yeniden başlatır. Kolun ve küpün konumu sıfırlanmaz; bütün hareket hedeflerini
+yine sinir ağı üretir. Yeniden deneme zamanlaması mühendislik kuralıdır,
+ağın bağımsız olarak öğrendiği bir davranış diye sunulmaz.
+
+Başarıda, girişim sınırında, görüş kaybında veya fizik sınırı ihlalinde görev
+durur. **Yeni görev** yeni bir sahne oluşturur; bu, aynı sahnedeki girişim
+sayacından ayrıdır. Durmuş görevin **Devam et** düğmesi yeni görevi başlatır.
+
+### Görsel eğitim
+
+Göz modu seçiliyken **Eğitimi başlat**, seçili modelin kopyasına görsel gösterim
+ve toparlanma eğitimi uygular. Bu eğitim davranış klonlama ve öğrenilmiş konum
+çıkışının ridge uyarlamasıdır; canlı izleme sırasında kendiliğinden ağırlık
+güncellemesi yapılmaz. Fizik sensörleri modu önceki eğitim akışını korur.
+
+Yeni görsel veri toplama, 24 sahnede gerçek kamera gözlemi kullanır. Alternatif
+sahnelerde kavrayıcı kaldırmadan sonra 600 ms açık tutulur; öğretici aynı küpü
+yeniden alır. Öğretici yalnızca eğitim etiketleri üretir, öğrenilmiş modelin
+canlı kontrolüne girmez. Veriler bütün bölümler bazında eğitim/doğrulamaya
+ayrılır; son fizik testlerinin tohumları ayrıca ayrıdır.
+
+```bash
+.venv/bin/python -m so101.vision_training \
+  --output artifacts/so101/visual-demonstrations.npz --episodes 24 --start-seed 3200
+
+.venv/bin/python -m so101.train_job \
+  --output models/lab_runs/my-so101-vision --steps 10000 --seed 44 \
+  --resume models/lab_runs/local-so101-validated-seed42/trained.npz \
+  --sensor camera --dataset artifacts/so101/visual-demonstrations.npz
+```
+
+Adaylar kamera ve zorla bırakma testleriyle önceki modelle karşılaştırılır.
+Son kabul eşiği 40 yeni kamera sahnesinde en az 36 başarı, 24 yeni düşürme
+sahnesinde en az 18 başarı ve sıfır fizik sınırı ihlalidir. Nöron etkinliği
+sıfırlanmış kontrol de ayrı çalıştırılır. Sonuçlar model dizinindeki
+`evaluation.json`, eğitim bilgisi `training.json` içindedir; modelin eğitiminin
+bitmesi kabul eşiğinin geçildiği anlamına gelmez.
+
+Öğrenilmiş modelin ulaştığı durumlardan düzeltici gösterim toplamak için:
+
+```bash
+.venv/bin/python -m so101.vision_training \
+  --output artifacts/so101/visual-training.npz --episodes 24 --start-seed 3260 \
+  --learner models/lab_runs/my-so101-vision/trained.npz \
+  --append-source artifacts/so101/visual-demonstrations.npz
+```
+
+Bu toplamada ilk bölümü ağ sürer; öğretici daha sonra kontrolü devralıp etiketli
+gösterimi tamamlar. Yalnızca başarılı bölümler eğitim dosyasına girer; bütün
+başarısız sonuçlar JSON raporunda saklanır. Eğitim sırasında kullanılan önceki
+aşama geri bildirimi de kaydedilir. UI varsa `visual-training.npz` dosyasını,
+yoksa ilk görsel gösterimleri kullanır. Her eğitim işi en fazla bir saat sürer;
+iptal veya zaman aşımı mevcut canlı modeli değiştirmez.
 
 ## Yerel hazırlık
 

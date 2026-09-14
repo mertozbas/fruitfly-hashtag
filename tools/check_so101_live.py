@@ -29,6 +29,11 @@ def check(base,model,output):
     np.testing.assert_allclose(action,s['neural']['applied_action'],atol=2e-6)
     activity=np.concatenate(layers)
     np.testing.assert_array_equal(activity.round(6),np.asarray(s['activity'],np.float32))
+    if s['robot'].get('sensor_mode')=='camera':
+        perception=s['robot']['perception']
+        assert s['neural']['sensor_frame_id']==perception['frame_id']
+        assert s['neural']['sample_time_s']==perception['sample_time_s']
+        assert set(s['eyes'])=={'rgb','depth','detection'}
     details=request('/api/model/'+s['model'])
     assert details['sha256']==s['model_sha256']
     for expected,actual in zip(p.input_sums,details['input_sums']):np.testing.assert_allclose(expected,actual,rtol=1e-6)
@@ -53,6 +58,7 @@ def check(base,model,output):
     wait(lambda x:x.get('behavior')=='so101' and x.get('model_sha256')==s['model_sha256'])
     report=dict(model=s['model'],checkpoint_sha256=s['model_sha256'],neurons=len(activity),
         maximum_activity_replay_error=float(np.max(np.abs(activity-s['activity']))),
+        camera_frame_matches_neural_decision=s['robot'].get('sensor_mode')=='camera',
         exact_motor_replay=True,all_layer_connection_weights=True,located_neurons=len(graph['nodes']),located_connections=len(graph['edges']),invalid_controls_rejected=rejected,odor_round_trip=True)
     Path(output).write_text(json.dumps(report,indent=2));return report
 

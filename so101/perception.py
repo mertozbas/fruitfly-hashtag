@@ -19,19 +19,23 @@ class RGBDCubeTracker:
         self.last_seen=None
         self.visible=False
         self.pixels=0
+        self.rgb=None;self.depth=None;self.mask=None;self.frame_id=0;self.sample_time_s=0.
 
     def reset(self):
         self.position=None;self.last_seen=None;self.visible=False
+        self.rgb=None;self.depth=None;self.mask=None;self.frame_id=0;self.pixels=0
 
     def update(self,data):
         option=mujoco.MjvOption();option.geomgroup[3]=0
         self.renderer.disable_depth_rendering()
         self.renderer.update_scene(data,camera=self.camera_name,scene_option=option)
-        rgb=self.renderer.render().astype(float)
+        self.rgb=self.renderer.render().copy()
+        rgb=self.rgb.astype(float)
         self.renderer.enable_depth_rendering()
         depth=self.renderer.render().copy()
         self.renderer.disable_depth_rendering()
         mask=(rgb[:,:,0]>75)&(rgb[:,:,0]>1.65*rgb[:,:,1])&(rgb[:,:,0]>1.5*rgb[:,:,2])&np.isfinite(depth)&(depth<1.)
+        self.depth=depth;self.mask=mask;self.frame_id+=1;self.sample_time_s=float(data.time)
         v,u=np.nonzero(mask);self.pixels=len(u);self.visible=len(u)>=8
         if self.visible:
             z=depth[v,u]
@@ -48,7 +52,33 @@ class RGBDCubeTracker:
             self.position=centre;self.last_seen=float(data.time)
         age=float('inf') if self.last_seen is None else float(data.time)-self.last_seen
         return dict(position=None if self.position is None else self.position.copy(),visible=self.visible,
-                    pixels=self.pixels,age_s=age,valid=self.position is not None and age<=.5)
+                    pixels=self.pixels,age_s=age if np.isfinite(age) else None,
+                    valid=self.position is not None and age<=.5,
+                    frame_id=self.frame_id,sample_time_s=self.sample_time_s,
+                    bbox=[int(u.min()),int(v.min()),int(u.max()),int(v.max())] if self.visible else None)
+
+    def previews(self):
+        """Encode the already consumed measurement, never render a newer frame."""
+        import base64
+        import io
+        from PIL import Image,ImageDraw
+        if self.rgb is None:return None
+        rgb=Image.fromarray(self.rgb)
+        detected=rgb.copy();draw=ImageDraw.Draw(detected)
+        v,u=np.nonzero(self.mask)
+        if self.visible:
+            box=(int(u.min()),int(v.min()),int(u.max()),int(v.max()))
+            draw.rectangle(box,outline=(98,216,208),width=2)
+            draw.text((box[0],max(0,box[1]-14)),"RED CUBE",fill=(98,216,208))
+        # Fixed metric scale, not per-frame min/max that hides distance changes.
+        near=np.clip((1.-self.depth)/.8,0,1)
+        colors=np.stack([30+65*near,40+175*near,65+150*near],axis=-1).astype(np.uint8)
+        colors[~np.isfinite(self.depth)]=0
+        result={}
+        for key,im in [('rgb',rgb),('detection',detected),('depth',Image.fromarray(colors))]:
+            buffer=io.BytesIO();im.save(buffer,format='JPEG',quality=88)
+            result[key]=base64.b64encode(buffer.getvalue()).decode()
+        return result
 
     def close(self):
         self.renderer.close()
@@ -69,6 +99,11 @@ class CameraObservation:
 
     def observation(self):
         e=self.env;measurement=self.tracker.update(e.data)
+        self.last=dict(source='synthetic RGB-D + joint encoders + tactile contacts + calibrated destination',
+            **{k:v for k,v in measurement.items() if k!='position'},
+            estimated_cube=None,kinematic_prediction=False,
+            goal_source='calibrated workspace destination',width=self.tracker.width,height=self.tracker.height,
+            depth_range_m=[.2,1.])
         contacts=set(e.contacts())
         holding={'gripper','moving_jaw_so101_v1'}<=contacts
         cube=measurement['position']
@@ -91,9 +126,7 @@ class CameraObservation:
             *((e.ee-[.06,-.18,.06])/.15),*((cube-e.ee)/.15),*((goal-cube)/.15),cube[2]/.15,
             float(holding),float(self.lifted),float(inside),min(e.contact_dwell/.5,1),*e.last_action,
         ],dtype=np.float32)
-        self.last=dict(source='synthetic RGB-D + joint encoders + tactile contacts + calibrated destination',
-            visible=measurement['visible'],pixels=measurement['pixels'],age_s=measurement['age_s'],
-            estimated_cube=cube.tolist(),kinematic_prediction=holding)
+        self.last.update(estimated_cube=cube.tolist(),kinematic_prediction=holding)
         return obs
 
     def close(self):self.tracker.close()

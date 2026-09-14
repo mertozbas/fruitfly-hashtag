@@ -11,7 +11,8 @@ def archive(path):
     path=Path(path);policy=Policy(path);root=Path(__file__).resolve().parents[1]
     files={n:(path.parent/n).read_bytes() for n in ("circuit.json","body_ids.npz","layer0.npz","layer1.npz","layer2.npz")}
     files.update({"checkpoint.npz":path.read_bytes(),"odor_policy.py":(root/"odor_policy.py").read_bytes(),
-                  "so101/__init__.py":b"","so101/policy.py":(root/"so101/policy.py").read_bytes()})
+                  "so101/__init__.py":b"","so101/policy.py":(root/"so101/policy.py").read_bytes(),
+                  "so101/recovery.py":(root/"so101/recovery.py").read_bytes()})
     files['infer.py']=b'''import argparse,json
 from pathlib import Path
 from so101.policy import Policy
@@ -58,6 +59,12 @@ bellek değerleridir; anatomik nöron değildir. Şemada
 izinleri de uygulanır. Bu görev önbilgisi anatomik bağlantılardan ayrıdır;
 konum, zaman veya hazır hareket yolu içermez.
 Bu paket hareket komutunu hesaplar; robot sürücüsü veya fizik çalıştırmaz.
+Kamera algısı ve temas ölçümü uygulama tarafında sağlanır. Canlı laboratuvardaki
+aynı sahnede tekrar deneme için `so101.recovery.RetrySupervisor` da dahildir.
+Her yeni bölümde gözetmeni sıfırlayın. Her karar öncesinde
+`retry.observe(observation, time_s, policy)` çağırın; `retry.exhausted` durumunda
+motor yürütmesini durdurun. Gözetmen motor komutu üretmez; görev belleğini
+sıfırlar. Ayrıca görüntü tazeliği, fizik sınırları ve toplam süre kapıları gerekir.
 Checkpoint, anatomik matrisler, giriş adaptörü ve öğrenilmiş bağlantı katsayıları
 birlikte taşınır. Canlı sinek beyni veya başka robota doğrudan uyumlu politika değildir.
 Gerçek donanım için kalibrasyon, gözlem eşlemesi ve kontrollü doğrulama gerekir.

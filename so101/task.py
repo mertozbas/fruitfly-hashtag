@@ -16,6 +16,7 @@ MAX_DELTA=.003
 
 
 class PickPlaceEnv(ArmEnv):
+    step_limit=600
     def reset(self,seed=0,cube=None,goal=None):
         rng=np.random.default_rng(seed)
         if cube is None:
@@ -109,7 +110,7 @@ class PickPlaceEnv(ArmEnv):
                 if c.dist<-.0005:
                     self.unsafe=True
         self.success=bool(self.settle_dwell>=.5 and not self.unsafe)
-        self.outcome="unsafe" if self.unsafe else "success" if self.success else "timeout" if self.steps>=600 else "running"
+        self.outcome="unsafe" if self.unsafe else "success" if self.success else "timeout" if self.steps>=self.step_limit else "running"
         parts={"time":-.002,"motion":-.001*float(np.square(delta/MAX_DELTA).sum())}
         if not self.grasped:
             parts["approach"]=float((before_distance-np.linalg.norm(self.ee-self.cube))*5)
