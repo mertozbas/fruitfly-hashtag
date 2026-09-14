@@ -1,7 +1,7 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rehber · Hashtag Neural Lab</title><link rel="icon" href="data:,"><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#0c121b;color:#d9e5ee;font:16px/1.75 system-ui,sans-serif}aside{position:fixed;inset:0 auto 0 0;width:220px;padding:28px 22px;overflow-y:auto;border-right:1px solid #263744;background:#101923}aside b{display:block;font-size:14px;letter-spacing:.08em;margin-bottom:25px}aside a{display:block;margin:10px 0}a{color:#7ee3c3}main{margin-left:220px;max-width:1440px;padding:36px 48px}section{padding:0 0 44px;margin-bottom:44px;border-bottom:1px solid #324653}h1{font-size:30px;line-height:1.3}h2{font-size:23px;margin-top:32px}h3{font-size:18px}pre{padding:18px;border:1px solid #2e4455;border-radius:7px;background:#060c13;overflow:auto;line-height:1.5}code{font:13px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}blockquote{border-left:3px solid #7ee3c3;margin-left:0;padding:3px 20px;color:#b6c8d7}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px;border:1px solid #293b4a;vertical-align:top}th{background:#162332}li{margin:7px 0}.meta{color:#98adbd;font-size:13px}@media(max-width:760px){aside{position:static;width:auto}aside a{display:inline-block;margin-right:18px}main{margin:0;padding:24px}table{display:block;overflow:auto}}@media print{aside{display:none}main{margin:0;padding:0}body{background:white;color:black}a{color:#064f44}pre{background:#eee}}
 
 img,video{max-width:100%;height:auto;border-radius:8px}p:has(>img){margin:26px 0}h1,h2,h3{color:#ecf3f6}section{scroll-margin-top:24px}a{overflow-wrap:anywhere}aside a{font-size:14px;margin:7px 0}summary{cursor:pointer}.meta{line-height:1.7}
-</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-so101-local">SO-101 robot deneyi</a><a href="#docs-tictactoe-local">Tic-tac-toe laboratuvarı</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
+</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-so101-local">SO-101 robot deneyi</a><a href="#docs-tictactoe-local">Tic-tac-toe laboratuvarı</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-so101-hardware">Gerçek SO-101 hazırlığı</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
 
 <h1 id="README--hashtag-neural-lab">Hashtag Neural Lab</h1>
 <p><strong>Gerçek sinek anatomisinden çıkarılan bir devreyi eğitin; yön kararını, canlı nöron yanıtlarını ve fizik simülasyonunu tek ekranda inceleyin.</strong></p>
@@ -330,6 +330,10 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 <tr>
 <td>SO-101, temasla al ve yerleştir, canlı ağ ve eğitim</td>
 <td><a href="#docs-so101-local">Yerel robot deneyi</a></td>
+</tr>
+<tr>
+<td>Gerçek follower, bilek kamerası ve salt okuma tanılaması</td>
+<td><a href="#docs-so101-hardware">Gerçek SO-101 hazırlığı</a></td>
 </tr>
 <tr>
 <td>Tic-tac-toe, kamera ile tahta okuma ve öğrenilmiş hamle seçimi</td>
@@ -1184,7 +1188,8 @@ genel amaçlı, her işi öğrenmiş veya yeni donanımda doğrudan çalışacak
 <p><a href="#docs-training">Eğitim rehberine dön</a> · <a href="#docs-usage">UI kullanımı</a></p></section>
 <section id="docs-so101-local"><h1 id="docs-so101-local--so-101-yerel-sinir-ağı-deneyi">SO-101 yerel sinir ağı deneyi</h1>
 <p>Bu çalışma yalnızca yerel simülasyon içindir. Fiziksel robot sürücüsü çağrılmaz;
-GitHub veya PyPI yayını yapılmaz. Mevcut sinek görevleri ve checkpoint'leri korunur.</p>
+GitHub veya PyPI yayını yapılmaz. Mevcut sinek görevleri ve checkpoint'leri korunur.
+Gerçek follower ve USB kameralar için ayrı <a href="#docs-so101-hardware">bağlantı hazırlığı ve tanılama rehberi</a> vardır; fiziksel motor yürütmesi henüz devreye alınmadı.</p>
 <p><img alt="SO-101 ve aynı kararı üreten canlı anatomik ağ" src="media/so101-lab.jpg"></p>
 <h2 id="docs-so101-local--aç-ve-kullan">Aç ve kullan</h2>
 <pre><code class="language-bash">.venv/bin/python lab_server.py
@@ -2088,6 +2093,171 @@ Bunlar Git ve Python wheel/sdist paketine dahil edilmez. İndirme dış sunucula
 standart HTTP istekleri yapar; kişisel model/eğitim yükleme veya telemetri servisi yoktur.
 UI yalnızca <code>127.0.0.1</code> dinler; kimlik doğrulamalı çok kullanıcılı bir servis değildir.
 LAN'a veya internete açmak bu dağıtımın hazır bir özelliği değildir.</p></section>
+<section id="docs-so101-hardware"><h1 id="docs-so101-hardware--gerçek-so-101-bağlantı-ve-devreye-alma">Gerçek SO-101: bağlantı ve devreye alma</h1>
+<p>Neural Lab'ın <strong>Gerçek kol ↗</strong> paneli fiziksel SO-101 follower'ı ve USB kameralarını
+tanılamaya hazırlar. Motor konumlarını, sıcaklığı, voltajı ve mevcut tork durumunu
+okur; kaydedilmiş kalibrasyonu motor belleğiyle karşılaştırır. Bilek ve sabit kamera
+için ayrı gerçek RGB önizlemeleri sunar.</p>
+<p><strong>Bu sürüm salt okuma aşamasındadır.</strong> Fiziksel kola hedef, tork veya kalibrasyon
+yazmaz. Simülasyondaki al ve yerleştir / tic-tac-toe modelleri henüz fiziksel kolda
+devreye alınmadı. Donanım panelini açmak, ana ekrandaki beyni gerçek kola bağlamaz;
+ana ekran simülasyonun sinir ağı hesabını göstermeye devam eder.</p>
+<h2 id="docs-so101-hardware--1-kol-bağlı-değilken-hazırlık">1. Kol bağlı değilken hazırlık</h2>
+<p>Kurulu Neural Lab çalışma dizininde:</p>
+<pre><code class="language-bash">.venv/bin/python tools/setup_so101_hardware.py
+</code></pre>
+<p>Komut <code>.runtime/hardware-venv</code> adında ayrı bir Python ortamı oluşturur. Bilimsel
+<code>.venv</code> ortamını, eğitimleri ve modelleri değiştirmez. <code>uv</code> ve mevcut Python 3.12
+ortamı kullanılır; ilk kurulumda internet gerekir. Bu bilgisayarda kurulum yapıldı.
+Farklı bir bilgisayarda aynı komutla tekrarlanabilir. pipx kullanıyorsanız komutu
+paketin uygulama ortamında değil, <code>fruitfly status</code> ile gördüğünüz <strong>çalışma
+dizininde</strong>, bilimsel ortam kurulduktan sonra çalıştırın.</p>
+<table>
+<thead>
+<tr>
+<th>Bağımlılık</th>
+<th>Sabit sürüm</th>
+<th>Görev</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pyserial</td>
+<td>3.5</td>
+<td>USB seri haberleşmesi</td>
+</tr>
+<tr>
+<td>feetech-servo-sdk</td>
+<td>1.0.0</td>
+<td>STS3215 kayıtlarının okunması</td>
+</tr>
+<tr>
+<td>opencv-python-headless</td>
+<td>4.13.0.92</td>
+<td>USB kamera görüntüsü</td>
+</tr>
+<tr>
+<td>numpy</td>
+<td>2.2.6</td>
+<td>Kamera görüntü dizileri</td>
+</tr>
+</tbody>
+</table>
+<p>UI'da sağ üstten <strong>Gerçek kol</strong> panelini açın. <strong>Sürücü ortamı hazır</strong> ve varsa
+yerel kalibrasyon dosyası görünür. <strong>Envanteri yenile</strong> yalnızca işletim sisteminin
+USB aygıt listesini okur; seri port veya kamera açmaz.</p>
+<h2 id="docs-so101-hardware--2-hazır-olduğunuzda-bağlanacak-parçalar">2. Hazır olduğunuzda bağlanacak parçalar</h2>
+<ol>
+<li>SO-101 <strong>follower</strong> kolunu masaya sabitleyin. Hareket alanını boş bırakın.</li>
+<li>Follower motor kartının USB kablosunu bilgisayara bağlayın. Motorları okumak
+   için kolun kendi kitine uygun güç adaptörünü kullanın. Bu bağlantı ekranı
+   mevcut tork durumunu değiştirmez; güç verildiğinde kolun fiziksel davranışı
+   motorun mevcut ayarlarına bağlıdır.</li>
+<li>Somun yuvalı adaptördeki <strong>32×32 UVC bilek kameranın USB'sini</strong> bağlayın.</li>
+<li>Tic-tac-toe tahtasının tamamını ve çalışma alanını gören sabit bir üst / karşı
+   kamera kullanın. Bilek kamerasının dar görüşü bütün tahtayı her pozda göremez.</li>
+</ol>
+<p>İlk tanılama için leader kol gerekmez. Gerçek hareket aşamasında elle gösterim
+toplamak gerekirse leader veya başka bir teleoperasyon aracı ayrıca kullanılabilir.
+Kolun portunu başka bir LeRobot / teleoperasyon uygulamasında açık bırakmayın.</p>
+<p>Montaj, follower / leader farkları ve kit kurulumu için
+<a href="https://huggingface.co/docs/lerobot/en/so101">resmî LeRobot SO-101 rehberi</a> kaynak
+alınır. Çalışan, kalibre edilmiş bir kol için motor ID kurulumunu baştan çalıştırmayın.</p>
+<h2 id="docs-so101-hardware--3-motorları-yalnızca-oku">3. Motorları yalnızca oku</h2>
+<ol>
+<li>Panelde <strong>Envanteri yenile</strong> düğmesine basın; follower'ın USB portunu seçin.</li>
+<li>Kola ait kalibrasyon dosyasını seçin. Dosya adı ve SHA-256 özeti görünür.</li>
+<li><strong>Motorları oku</strong> düğmesine basın. Altı motorun ID 1–6 ve model kodu STS3215
+   olarak okunması beklenir. Uyuşmazlıkta tanılama hata gösterir.</li>
+<li>Konum, sıcaklık, voltaj ve mevcut tork durumunu inceleyin. Satırın üzerine
+   geldiğinizde teknik eklem adı, ham enkoder, ham yük ve çalışma modu görünür.</li>
+<li><strong>Devreye alma</strong> sekmesinde dosya / motor kalibrasyonu karşılaştırmasını görün.</li>
+</ol>
+<p>Kalibrasyon dosyaları şu yerlerde aranır:</p>
+<pre><code class="language-text">~/.cache/huggingface/lerobot/calibration/robots/so_follower/*.json
+~/.cache/huggingface/lerobot/calibration/robots/so101_follower/*.json
+</code></pre>
+<p>Dosya geçerli olsa bile doğru kola ait olduğu henüz kanıtlanmış değildir. Kontrol;
+motor ID, kayıtlı alt / üst limit ve homing offset eşleşmesini kapsar. Follower
+kimliği, mekanik dişli oranı ve simülasyonla yön eşleşmesi ayrı ölçümlerdir.
+Dosyaya veya motor belleğine otomatik düzeltme yazılmaz.</p>
+<p>İlk beş eklemin konumu LeRobot derece ölçeği, gripper konumu yüzde ölçeğidir.
+Homing offset motor tarafından uygulanır; yazılımda ikinci kez çıkarılmaz.
+Aralık dışındaki değerler kırpılmaz. <strong>Bu değerler doğrudan MuJoCo radyanlarına
+çevrilip hareket komutu yapılamaz:</strong> sıfır noktası ve yön eşleştirmesi gerekir.</p>
+<h2 id="docs-so101-hardware--4-kameraları-gör">4. Kameraları gör</h2>
+<p>Her kamera için bir aygıt indeksi seçip <strong>Görüntüyü aç</strong> düğmesine basın.
+İndeksler işletim sistemine ve takılı aygıtlara göre değişir; <code>0</code> her zaman bilek
+kamerası değildir. Görüntüden doğru aygıtı kontrol edin. Aynı indeks iki rol için
+aynı anda açılamaz. macOS kamera izni isterse Python'u başlatan uygulamanın
+kamera erişimini sistem ayarlarından açın.</p>
+<p>1280×720 istenir; kamera farklı çözünürlük verirse <strong>gerçekte alınan çözünürlük</strong>
+panelde yazılır. İşçi en fazla 8 kare/saniye üretir, panel yaklaşık 4 kez/saniye
+yenilenir; cihaz ve işlem süresi bunu düşürebilir. Son kare 2 saniyeden eskiyse
+canlı kabul edilmez. UVC'den derinlik görüntüsü uydurulmaz.
+Paneldeki <code>ms</code> değeri son mesajın sunucuya gelişinden itibaren yaşıdır;
+kameranın pozlama zamanını veya uçtan uca kontrol gecikmesini ölçmez.</p>
+<p><strong>Durdur</strong> seçilen kamerayı; <strong>Tüm bağlantıları kapat</strong> motor tanılamasını ve iki
+kamerayı kapatır. Panel kapandığında da bağlantılar bırakılır. UI'dan 15 saniye
+güncelleme gelmezse oturumlar otomatik kapanır; her oturum en fazla 10 dakikadır.
+Bağlantıyı kapatmak <strong>acil durdurma veya tork kapatma komutu değildir</strong>. Uygulama
+torku açmadığı gibi kapatmaz; fiziksel güç kesme imkânı ayrı tutulmalıdır.</p>
+<h2 id="docs-so101-hardware--5-simülasyondan-gerçek-harekete-kalan-işler">5. Simülasyondan gerçek harekete kalan işler</h2>
+<p>Bağlantı tanılamasından sonra gerçek koldan ölçüm alarak şu aşamalar tamamlanır:</p>
+<table>
+<thead>
+<tr>
+<th>Aşama</th>
+<th>Ölçüm / kabul koşulu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eklem eşleştirmesi</td>
+<td>Follower kimliği, eklem sırası, yön, sıfır, birim, hareket ve hız sınırları</td>
+</tr>
+<tr>
+<td>Kamera geometrisi</td>
+<td>Bilek / üst kamera kimliği, lens kalibrasyonu, kamera–robot ve masa koordinatları</td>
+</tr>
+<tr>
+<td>Gerçek görsel gözlem</td>
+<td>RGB'den kalibre edilmiş masa / nesne geometrisi; simülasyonun derinlik ve nesne konumu bilgisine bağımlılık kaldırılır</td>
+</tr>
+<tr>
+<td>Kavrama / düşme</td>
+<td>Görüntü ve ölçülen motor geri bildirimiyle güvenilir doğrulama; ham servo yükü tek başına başarı kanıtı sayılmaz</td>
+</tr>
+<tr>
+<td>Kontrollü hareket</td>
+<td>Zaman damgası, gecikme, hız / adım / çalışma alanı sınırları, gözlem kaybında durma, operatörün güç kesmesi</td>
+</tr>
+<tr>
+<td>Görev doğrulaması</td>
+<td>Önce kısa boşta hareket, sonra tek küp ve tek hücre; ardından düşme kurtarma ve tam oyun</td>
+</tr>
+</tbody>
+</table>
+<p>Bu dört son kontrol UI'da bilinçli olarak <strong>bekliyor</strong> görünür. Bunları tamamlandı
+diye işaretleyen bir ayar yoktur; fiziksel gözlem adaptörü ve sınırlı motor yürütücüsü
+gerçek ölçümlerle uygulanıp doğrulanmalıdır. <code>/api/hardware/motion</code> bu sürümde
+daima <code>423</code> döndürür ve hedef kabul etmez.</p>
+<p>Öğrenilmiş tic-tac-toe hamle ağı, doğrulanmış tahta gözlemi sağlandığında tekrar
+kullanılabilir. Motor okuması simülasyonda öğrenildi: fiziksel deneme kaydı ve
+gerektiğinde yeniden eğitim gerekir. Simülasyondaki başarı sayıları gerçek
+kolun başarı sayıları değildir. Sineğe özgü koku, yürüme ve uçuş görevleri de
+bir robot koluna doğrudan aynı hareket olarak aktarılamaz.</p>
+<h2 id="docs-so101-hardware--bağlantısız-doğrulama">Bağlantısız doğrulama</h2>
+<pre><code class="language-bash">.venv/bin/python -m unittest discover -s tests -p test_hardware.py -v
+.venv/bin/python -m unittest discover -s tests/scientific -p test_hardware_api.py -v
+.runtime/hardware-venv/bin/python -m unittest discover -s tests/hardware -v
+</code></pre>
+<p>Testler sahte seri taşıma / süreçler kullanır; fiziksel motoru veya kamerayı açmaz.
+Kurulu Feetech SDK'sının yazma çağrılarının seri sınıra ulaşmadan reddedildiği de
+sınanır. Standart LeRobot <code>connect(calibrate=False)</code> çağrısı yapılandırma / tork
+yazabildiğinden bu tanılama yolunda kullanılmaz. Seri sınır yalnızca altı motor
+ID'sine PING ve sınırlı READ paketlerine izin verir.</p>
+<p><a href="#docs-so101-local">← SO-101 simülasyonu</a> · <a href="#docs-tictactoe-local">Tic-tac-toe</a> · <a href="#docs-README">Rehber dizini</a></p></section>
 <section id="docs-troubleshooting"><h1 id="docs-troubleshooting--sorun-giderme-bakım-ve-yedekleme">Sorun giderme, bakım ve yedekleme</h1>
 <p>Önce çalışan terminalin günlüğünü ve <code>fruitfly doctor</code> çıktısını inceleyin.
 Aşağıdaki işlemlerde uygulama sürümü ile kişisel veri dizinini ayrı tutun.</p>

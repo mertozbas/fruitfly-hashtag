@@ -2,6 +2,7 @@
 
 Bu çalışma yalnızca yerel simülasyon içindir. Fiziksel robot sürücüsü çağrılmaz;
 GitHub veya PyPI yayını yapılmaz. Mevcut sinek görevleri ve checkpoint'leri korunur.
+Gerçek follower ve USB kameralar için ayrı [bağlantı hazırlığı ve tanılama rehberi](so101-hardware.md) vardır; fiziksel motor yürütmesi henüz devreye alınmadı.
 
 ![SO-101 ve aynı kararı üreten canlı anatomik ağ](media/so101-lab.jpg)
 

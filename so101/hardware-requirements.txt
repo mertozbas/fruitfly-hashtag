@@ -1,0 +1,5 @@
+# Isolated hardware diagnostics runtime. Never sync the scientific environment.
+numpy==2.2.6
+pyserial==3.5
+feetech-servo-sdk==1.0.0
+opencv-python-headless==4.13.0.92

@@ -21,6 +21,7 @@ PAGES = {
     "docs/usage.md": "UI kullanımı", "docs/training.md": "Eğitim",
     "SIMULATION.md": "Yürüyüş", "flight/README.md": "Uçuş",
     "docs/local-tasks.md": "Yeni yerel görevler", "docs/so101-local.md": "SO-101 robot deneyi", "docs/tictactoe-local.md": "Tic-tac-toe laboratuvarı", "docs/experiments.md": "Deney kayıtları", "docs/data.md": "Veriler",
+    "docs/so101-hardware.md": "Gerçek SO-101 hazırlığı",
     "docs/troubleshooting.md": "Sorun giderme", "docs/development.md": "Geliştirme",
     "docs/media/README.md": "Medya kökeni", "THIRD_PARTY_NOTICES.md": "Kaynaklar",
 }

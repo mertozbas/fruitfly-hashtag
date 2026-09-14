@@ -21,6 +21,8 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
 from lab_tasks import TASKS, compatible
+from so101.hardware import HardwareLab
+from so101.hardware_api import router as hardware_router
 
 ROOT = Path(__file__).resolve().parent
 BASE = ROOT / "models/odor_navigation"
@@ -135,6 +137,7 @@ class Runtime:
                     channel.close()
 
 runtime = Runtime()
+hardware = HardwareLab(ROOT)
 
 @asynccontextmanager
 async def lifespan(app):
@@ -163,15 +166,18 @@ async def lifespan(app):
     default_task=os.environ.get('FRUITFLY_DEFAULT_TASK','so101' if robot_models else 'odor')
     if default_task!='odor':
         runtime.switch(default_task)
+    hardware.start()
     try:
         yield
     finally:
+        hardware.close()
         if runtime.job_process and runtime.job_process.poll() is None:
             runtime.job_process.terminate()
             runtime.job_process.wait(timeout=10)
         runtime.stop()
 
 app = FastAPI(title="Hashtag Neural Lab", lifespan=lifespan)
+app.include_router(hardware_router(hardware))
 
 @app.middleware("http")
 async def local_only(request: Request, call_next):
