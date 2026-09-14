@@ -9,8 +9,9 @@ Masaüstü düzeni tek ekran için tasarlanmıştır.
 
 ## Deney seçimi
 
-**Davranış** menüsünde kokuya yönelme ve kuruluysa beyne bağlı uçuş aktiftir.
-“Hazırlık” yazan kaçınma, görsel yönelme ve arazi uygulanmış eğitimler değildir.
+**Davranış** menüsünde kokuya yönelme, kaçınma, görsel yönelme, deneysel engel
+aşma ve kuruluysa beyne bağlı uçuş aktiftir. [Yerel görevler](local-tasks.md) yeni
+devreleri, sınırlarını ve karşılaştırma sonuçlarını açıklar.
 **Simülasyondaki model** hangi kayıtlı ağın çalıştığını gösterir; seçim eğitim başlatmaz.
 
 **Hedef X/Y** milimetredir, sınırı ±30 mm. **Hedefi uygula** yeni bölüm başlatır.
@@ -34,20 +35,23 @@ duvar saatinden farklı ilerler. Kanat hareketi hazır FlyBody politikasından g
 ## Beyni okumak
 
 **Aktivite**, son beyin kararındaki hesaplanan nöron yanıtıdır; biyolojik ölçüm
-değildir. Duraklatınca son değerler sabit kalır. 7.075 yanıt hesaplanır; gerçek
-soma konumu olan 4.826 nöron 3B'de çizilir. Eksik konumlar uydurulmaz.
+değildir. Duraklatınca son değerler sabit kalır. Devre görevle değişir. Koku
+devresinde 7.075 yanıt hesaplanır; 4.826 soma 3B'de çizilir. Diğer görevlerin
+sayıları başlıkta ve katman çubuğunda gösterilir. Eksik konumlar uydurulmaz.
 
 **Sade** 520 temsilci bağ, **Nöronun bağları** seçili nöronun bağları,
-**Tüm bağlar** konumu bilinen 82.747 model bağı gösterir. Son seçenek daha yoğundur.
+**Tüm bağlar** seçili devrenin konumlu bağlarını gösterir (koku devresinde 82.747).
 Parlaklık ve sinyal eşiği yalnızca görünümü değiştirir, çalışan ağı değiştirmez.
 
 Düz çizgiler soma–soma bağlantı gösterimidir, akson geometrisi değildir.
-Arka plandaki 28 dallanan SWC gerçek anatomidir; yalnızca üçü çalışan alt devreye
-dahildir. Hesaplanmayan iskeletler gri kalır.
+Arka plandaki 28 dallanan SWC gerçek anatomidir; yalnızca seçili devreye dahil
+olanları aktivite alır (koku devresinde üçü). Hesaplanmayan iskeletler gri kalır.
 
 Nörona/bağa tıklayın: bodyId, sınıf, kaynak anotasyonları, temaslar ve seçili
 modeldeki katsayılar ayrıntı panelinde açılır. JSON indirme seçili kaydı dışa
-aktarır; bütün checkpoint'i indirmez.
+aktarır; bütün checkpoint'i indirmez. Soldaki **Modeli indir** ise devreyi,
+ağırlıkları ve taşınabilir çıkarım kodunu ZIP olarak verir. **Test karşılaştırması**
+yeni görevlerde eğitim öncesi/sonrası ve motor çıkışı kapalı sonuçları gösterir.
 
 **Δ Ağırlık** anatomik başlangıca göre katsayı değişimidir; iki eğitimin birbirine
 farkı değildir. İki modelde aynı bağlantıyı ayrı ayrı seçerek karşılaştırabilirsiniz.

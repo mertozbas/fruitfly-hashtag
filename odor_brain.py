@@ -69,22 +69,35 @@ def load_policy(kind="trained"):
     return Policy(path)
 
 
-def make_examples(count, seed):
+def make_examples(count, seed, task="odor"):
     from fly_sim import teacher
     rng = np.random.default_rng(seed)
+    if task == "terrain":
+        sensory = rng.uniform(0, 1, (count, 2)).astype(np.float32)
+        sensory[:count//4] *= .03
+        # A hand-written target for a bounded reflex-gain decoder, not RL.
+        return sensory, np.tanh(8 * np.max(sensory, axis=1)).astype(np.float32)
     common = np.exp(rng.uniform(np.log(.005), np.log(.85), count))
-    contrast = rng.uniform(-.08, .08, count)
+    contrast = rng.uniform(-.95 if task == "vision" else -.08, .95 if task == "vision" else .08, count)
     odor = np.stack([common * (1 + contrast), common * (1 - contrast)], axis=1).astype(np.float32)
-    return odor, teacher(odor).astype(np.float32)
+    labels = teacher(odor).astype(np.float32)
+    return odor, -labels if task == "avoidance" else labels
 
 
-def train(*, steps=3000, seed=42, device="auto"):
+def train(*, steps=3000, seed=42, device="auto", task="odor"):
+    if task not in {"odor", "flight", "avoidance", "vision", "terrain"}:
+        raise ValueError("Unknown training task")
     import torch
     from torch import nn
     from torch.utils.tensorboard import SummaryWriter
     torch.set_num_threads(4)
     torch.manual_seed(seed)
     circuit = Circuit()
+    circuit_task = circuit.metadata.get("task", "odor")
+    if (task in {"vision", "terrain"} and circuit_task != task) or (
+        circuit_task in {"vision", "terrain"} and task != circuit_task
+    ):
+        raise ValueError("Training task requires its matching anatomical sensory circuit")
     if (MODEL / "trained.npz").exists():
         import shutil
         from datetime import datetime, timezone
@@ -112,10 +125,10 @@ def train(*, steps=3000, seed=42, device="auto"):
         np.savez_compressed(MODEL / f"{kind}.npz", weight=network.weight().detach().cpu().numpy(),
                             decoder=network.readout.weight.detach().cpu().numpy().T,
                             bias=network.readout.bias.detach().cpu().numpy(),
-                            circuit_identity=circuit.identity, seed=seed)
+                            circuit_identity=circuit.identity, seed=seed, task=task)
     save("untrained")
-    train_x, train_y = make_examples(2048, seed)
-    test_x, test_y = make_examples(512, seed + 1000)
+    train_x, train_y = make_examples(2048, seed, task)
+    test_x, test_y = make_examples(512, seed + 1000, task)
     x = torch.tensor(circuit.kc_features(train_x), device=device)
     y = torch.tensor(train_y, device=device)
     tx = torch.tensor(circuit.kc_features(test_x), device=device)
@@ -126,7 +139,7 @@ def train(*, steps=3000, seed=42, device="auto"):
     writer = SummaryWriter(str(MODEL / "tensorboard" / f"seed-{seed}"))
     rng = np.random.default_rng(seed)
     started = time.monotonic()
-    print(f"Training {int((base != 0).sum().cpu()):,} existing KC->MBON gains + motor readout on {device}; baseline MSE={before:.5f}", flush=True)
+    print(f"Training {int((base != 0).sum().cpu()):,} existing {circuit.groups[2]}->{circuit.groups[3]} gains + motor readout on {device}; baseline MSE={before:.5f}", flush=True)
     history = []
     for step in range(steps):
         batch = torch.tensor(rng.integers(0, len(x), 256), device=device)
@@ -150,11 +163,12 @@ def train(*, steps=3000, seed=42, device="auto"):
     writer.close()
     original_weight = circuit.layers[2].toarray()
     changed = int(np.count_nonzero((original_weight != 0) & (np.abs(final_weight - original_weight) > 1e-7)))
-    result = dict(seed=seed, device=device, steps=steps, elapsed_wall_seconds=time.monotonic() - started,
+    result = dict(task=task, seed=seed, device=device, steps=steps, elapsed_wall_seconds=time.monotonic() - started,
                   training_examples=len(x), heldout_examples=len(tx), before_mse=before, after_mse=after,
                   heldout_direction_accuracy=float(np.mean(np.sign(prediction) == np.sign(test_y))),
                   changed_existing_synaptic_gains=changed, newly_created_anatomical_edges=int(np.count_nonzero(final_weight[original_weight == 0])),
-                  training_kind="Supervised imitation of synthetic odor-gradient labels, not biological reward learning",
+                  training_kind="Supervised imitation of synthetic task-specific labels, not biological reward learning",
+                  initialization="Fresh anatomical baseline, not continual fine-tuning of the selected checkpoint",
                   scope=circuit.metadata["scope"], history=history)
     (MODEL / "training.json").write_text(json.dumps(result, indent=2) + "\n")
     if after >= before or changed == 0:

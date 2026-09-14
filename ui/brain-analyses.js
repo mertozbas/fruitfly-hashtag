@@ -1,13 +1,16 @@
 import {groupActivity, activityGrid} from './neural-math.js';
 const $=id=>document.getElementById(id);
-const names={ORN:'ORN',ALPN:'ALPN',Kenyon_Cell:'Kenyon',MBON:'MBON'};
+const names={Photoreceptor:'Foto',Optic_relay:'Optik',Visual_projection:'VP',Descending:'İnen',Touch:'Temas',VNC_relay:'VNC',VNC_premotor:'Ön motor',Motor:'Motor',ORN:'ORN',ALPN:'ALPN',Kenyon_Cell:'Kenyon',MBON:'MBON'};
 const count=n=>Number(n).toLocaleString('tr-TR');
 export function createAnalyses(graph,{getSelection}){
+  const lifecycle=new AbortController();
+  const listen=(target,event,handler)=>target.addEventListener(event,handler,{signal:lifecycle.signal});
   let current={}, visible=false, disconnected=false;
   const nodes=graph.nodes, byId=new Map(nodes.map(n=>[n.id,n]));
   const bounds=extents(nodes.map(n=>n.position));
   const surface=[];for(let i=0;i<graph.vertices.length;i+=3)surface.push(graph.vertices.slice(i,i+3));
   const allBounds=extents(surface);
+  $('region-values').replaceChildren();
   const rows=graph.group_ranges.map(g=>{
     const row=document.createElement('div');row.className='region-row';
     const name=document.createElement('span');name.textContent=names[g.name]||g.name;
@@ -23,12 +26,13 @@ export function createAnalyses(graph,{getSelection}){
     }
     draw();
   }
-  $('metrics-tab').addEventListener('click',()=>tab(false));$('analyses-tab').addEventListener('click',()=>tab(true));
-  for(const id of ['metrics-tab','analyses-tab'])$(id).addEventListener('keydown',e=>{
+  listen($('metrics-tab'),'click',()=>tab(false));listen($('analyses-tab'),'click',()=>tab(true));
+  for(const id of ['metrics-tab','analyses-tab'])listen($(id),'keydown',e=>{
     if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();tab(e.key==='Home'?false:e.key==='End'?true:!visible);$(visible?'analyses-tab':'metrics-tab').focus();}
   });
-  $('slice-depth').addEventListener('input',draw);$('slice-width').addEventListener('change',draw);
-  new ResizeObserver(()=>{if(visible)draw();}).observe($('analyses-view'));
+  listen($('slice-depth'),'input',draw);listen($('slice-width'),'change',draw);
+  const observer=new ResizeObserver(()=>{if(visible)draw();});observer.observe($('analyses-view'));
+  tab(!$('analyses-view').classList.contains('hidden'));
   function update(s){current=s;disconnected=false;status();if(visible)draw();}
   function status(){
     $('analysis-frame').textContent=disconnected?'AKIŞ KESİLDİ · SON KARE':current.seq?`${current.paused?'DURAKLATILDI':current.idle?'BOŞTA':'CANLI'} · #${current.seq} · ${Number(current.neural?.sample_time_s??current.time_s).toFixed(2)} s`:'CANLI VERİ BEKLENİYOR';
@@ -41,12 +45,12 @@ export function createAnalyses(graph,{getSelection}){
       rows[i].fill.style.width=(g.mean*100)+'%';rows[i].value.textContent=g.mean.toFixed(3);
       rows[i].row.title=`${count(g.count)} model nöronu · ${count(g.located)} soma konumu · ${count(g.active)} yanıt >0,01. Ortalama tüm gruptan hesaplanır.`;
     });
-    $('region-name').textContent=selectedNode?.region||'KOKU DEVRESİ';
-    $('region-selection').textContent=selectedNode?`${selectedNode.label} · ${selectedNode.region||'Bölge anotasyonu yok'}`:selected?.id?`Body ${selected.id} · konumlu devre dışında`:'Çerçeve: konumlu koku devresi';
+    $('region-name').textContent=selectedNode?.region||'SEÇİLİ ALT DEVRE';
+    $('region-selection').textContent=selectedNode?`${selectedNode.label} · ${selectedNode.region||'Bölge anotasyonu yok'}`:selected?.id?`Body ${selected.id} · konumlu devre dışında`:'Çerçeve: konumlu model devresi';
     $('region-selection').title=$('region-selection').textContent;
     const drive=current.neural?.cpg_drive;
     $('motor-drive').title=current.neural?.brain_connected?'Son beyin kararından üretilen yön hızı: nötr değer çıkarılmış MBON okuması × 60; ±8 rad/s sınırı. Kanat torku değildir.':'Son fizik adımında CPG sürüşü; VNC nöron aktivitesi değildir.';
-    $('motor-drive').textContent=current.neural?.brain_connected?`Yaw ${Number(current.neural.yaw_rate_rad_s).toFixed(2)} rad/s`:drive?`CPG ${drive[0].toFixed(2)} / ${drive[1].toFixed(2)}`:'CPG henüz sürülmedi';
+    $('motor-drive').textContent=current.behavior==='terrain'?`Düzeltme ×${Number(current.neural?.correction_gain||0).toFixed(2)}`:current.neural?.brain_connected?`Yaw ${Number(current.neural.yaw_rate_rad_s).toFixed(2)} rad/s`:drive?`CPG ${drive[0].toFixed(2)} / ${drive[1].toFixed(2)}`:'CPG henüz sürülmedi';
     const region=setup($('region-map'),allBounds);
     if(region){
       background(region,surface,allBounds);
@@ -82,7 +86,7 @@ export function createAnalyses(graph,{getSelection}){
       if(selectedNode&&Math.abs(selectedNode.position[1]-y)<=thickness/2){const p=xray.point(selectedNode.position);c.strokeStyle='#fff1ce';c.beginPath();c.arc(...p,3,0,Math.PI*2);c.stroke();}
     }
   }
-  return {update,stale(){disconnected=true;status();}};
+  return {update,dispose(){lifecycle.abort();observer.disconnect();},stale(){disconnected=true;status();}};
 }
 function extents(points){
   const b={minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity,minZ:Infinity,maxZ:-Infinity};

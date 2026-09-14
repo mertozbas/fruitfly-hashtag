@@ -78,18 +78,39 @@ function goal() {
 async function refreshCatalog() {
   catalog = await api('catalog');
   const current=$('model').value;
-  $('model').replaceChildren(...catalog.models.map(m=>{const option=document.createElement('option');option.value=m.id;option.textContent=m.name;return option;}));
+  $('model').replaceChildren(...catalog.models.map(m=>{const option=document.createElement('option');option.value=m.id;option.textContent=m.name;option.dataset.task=m.task||'odor';return option;}));
   if (catalog.models.some(m=>m.id===current)) $('model').value=current;
-  behaviorUI(isFlight());
+  behaviorUI(simulation.behavior||'odor');
 }
 async function refreshModel(id) {
   const request=++modelRequest, result=await api('model/'+encodeURIComponent(id));
   if(request!==modelRequest)return;
+  if(!graph||graph.circuit_identity!==result.circuit_identity){
+    const next=await api('graph?model='+encodeURIComponent(id));
+    if(request!==modelRequest)return;
+    sceneView?.dispose();analyses?.dispose();
+    graph=next;selectedNode=selection=null;selectedEdge=-1;
+    $('detail-drawer').classList.add('hidden');$('inspect-open').classList.add('hidden');
+    $('node-title').textContent='Bir nöron seç';$('node-type').textContent='SEÇİM YOK';
+    $('node-id').textContent='—';$('node-description').textContent='Seçili görevdeki bir nörona tıkla.';
+    sceneView=createBrain(graph,{getState:()=>({simulation,selectedModel,selectedNode,selectedEdge,selection,mode,pickMode}),onSelect:selectEntity});
+    analyses=createAnalyses(graph,{getSelection:()=>selection});
+    const short={Photoreceptor:'Foto',Optic_relay:'Optik',Visual_projection:'VP',Descending:'İnen',Touch:'Temas',VNC_relay:'VNC',VNC_premotor:'Ön motor',Motor:'Motor',Kenyon_Cell:'Kenyon'};
+    graph.group_ranges.forEach((g,i)=>{const cell=$('layer-'+i).parentElement.parentElement;cell.querySelector('b').textContent=short[g.name]||g.name;cell.querySelector('small').textContent=count(g.count);cell.title=g.name;});
+    document.querySelector('[data-brain-focus="circuit"]').textContent='Seçili devre';
+    $('connection-density').title=`Sade: 520 temsilci. Tümü: ${count(graph.edges.length)} konumlu bağlantı.`;
+    $('odor-neurons').replaceChildren(document.createTextNode(count(graph.total)+' '),Object.assign(document.createElement('em'),{textContent:'model nöronu'}));
+    $('odor-weights').replaceChildren(document.createTextNode(count(graph.layer_counts[2].total)+' '),Object.assign(document.createElement('em'),{textContent:'eğitilebilir bağlantı'}));
+    $('scope-model').textContent=`Seçili devre ${count(graph.total)} nöron içerir; ${count(graph.nodes.length)} soma konumu ve ${count(graph.edges.length)} konumlu bağlantı çizilebilir. Katmanlar: ${graph.group_ranges.map(g=>g.name).join(' → ')}. Diğer anatomik iskeletler gri gösterilir.`;
+  }
   selectedModel=result;
   updateSelectionValue();
   const item=catalog.models?.find(m=>m.id===id);
   const t=selectedModel.training, e=isFlight()?selectedModel.flight_evaluation:selectedModel.walk_evaluation;
   $('benchmark').textContent=e ? `${e.success_count} / ${e.episodes}`:'—';
+  $('benchmark').title=e?.criterion||'Seçili modelin kayıtlı fizik değerlendirmesi';
+  $('export-model').href='/api/model/'+encodeURIComponent(id)+'/export';
+  $('validation-open').disabled=!e;
   $('model-loss').textContent=t ? fmt(t.after_mse,5):'—';
   $('checkpoint').textContent='CHECKPOINT '+selectedModel.sha256.slice(0,12);
   $('brain-model').textContent=item?.name ?? id;
@@ -117,7 +138,7 @@ function chart(canvas, series, {min=0,max=1}={}) {
 }
 function updateCharts(job) {
   const h=simulation.history ?? [];
-  chart($('signal-chart'),[{values:h.map(x=>x[1]),color:'#62d8d0'},{values:h.map(x=>x[2]),color:'#eaa867'}]);
+  chart($('signal-chart'),[{values:h.map(x=>x[1]),color:'#62d8d0'},{values:h.map(x=>x[2]),color:'#eaa867'}],{max:simulation.behavior==='vision'?Math.max(.00001,...h.flatMap(x=>[x[1],x[2]])):1});
   const active=['training','evaluating','cancelling'].includes(job?.status);
   const samples=active ? job.history ?? [] : trainingHistory;
   chart($('loss-chart'),[{values:samples.map(p=>p[1]),color:'#62d8d0'}],{min:0,max:Math.max(.01,...samples.map(p=>p[1]))});
@@ -126,21 +147,21 @@ function updateCharts(job) {
     $('loss-value').textContent=fmt(job.loss,5);
     $('loss-change').textContent='';
     $('loss-steps').textContent=`${count(job.step||0)} / ${count(job.steps)} adım`;
-    $('changed').textContent=job.status==='evaluating'?`${job.evaluated||0} / 6 fizik testi`:'Model eğitiliyor';
+    $('changed').textContent=job.status==='evaluating'?`${job.evaluated||0} / ${job.evaluation_total||6} fizik testi`:'Model eğitiliyor';
   } else $('loss-source').textContent='SEÇİLİ MODEL';
 }
 async function updateJob(job) {
   const busy=['training','evaluating','cancelling'].includes(job.status);
-  $('train').disabled=busy || !['odor','flight'].includes($('experiment').value);
+  $('train').disabled=busy;
   $('cancel').classList.toggle('hidden',!busy);
   $('cancel').disabled=job.status==='cancelling';
   const labels={idle:'Yeni deney hazır',training:'Model eğitiliyor',evaluating:'Fizik testleri çalışıyor',complete:'Deney tamamlandı',failed:'Deney başarısız',cancelled:'Deney durduruldu',cancelling:'Durduruluyor'};
   $('job-state').textContent=labels[job.status]||'Yeni deney hazır';
-  const percent=job.status==='complete'?100:job.status==='evaluating'?75+25*(job.evaluated||0)/6:busy?75*(job.step||0)/(job.steps||1):0;
+  const percent=job.status==='complete'?100:job.status==='evaluating'?75+25*(job.evaluated||0)/(job.evaluation_total||6):busy?75*(job.step||0)/(job.steps||1):0;
   $('job-percent').textContent=`${Math.round(percent)}%`;
   $('job-progress').style.width=percent+'%';
   if(job.status==='training') $('job-note').textContent=`${count(job.step||0)} / ${count(job.steps)} adım · Canlı görünüm seçili modelle devam eder.`;
-  else if(job.status==='evaluating') $('job-note').textContent=`Hedef ${job.evaluated||0} / 6 · ${job.success_count||0} başarılı. Yeni model henüz seçilmedi.`;
+  else if(job.status==='evaluating') $('job-note').textContent=`Test ${job.evaluated||0} / ${job.evaluation_total||6} · ${{trained:'Eğitimli',untrained:'Eğitimsiz',silenced:'Çıkış kapalı'}[job.variant]||'Hedef'}: ${job.success_count||0} başarılı.`;
   else if(job.message&&!isFlight()) $('job-note').textContent=job.message;
   if(job.status==='complete'&&job.id!==completedJob){
     completedJob=latestRun=job.id;
@@ -156,12 +177,13 @@ function updateSimulation(s) {
   if(s.goal_mm&&(!simulation.seq||switching)){$('goal-x').value=s.goal_mm[0];$('goal-y').value=s.goal_mm[1];}
   simulation=s; paused=!!s.paused; lastPacketAt=Date.now();
   if(switching){
-    behavior=s.behavior;behaviorUI(isFlight());$('experiment').value=behavior;
+    behavior=s.behavior;behaviorUI(behavior);$('experiment').value=behavior;
   }
   camera=s.camera;document.querySelectorAll('[data-camera]').forEach(b=>b.classList.toggle('active',b.dataset.camera===camera));
   $('sim-empty').classList.add('hidden');
   $('fly-image').style.visibility='visible';
   $('fly-image').src='data:image/jpeg;base64,'+s.image;
+  if(s.eyes_image)$('eye-image').src='data:image/jpeg;base64,'+s.eyes_image;
   $('render-quality').textContent=s.render?`${s.render.width} × ${s.render.height} · ${s.render.msaa}× MSAA`:'GÖRÜNTÜ AKIŞI';
   $('distance').innerHTML=fmt(s.distance_mm)+'<small> mm</small>';
   $('speed').innerHTML=fmt(s.speed_mm_s,1)+'<small> mm/s</small>';
@@ -173,18 +195,19 @@ function updateSimulation(s) {
   $('episode-stats').textContent=isFlight()?`Bu oturum: ${s.successes}/${s.completed} hedef · ${s.falls} uçuş sınırı`:`Bu oturum: ${s.successes}/${s.completed} hedef · ${s.falls} devrilme`;
   $('rtf').textContent=fmt(s.rtf,isFlight()?3:2)+' ×';
   $('rtf').title='Simülasyon süresi / gerçek süre';
-  $('odor-left').textContent=fmt(s.odor[0],3);$('odor-right').textContent=fmt(s.odor[1],3);
+  $('odor-left').textContent=fmt(s.odor[0],s.behavior==='vision'?5:3);$('odor-right').textContent=fmt(s.odor[1],s.behavior==='vision'?5:3);
   $('steering').textContent=fmt(isFlight()?s.yaw_rate_rad_s:s.steering,3);
-  $('contacts').textContent=isFlight()?`Z ${fmt(s.altitude_mm,1)} mm · ${fmt(s.wing_hz,1)} Hz`:`Temas: ${s.contacts}`;
+  $('contacts').textContent=isFlight()?`Z ${fmt(s.altitude_mm,1)} mm · ${fmt(s.wing_hz,1)} Hz`:s.behavior==='terrain'?`Engel teması: ${count(s.barrier_contacts||0)}`:`Temas: ${s.contacts}`;
   s.layer_means.forEach((v,i)=>{$('layer-'+i).style.width=(v*100)+'%';$('layer-'+i).parentElement.title=`Ortalama aktivite: ${fmt(v,4)}`;});
   $('outcome').classList.toggle('hidden',s.outcome==='running');
-  $('outcome').textContent={success:isFlight()?'Kokulu hedefe ulaşıldı':'Hedefe ulaşıldı',fallen:'Denge kaybı',timeout:'Süre doldu'}[s.outcome]||'';
+  $('outcome').textContent={success:s.behavior==='avoidance'?'Kaynaktan uzaklaşıldı':s.behavior==='terrain'?'Engel geçildi':isFlight()?'Kokulu hedefe ulaşıldı':'Hedefe ulaşıldı',fallen:'Denge kaybı',timeout:'Süre doldu',unsafe:'Tehlike alanına girildi'}[s.outcome]||'';
   $('footer-status').textContent=isFlight()?'Fizik 0,05 ms · Kanat 0,2 ms · Beyin kararı 10 ms':`Fizik ${fmt(s.physics_dt*1000,1)} ms · Sensör / karar 10 ms · Canlı veri`;
   $('connection').classList.add('ready');$('connection').innerHTML='<i></i> Yerel bağlantı aktif';
   sceneView?.update(s.activity);
   sceneView?.freshness();
-  analyses?.update(s);
-  inspector?.tick(s.activity,s.model);
+  const matches=graph&&modelMatches(graph,s,selectedModel);
+  analyses?.update(matches?s:{...s,activity:null});
+  inspector?.tick(matches?s.activity:null,s.model);
   updateSelectionValue();
   if(`${s.behavior}:${s.model}`!==lastModelId){lastModelId=`${s.behavior}:${s.model}`;$('model').value=s.model;refreshModel(s.model).catch(e=>toast(e.message));}
 }
@@ -194,9 +217,9 @@ async function poll() {
     const data=await api('state');
     if(data.simulation.starting){
       simulation={...data.simulation, activity:null};lastPacketAt=0;lastSequence=-1;
-      behaviorUI(isFlight());$('experiment').value=simulation.behavior;
+      behaviorUI(simulation.behavior);$('experiment').value=simulation.behavior;
       $('fly-image').style.visibility='hidden';$('sim-empty').classList.remove('hidden');
-      $('sim-empty').textContent=isFlight()?'FlyBody uçuş politikası hazırlanıyor…':'Koku simülasyonu sürdürülüyor…';
+      $('sim-empty').textContent=isFlight()?'FlyBody uçuş politikası hazırlanıyor…':'Görev devresi ve fizik ortamı hazırlanıyor…';
       sceneView?.update(null);sceneView?.freshness();analyses?.update(simulation);
       return;
     }
@@ -248,18 +271,28 @@ document.querySelectorAll('[data-camera]').forEach(b=>b.addEventListener('click'
 $('model').addEventListener('change',async()=>{try{await control({op:'model',model:$('model').value});}catch(e){toast(e.message);$('model').value=simulation.model||'trained';}});
 $('experiment').addEventListener('change',async()=>{
   const e=catalog.experiments?.find(x=>x.id===$('experiment').value);if(!e)return;
-  if(!['odor','flight'].includes(e.id)){toast(e.detail);$('experiment').value=behavior||'odor';return;}
   $('experiment').disabled=true;
   try{await control({op:'behavior',behavior:e.id});lastSequence=-1;}
   catch(error){toast(error.message);$('experiment').value=behavior||'odor';}
   finally{$('experiment').disabled=false;}
 });
-bind('train',async()=>{if(!['odor','flight'].includes($('experiment').value))return;const steps=integer('steps',200,10000),seed=integer('seed',0,1000000);$('train').disabled=true;await api('train',{steps,seed,task:$('experiment').value});$('load-new').classList.add('hidden');toast('Yeni eğitim başladı. Mevcut model korunuyor.');});
+bind('train',async()=>{const steps=integer('steps',200,10000),seed=integer('seed',0,1000000);$('train').disabled=true;await api('train',{steps,seed,task:$('experiment').value});$('load-new').classList.add('hidden');toast('Yeni eğitim başladı. Mevcut model korunuyor.');});
 bind('cancel',()=>api('train/cancel',{}));
-bind('load-new',async()=>{if(latestRun){await control({op:'model',model:latestRun});$('model').value=latestRun;}});
+bind('load-new',async()=>{if(latestRun){const m=catalog.models.find(m=>m.id===latestRun);if(m?.task&&m.task!==simulation.behavior)await control({op:'behavior',behavior:m.task});await control({op:'model',model:latestRun});$('model').value=latestRun;}});
 function setMode(value){mode=value;$('brain-view').classList.toggle('delta-view',value==='delta');$('activity-mode').classList.toggle('active',value==='activity');$('delta-mode').classList.toggle('active',value==='delta');$('scale-title').textContent=value==='activity'?'MODEL AKTİVİTESİ':'BAĞLANTI ÇARPANI';$('scale-low').textContent=value==='activity'?'0':'0.22×';$('scale-high').textContent=value==='activity'?'1':'4.48×';sceneView?.update(simulation.activity);}
 bind('activity-mode',()=>setMode('activity'));bind('delta-mode',()=>setMode('delta'));
 bind('scope-open',()=>$('scope-dialog').showModal());bind('scope-close',()=>$('scope-dialog').close());
+bind('validation-open',()=>{
+  const e=isFlight()?selectedModel?.flight_evaluation:selectedModel?.walk_evaluation;if(!e)return;
+  $('validation-criterion').textContent=e.criterion||simulation.task_contract?.success||'Kayıtlı görev başarı ölçütü';
+  const rows=[[selectedModel.before?'Eğitim öncesi':'Seçili model',e],...Object.entries(e.controls||{}).map(([k,v])=>[k==='silenced'?'Motor çıkışı kapalı':'Eğitim öncesi',v])];
+  $('validation-rows').replaceChildren(...rows.map(([label,v])=>{const tr=document.createElement('tr');for(const value of [label,`${v.success_count} / ${v.episodes}`,v.falls??'—',v.unsafe_count??'—']){const td=document.createElement('td');td.textContent=value;tr.append(td);}return tr;}));
+  const muted=e.controls?.silenced;
+  $('validation-note').textContent=muted?(e.success_count>muted.success_count?'Bu koşullarda öğrenilmiş motor çıkışı başarıya katkı sağladı.':'Bu koşullarda ağ çıkışının başarı artışı gösterilemedi. Deneysel sonuç; engeli hazır kontrolcü de geçebilir.'):'Bu kayıtta çıkış kapatma karşılaştırması yok.';
+  $('validation-sha').textContent='Checkpoint: '+selectedModel.sha256;
+  $('validation-dialog').showModal();
+});
+bind('validation-close',()=>$('validation-dialog').close());
 bind('inspect-open',()=>selection&&inspector.show(selection,simulation.model||$('model').value));
 function setPickMode(value){pickMode=value;$('pick-node').classList.toggle('active',value==='node');$('pick-edge').classList.toggle('active',value==='edge');}
 bind('pick-node',()=>setPickMode('node'));bind('pick-edge',()=>setPickMode('edge'));
@@ -278,8 +311,5 @@ if(document.modelContext?.registerTool){
 try {
   await refreshCatalog();
   poll();
-  graph=await api('graph');
-  sceneView=createBrain(graph,{getState:()=>({simulation,selectedModel,selectedNode,selectedEdge,selection,mode,pickMode}),onSelect:selectEntity});
-  analyses=createAnalyses(graph,{getSelection:()=>selection});
   await refreshModel(simulation.model || 'trained');
 } catch(e){toast(e.message);$('brain-hint').textContent='Beyin görünümü yüklenemedi: '+e.message;}

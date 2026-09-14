@@ -28,9 +28,12 @@ haritası ve saydam kesit. Ekrandaki oturum sayacı aynı koşulun tekrarlarıd�
 çok hedefli başarı testi değildir.*
 
 > Bu proje **tam beyin emülasyonu değildir**. MaleCNS anatomisinden türetilmiş
-> **7.075 nöronluk basitleştirilmiş yönelme ağıdır**. Renkler hesaplanan model
+> **basitleştirilmiş görev alt ağları** kullanır; koku devresi 7.075 nörondur. Renkler hesaplanan model
 > yanıtıdır. Bacakları FlyGym, kanatları FlyBody'nin hazır motor kontrolcüleri
-> yönetir. Öğrenilen şey yön kararıdır. [Bilimsel kapsam](docs/training.md#bilimsel-kapsam).
+> yönetir. Öğrenilen şey yön kararı veya motor düzeltme kazancıdır. [Bilimsel kapsam](docs/training.md#bilimsel-kapsam).
+
+Yerel ek: **kaçınma 6/6, görsel yönelme 6/6, engel 2/6**. Engel eğitiminde başarı
+artışı gösterilmedi. [Üçlü kontrol deneyleri ve model dışa aktarımı](docs/local-tasks.md).
 
 ## Bir anatomik haritadan çalışan deneye
 
@@ -163,8 +166,8 @@ politikasına referans olur. Beyin paneli o anda kullanılan hesabı gösterir.
 
 Uçuş seçiliyken **Yönelme ağını eğit**, yeni ağı altı uçuş hedefinde de sınar.
 **Sinek havada başlar.** Kalkış, iniş, irtifa öğrenimi ve kanat politikasını yeniden
-eğitme bu sürümde yoktur. Koku yönelmesi dışındaki “hazırlık” seçenekleri de
-uygulanmış eğitimler değildir. [Uçuş kontrol yolu ve kullanım](flight/README.md).
+eğitme bu sürümde yoktur. Kaçınma, görme ve engel görevleri yerel çalışma
+kopyasına eklenmiştir; bu ek henüz GitHub/PyPI sürümünde bulunmaz. [Yerel görevler ve sonuçlar](docs/local-tasks.md). [Uçuş kontrol yolu ve kullanım](flight/README.md).
 
 <a id="kanitlar"></a>
 ## 05 — Sonucu neyle doğruluyoruz?

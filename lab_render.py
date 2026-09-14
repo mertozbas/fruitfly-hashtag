@@ -39,5 +39,8 @@ def sync_render(env, model, data):
     data.qpos[:] = env.sim.mj_data.qpos
     data.time = env.sim.mj_data.time
     model.geom_pos[env.goal_geom] = env.sim.mj_model.geom_pos[env.goal_geom]
+    if getattr(env, "barrier_geom", -1) >= 0:
+        model.geom_pos[env.barrier_geom] = env.sim.mj_model.geom_pos[env.barrier_geom]
+        model.geom_size[env.barrier_geom] = env.sim.mj_model.geom_size[env.barrier_geom]
     mujoco.mj_kinematics(model, data)
     mujoco.mj_camlight(model, data)

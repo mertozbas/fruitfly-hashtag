@@ -21,6 +21,7 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 | Tek ekranın çalışma mantığı | [Laboratuvar turu](../LAB.md) |
 | Eğitim öncesi/sonrası yürüyüş | [Simülasyon rehberi](../SIMULATION.md) |
 | Beyne bağlı uçuş, zamanlama, motor adaptörü | [Uçuş README](../flight/README.md) |
+| Kaçınma, görme, engel ve taşınabilir model | [Yerel görevler](local-tasks.md) |
 | Hangi veriyi, kaç GB ve neden indiriyorum? | [Veriler ve modeller](data.md) |
 | Hata, port, güncelleme, yedekleme, kaldırma | [Sorun giderme](troubleshooting.md) |
 | Kodu değiştir, doğrula, paketle | [Geliştirme](development.md) |

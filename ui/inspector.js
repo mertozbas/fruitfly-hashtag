@@ -17,7 +17,7 @@ export function createInspector({api,onSelect}) {
     document.getElementById('detail-title').textContent=next.kind==='node'?next.id:`${next.source} → ${next.target}`;
     refreshTabs();
     try{
-      const result=await api(next.kind==='node'?`neuron/${next.id}`:`connection/${next.source}/${next.target}?model=${encodeURIComponent(model)}`);
+      const result=await api(next.kind==='node'?`neuron/${next.id}?model=${encodeURIComponent(model)}`:`connection/${next.source}/${next.target}?model=${encodeURIComponent(model)}`);
       if(token!==generation)return;
       data=result;document.getElementById('detail-title').textContent=next.kind==='node'?(result.type||result.instance||result.id):`${result.source.type||result.source.id} → ${result.target.type||result.target.id}`;
       await render();
@@ -37,7 +37,7 @@ export function createInspector({api,onSelect}) {
         content.append(section('Anatomik bağlantı',[['Kaynak',`${data.source.type||'Tip yok'} · ${data.source.id}`],['Hedef',`${data.target.type||'Tip yok'} · ${data.target.id}`],['Yön','Kaynak → hedef'],['Sinaptik temas',num(data.anatomical_contacts,0)],['Kaynak nörotransmiteri',data.source.neurotransmitter]]));
         const navigation=el('div',undefined,'detail-actions');
         for(const [label,node] of [['Kaynak nöron',data.source],['Hedef nöron',data.target]]){const b=el('button',label,'secondary');b.onclick=()=>{onSelect({kind:'node',id:node.id});show({kind:'node',id:node.id},model);};navigation.append(b);}content.append(navigation);
-        content.append(m?section('Seçili modelde',[['Katman',m.layer],['Anatomik başlangıç ağırlığı',num(m.base_weight,8)],['Güncel model ağırlığı',num(m.current_weight,8)],['Eğitim çarpanı',num(m.gain,5)+' ×'],['Değişim',num(m.change_percent,2)+' %'],['Eğitilebilir',m.trainable?'Evet · KC → MBON':'Hayır · sabit katman']]):note('Bu anatomik bağlantı kullanılan ileri beslemeli alt devreye dahil değil.'));
+        content.append(m?section('Seçili modelde',[['Katman',m.layer],['Anatomik başlangıç ağırlığı',num(m.base_weight,8)],['Güncel model ağırlığı',num(m.current_weight,8)],['Eğitim çarpanı',num(m.gain,5)+' ×'],['Değişim',num(m.change_percent,2)+' %'],['Eğitilebilir',m.trainable?'Evet · son anatomik katman':'Hayır · sabit katman']]):note('Bu anatomik bağlantı kullanılan ileri beslemeli alt devreye dahil değil.'));
         const live=el('div',undefined,'detail-live');live.id='detail-live';content.append(live);tick(activity);
         content.append(note('Temas sayısı anatomik veridir. Normalize model ağırlığı ve eğitim çarpanı farklı niceliklerdir.'));
       }
@@ -51,7 +51,7 @@ export function createInspector({api,onSelect}) {
       const results=el('div');content.append(results);results.textContent='Bağlantılar okunuyor…';
       const token=generation, id=selection.id;
       try{
-        const r=await api(`neuron/${id}/connections?direction=${direction}&page=${page}&limit=12`);
+        const r=await api(`neuron/${id}/connections?direction=${direction}&page=${page}&limit=12&model=${encodeURIComponent(model)}`);
         if(token!==generation||renderToken!==renderGeneration||tab!=='connections')return;
         results.replaceChildren(note(`${num(r.total,0)} partner · Anatomik temas sayısına göre sıralı`));
         const table=el('table',undefined,'detail-table');const head=el('thead');const hr=el('tr');['Nöron / tip','Temas','İncele'].forEach(t=>hr.append(el('th',t)));head.append(hr);table.append(head);
@@ -63,7 +63,7 @@ export function createInspector({api,onSelect}) {
     }else{
       content.append(section('Kimlik',[['Body ID',data.id],['Tip',data.type],['Örnek / instance',data.instance],['Sınıf',data.cell_class],['Alt devre',data.circuit?.group||'Bu modelin dışında'],['Soma tarafı',data.annotations.somaSide],['Kök tarafı',data.annotations.rootSide],['Soma konumu (µm)',data.soma_um?.map(x=>num(x,3)).join(' / ')]]));
       const live=el('div',undefined,'detail-live');live.id='detail-live';content.append(live);tick(activity);
-      if(data.circuit)content.append(note(roles[data.circuit.group]));
+      if(data.circuit)content.append(note(roles[data.circuit.group]||'Bu görevin anatomik alt devresinde yer alır. Duyusal kodlama, nöron dinamiği ve motor okuması yapaydır.'));
       content.append(section('Anatomik bağlantı özeti',[['Gelen partner',num(data.connectivity.incoming_partners,0)],['Giden partner',num(data.connectivity.outgoing_partners,0)],['Gelen sinaptik temas',num(data.connectivity.incoming_contacts,0)],['Giden sinaptik temas',num(data.connectivity.outgoing_contacts,0)]]));
       content.append(section('Nörotransmiter',[['Konsensüs',data.neurotransmitter],['Tahmin güveni',num(data.annotations.predicted_nt_confidence,5)],['Kaynak',data.dataset]]));
       content.append(note('Tip, sınıf ve tahminler kaynak veri alanlarıdır. Eksik alanlar “Veri yok” olarak gösterilir. Bireye özgü öğrenilmiş bir biyolojik işlev varsayılmaz.'));
@@ -83,5 +83,5 @@ export function createInspector({api,onSelect}) {
   document.querySelectorAll('[data-detail-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.detailTab;render();});
   document.getElementById('detail-download').onclick=()=>{if(!data)return;const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=selection.kind==='node'?`neuron-${selection.id}.json`:`connection-${selection.source}-${selection.target}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   addEventListener('keydown',e=>{if(e.key==='Escape')host.classList.add('hidden');});
-  return {show,tick,modelChanged:async id=>{model=id;if(selection?.kind==='edge'&&!host.classList.contains('hidden'))await show(selection,id);}};
+  return {show,tick,modelChanged:async id=>{model=id;if(selection&&!host.classList.contains('hidden'))await show(selection,id);}};
 }

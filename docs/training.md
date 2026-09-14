@@ -26,7 +26,14 @@ Akış: **başlangıcı izle → eğit → fizik testini bekle → yeni modeli y
 `3000/42` başlangıç önerisidir, başarı garantisi değildir. Tohum tekrarlanabilirliği
 artırır; cihaz/BLAS/MPS farklılıkları sayısal sonucu değiştirebilir.
 
-## Ne öğreniliyor?
+## Kaçınma, görsel yönelme ve engel
+
+Bu görevlerin duyusal devreleri, UI adımları, başarı sınırları ve model dışa
+aktarımı [yerel görevler rehberinde](local-tasks.md) anlatılır. Her görev ayrı
+checkpoint üretir; eğitimler tek modelde birikmez. Yeni görevlerde değerlendirme
+6 koşul × 3 kontrol, yani 18 fizik bölümüdür.
+
+## Koku görevinde ne öğreniliyor?
 
 İki antenin sentetik koku yoğunluğu giriş olur. ORN → ALPN → Kenyon → MBON gerçek
 MaleCNS topolojisine bağlanır. Program koku gradyanı örnekleri üretir; öğretmen

@@ -13,9 +13,14 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--steps",type=int,required=True)
     p.add_argument("--seed",type=int,required=True)
-    p.add_argument('--task',choices=['odor','flight'],default='odor')
+    from lab_tasks import TASKS
+    p.add_argument('--task',choices=list(TASKS),default='odor')
     args=p.parse_args()
-    train(steps=args.steps,seed=args.seed)
+    train(steps=args.steps,seed=args.seed,task=args.task)
+    if args.task in {'avoidance','vision','terrain'}:
+        from lab_tasks import evaluate
+        evaluate(MODEL, args.task, event)
+        return
     event(status="evaluating", evaluated=0, evaluation_total=6)
     if args.task=='flight':
         root=Path(__file__).resolve().parent

@@ -4,6 +4,8 @@ import { edgeSignal, modelMatches, displayEdgeIndices } from './neural-math.js';
 const $ = id => document.getElementById(id);
 const count = n => Number(n).toLocaleString('tr-TR');
 export function createBrain(data, {getState, onSelect}) {
+  const lifecycle=new AbortController();
+  const listen=(target,event,handler)=>target.addEventListener(event,handler,{signal:lifecycle.signal});
   let atlas=[], focus='circuit', focusId=null, displayKey='', candidateEdges=[], visibleEdges=[];
   const nodeIds=new Set(data.nodes.map(n=>n.id));
   const brightnessInput=$('brain-brightness'), brightnessKey='neural-lab.brain-brightness';
@@ -46,7 +48,7 @@ export function createBrain(data, {getState, onSelect}) {
     $('brain-brightness-value').textContent=`${Math.round(level*100)}%`;
     brightnessInput.setAttribute('aria-valuetext',`%${Math.round(level*100)}`);
   }
-  brightnessInput.addEventListener('input',()=>{
+  listen(brightnessInput,'input',()=>{
     update(getState().simulation.activity);
     try {localStorage.setItem(brightnessKey,brightnessInput.value);} catch { /* Optional preference. */ }
   });
@@ -63,7 +65,7 @@ export function createBrain(data, {getState, onSelect}) {
     controls.enableDamping=false;controls.update();controls.target.copy(target);cam.position.copy(target).add(new THREE.Vector3(0,-d,-d*.12));controls.update();controls.enableDamping=true;
   }
   home();
-  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();};new ResizeObserver(resize).observe(host);resize();
+  const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();};const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const ray=new THREE.Raycaster(), tooltip=$('brain-tooltip');
   function pick(event){
     const r=renderer.domElement.getBoundingClientRect();
@@ -91,10 +93,10 @@ export function createBrain(data, {getState, onSelect}) {
     return null;
   }
   let down=null, lastHover=0;
-  renderer.domElement.addEventListener('pointerdown',e=>{down=e.button===0&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey?[e.clientX,e.clientY]:null;tooltip.classList.add('hidden');});
-  renderer.domElement.addEventListener('pointercancel',()=>{down=null;});
-  renderer.domElement.addEventListener('pointerleave',()=>tooltip.classList.add('hidden'));
-  renderer.domElement.addEventListener('pointermove',e=>{
+  listen(renderer.domElement,'pointerdown',e=>{down=e.button===0&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey?[e.clientX,e.clientY]:null;tooltip.classList.add('hidden');});
+  listen(renderer.domElement,'pointercancel',()=>{down=null;});
+  listen(renderer.domElement,'pointerleave',()=>tooltip.classList.add('hidden'));
+  listen(renderer.domElement,'pointermove',e=>{
     if(e.buttons){tooltip.classList.add('hidden');return;}
     if(performance.now()-lastHover<100)return;lastHover=performance.now();
     const hit=pick(e);renderer.domElement.style.cursor=hit?'pointer':'grab';
@@ -102,7 +104,7 @@ export function createBrain(data, {getState, onSelect}) {
     const r=host.getBoundingClientRect();tooltip.style.left=Math.min(e.clientX-r.left+12,r.width-270)+'px';tooltip.style.top=Math.max(12,e.clientY-r.top-30)+'px';
     tooltip.textContent=hit.kind==='node'?`${hit.node.label} · ${hit.id}`:`${data.nodes[data.edges[hit.edgeIndex].a].label} → ${data.nodes[data.edges[hit.edgeIndex].b].label}`;
   });
-  renderer.domElement.addEventListener('pointerup',e=>{
+  listen(renderer.domElement,'pointerup',e=>{
     const start=down;down=null;
     if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>4)return;
     const hit=pick(e);if(hit)onSelect(hit);
@@ -175,17 +177,19 @@ export function createBrain(data, {getState, onSelect}) {
   }
   function freshness(stale=false){
     const {simulation:s,selectedModel:m}=getState(), ok=modelMatches(data,s,m);
-    $('brain-live').textContent=stale?'AKIŞ KESİLDİ · SON KARE':!ok?'MODEL EŞLEŞTİRİLİYOR':`${s.paused?'DURAKLATILDI':s.idle?'BOŞTA':'CANLI HESAP'} · ${Number(s.neural?.sample_time_s??s.time_s).toFixed(2)} s · #${s.seq}`;
+    $('brain-live').textContent=stale?'AKIŞ KESİLDİ · SON KARE':!ok?'MODEL EŞLEŞTİRİLİYOR':`${s.neural?.decision_applied===false?'BAŞLANGIÇ · HENÜZ MOTOR ADIMI YOK':s.paused?'DURAKLATILDI':s.idle?'BOŞTA':'CANLI HESAP'} · ${Number(s.neural?.sample_time_s??s.time_s).toFixed(2)} s · #${s.seq}`;
     $('brain-live').classList.toggle('stale',stale||!ok||s.paused||s.idle);
   }
   async function loadAtlas(){
     try{
       const [meta,buffer]=await Promise.all([fetch('/api/anatomy').then(r=>{if(!r.ok)throw Error(r.status);return r.json();}),fetch('/api/anatomy/segments').then(r=>{if(!r.ok)throw Error(r.status);return r.arrayBuffer();})]);
+      if(lifecycle.signal.aborted)return;
       const values=new Float32Array(buffer);
       if(values.length!==meta.segments*6)throw Error('Anatomi boyutu eşleşmiyor');
       for(const record of meta.skeletons){
         const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(values.subarray(record.start*6,(record.start+record.count)*6),3));
         const obj=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0x567086,transparent:true,opacity:.14,depthWrite:false}));
+        record.index=data.model_index?.[record.id]??null;
         obj.userData=record;obj.visible=$('anatomy').checked;atlas.push(obj);group.add(obj);
       }
       $('atlas-status').textContent=`${meta.skeletons.length} gerçek SWC · Gri: model dışında`;
@@ -193,16 +197,16 @@ export function createBrain(data, {getState, onSelect}) {
     }catch(e){$('atlas-status').textContent='Anatomi yüklenemedi: '+e.message;}
   }
   let lastDraw=0;
-  function animate(now){requestAnimationFrame(animate);if(document.hidden||now-lastDraw<30)return;controls.update();renderer.render(scene,cam);lastDraw=now;}requestAnimationFrame(animate);
-  $('brain-home').addEventListener('click',home);
-  $('edges').addEventListener('change',()=>{lines.visible=$('edges').checked;selectedLine.visible=$('edges').checked&&getState().selectedEdge>=0;});
+  function animate(now){if(lifecycle.signal.aborted)return;requestAnimationFrame(animate);if(document.hidden||now-lastDraw<30)return;controls.update();renderer.render(scene,cam);lastDraw=now;}requestAnimationFrame(animate);
+  listen($('brain-home'),'click',home);
+  listen($('edges'),'change',()=>{lines.visible=$('edges').checked;selectedLine.visible=$('edges').checked&&getState().selectedEdge>=0;});
   $('located').textContent=`${count(data.nodes.length)} / ${count(data.total)} soma konumu`;
-  $('anatomy').addEventListener('change',()=>{atlas.forEach(o=>o.visible=$('anatomy').checked);});
-  document.querySelectorAll('[data-brain-focus]').forEach(b=>b.addEventListener('click',()=>{focus=b.dataset.brainFocus;document.querySelectorAll('[data-brain-focus]').forEach(x=>x.classList.toggle('active',x===b));home();}));
-  $('flow-floor').addEventListener('input',()=>update(getState().simulation.activity));
-  $('connection-density').addEventListener('change',()=>update(getState().simulation.activity));
+  listen($('anatomy'),'change',()=>{atlas.forEach(o=>o.visible=$('anatomy').checked);});
+  document.querySelectorAll('[data-brain-focus]').forEach(b=>listen(b,'click',()=>{focus=b.dataset.brainFocus;document.querySelectorAll('[data-brain-focus]').forEach(x=>x.classList.toggle('active',x===b));home();}));
+  listen($('flow-floor'),'input',()=>update(getState().simulation.activity));
+  listen($('connection-density'),'change',()=>update(getState().simulation.activity));
   loadAtlas();
-  return {update,freshness,neuron:id=>atlas.find(o=>o.userData.id===id)?.userData};
+  return {update,freshness,dispose(){lifecycle.abort();observer.disconnect();controls.dispose();scene.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});renderer.dispose();renderer.domElement.remove();},neuron:id=>atlas.find(o=>o.userData.id===id)?.userData};
 }
 
 function responseColor(color,v,brightness){

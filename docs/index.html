@@ -1,7 +1,7 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rehber · Hashtag Neural Lab</title><link rel="icon" href="data:,"><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#0c121b;color:#d9e5ee;font:16px/1.75 system-ui,sans-serif}aside{position:fixed;inset:0 auto 0 0;width:220px;padding:28px 22px;overflow-y:auto;border-right:1px solid #263744;background:#101923}aside b{display:block;font-size:14px;letter-spacing:.08em;margin-bottom:25px}aside a{display:block;margin:10px 0}a{color:#7ee3c3}main{margin-left:220px;max-width:1440px;padding:36px 48px}section{padding:0 0 44px;margin-bottom:44px;border-bottom:1px solid #324653}h1{font-size:30px;line-height:1.3}h2{font-size:23px;margin-top:32px}h3{font-size:18px}pre{padding:18px;border:1px solid #2e4455;border-radius:7px;background:#060c13;overflow:auto;line-height:1.5}code{font:13px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}blockquote{border-left:3px solid #7ee3c3;margin-left:0;padding:3px 20px;color:#b6c8d7}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px;border:1px solid #293b4a;vertical-align:top}th{background:#162332}li{margin:7px 0}.meta{color:#98adbd;font-size:13px}@media(max-width:760px){aside{position:static;width:auto}aside a{display:inline-block;margin-right:18px}main{margin:0;padding:24px}table{display:block;overflow:auto}}@media print{aside{display:none}main{margin:0;padding:0}body{background:white;color:black}a{color:#064f44}pre{background:#eee}}
 
 img,video{max-width:100%;height:auto;border-radius:8px}p:has(>img){margin:26px 0}h1,h2,h3{color:#ecf3f6}section{scroll-margin-top:24px}a{overflow-wrap:anywhere}aside a{font-size:14px;margin:7px 0}summary{cursor:pointer}.meta{line-height:1.7}
-</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
+</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
 
 <h1 id="README--hashtag-neural-lab">Hashtag Neural Lab</h1>
 <p><strong>Gerçek sinek anatomisinden çıkarılan bir devreyi eğitin; yön kararını, canlı nöron yanıtlarını ve fizik simülasyonunu tek ekranda inceleyin.</strong></p>
@@ -17,10 +17,12 @@ haritası ve saydam kesit. Ekrandaki oturum sayacı aynı koşulun tekrarlarıd�
 çok hedefli başarı testi değildir.</em></p>
 <blockquote>
 <p>Bu proje <strong>tam beyin emülasyonu değildir</strong>. MaleCNS anatomisinden türetilmiş
-<strong>7.075 nöronluk basitleştirilmiş yönelme ağıdır</strong>. Renkler hesaplanan model
+<strong>basitleştirilmiş görev alt ağları</strong> kullanır; koku devresi 7.075 nörondur. Renkler hesaplanan model
 yanıtıdır. Bacakları FlyGym, kanatları FlyBody'nin hazır motor kontrolcüleri
-yönetir. Öğrenilen şey yön kararıdır. <a href="#docs-training--bilimsel-kapsam">Bilimsel kapsam</a>.</p>
+yönetir. Öğrenilen şey yön kararı veya motor düzeltme kazancıdır. <a href="#docs-training--bilimsel-kapsam">Bilimsel kapsam</a>.</p>
 </blockquote>
+<p>Yerel ek: <strong>kaçınma 6/6, görsel yönelme 6/6, engel 2/6</strong>. Engel eğitiminde başarı
+artışı gösterilmedi. <a href="#docs-local-tasks">Üçlü kontrol deneyleri ve model dışa aktarımı</a>.</p>
 <h2 id="README--bir-anatomik-haritadan-çalışan-deneye">Bir anatomik haritadan çalışan deneye</h2>
 <p>Başlangıç sorusu basitti: “İndirilen sinir sistemi verisinden bir devre seçip,
 onun parametrelerini değiştirince davranıştaki farkı görebilir miyiz?”
@@ -159,8 +161,8 @@ politikasına referans olur. Beyin paneli o anda kullanılan hesabı gösterir.<
 <p><img alt="Uçuş fiziği, canlı devre ve anatomik analizler aynı ekranda" src="media/flight-lab.jpg"></p>
 <p>Uçuş seçiliyken <strong>Yönelme ağını eğit</strong>, yeni ağı altı uçuş hedefinde de sınar.
 <strong>Sinek havada başlar.</strong> Kalkış, iniş, irtifa öğrenimi ve kanat politikasını yeniden
-eğitme bu sürümde yoktur. Koku yönelmesi dışındaki “hazırlık” seçenekleri de
-uygulanmış eğitimler değildir. <a href="#flight-README">Uçuş kontrol yolu ve kullanım</a>.</p>
+eğitme bu sürümde yoktur. Kaçınma, görme ve engel görevleri yerel çalışma
+kopyasına eklenmiştir; bu ek henüz GitHub/PyPI sürümünde bulunmaz. <a href="#docs-local-tasks">Yerel görevler ve sonuçlar</a>. <a href="#flight-README">Uçuş kontrol yolu ve kullanım</a>.</p>
 <p><a id="README--kanitlar"></a></p>
 <h2 id="README--05-sonucu-neyle-doğruluyoruz">05 — Sonucu neyle doğruluyoruz?</h2>
 <table>
@@ -308,6 +310,10 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 <tr>
 <td>Beyne bağlı uçuş, zamanlama, motor adaptörü</td>
 <td><a href="#flight-README">Uçuş README</a></td>
+</tr>
+<tr>
+<td>Kaçınma, görme, engel ve taşınabilir model</td>
+<td><a href="#docs-local-tasks">Yerel görevler</a></td>
 </tr>
 <tr>
 <td>Hangi veriyi, kaç GB ve neden indiriyorum?</td>
@@ -546,8 +552,9 @@ skoruyla karıştırmayın. <a href="#docs-experiments">Deneyleri doğru karşı
 <p>Sağ üstte <strong>⛶</strong> tam ekranı açar. <strong>Rehber</strong> ayrı sekmede çevrimdışı kılavuzu açar.
 Masaüstü düzeni tek ekran için tasarlanmıştır.</p>
 <h2 id="docs-usage--deney-seçimi">Deney seçimi</h2>
-<p><strong>Davranış</strong> menüsünde kokuya yönelme ve kuruluysa beyne bağlı uçuş aktiftir.
-“Hazırlık” yazan kaçınma, görsel yönelme ve arazi uygulanmış eğitimler değildir.
+<p><strong>Davranış</strong> menüsünde kokuya yönelme, kaçınma, görsel yönelme, deneysel engel
+aşma ve kuruluysa beyne bağlı uçuş aktiftir. <a href="#docs-local-tasks">Yerel görevler</a> yeni
+devreleri, sınırlarını ve karşılaştırma sonuçlarını açıklar.
 <strong>Simülasyondaki model</strong> hangi kayıtlı ağın çalıştığını gösterir; seçim eğitim başlatmaz.</p>
 <p><strong>Hedef X/Y</strong> milimetredir, sınırı ±30 mm. <strong>Hedefi uygula</strong> yeni bölüm başlatır.
 Her serbest hedefte başarı garanti edilmez; kısa uçuşta gerideki hedefe erişilemeyebilir.</p>
@@ -591,17 +598,20 @@ HD gerçek zamanlı hız garantisi değildir. Uçuş yavaş çekimdir; <strong>s
 duvar saatinden farklı ilerler. Kanat hareketi hazır FlyBody politikasından gelir.</p>
 <h2 id="docs-usage--beyni-okumak">Beyni okumak</h2>
 <p><strong>Aktivite</strong>, son beyin kararındaki hesaplanan nöron yanıtıdır; biyolojik ölçüm
-değildir. Duraklatınca son değerler sabit kalır. 7.075 yanıt hesaplanır; gerçek
-soma konumu olan 4.826 nöron 3B'de çizilir. Eksik konumlar uydurulmaz.</p>
+değildir. Duraklatınca son değerler sabit kalır. Devre görevle değişir. Koku
+devresinde 7.075 yanıt hesaplanır; 4.826 soma 3B'de çizilir. Diğer görevlerin
+sayıları başlıkta ve katman çubuğunda gösterilir. Eksik konumlar uydurulmaz.</p>
 <p><strong>Sade</strong> 520 temsilci bağ, <strong>Nöronun bağları</strong> seçili nöronun bağları,
-<strong>Tüm bağlar</strong> konumu bilinen 82.747 model bağı gösterir. Son seçenek daha yoğundur.
+<strong>Tüm bağlar</strong> seçili devrenin konumlu bağlarını gösterir (koku devresinde 82.747).
 Parlaklık ve sinyal eşiği yalnızca görünümü değiştirir, çalışan ağı değiştirmez.</p>
 <p>Düz çizgiler soma–soma bağlantı gösterimidir, akson geometrisi değildir.
-Arka plandaki 28 dallanan SWC gerçek anatomidir; yalnızca üçü çalışan alt devreye
-dahildir. Hesaplanmayan iskeletler gri kalır.</p>
+Arka plandaki 28 dallanan SWC gerçek anatomidir; yalnızca seçili devreye dahil
+olanları aktivite alır (koku devresinde üçü). Hesaplanmayan iskeletler gri kalır.</p>
 <p>Nörona/bağa tıklayın: bodyId, sınıf, kaynak anotasyonları, temaslar ve seçili
 modeldeki katsayılar ayrıntı panelinde açılır. JSON indirme seçili kaydı dışa
-aktarır; bütün checkpoint'i indirmez.</p>
+aktarır; bütün checkpoint'i indirmez. Soldaki <strong>Modeli indir</strong> ise devreyi,
+ağırlıkları ve taşınabilir çıkarım kodunu ZIP olarak verir. <strong>Test karşılaştırması</strong>
+yeni görevlerde eğitim öncesi/sonrası ve motor çıkışı kapalı sonuçları gösterir.</p>
 <p><strong>Δ Ağırlık</strong> anatomik başlangıca göre katsayı değişimidir; iki eğitimin birbirine
 farkı değildir. İki modelde aynı bağlantıyı ayrı ayrı seçerek karşılaştırabilirsiniz.</p>
 <h2 id="docs-usage--metrikler">Metrikler</h2>
@@ -689,7 +699,12 @@ aynı koşullarda karşılaştırmak. Bu rehberdeki adımlar mevcut UI ile yapı
 </ol>
 <p><code>3000/42</code> başlangıç önerisidir, başarı garantisi değildir. Tohum tekrarlanabilirliği
 artırır; cihaz/BLAS/MPS farklılıkları sayısal sonucu değiştirebilir.</p>
-<h2 id="docs-training--ne-öğreniliyor">Ne öğreniliyor?</h2>
+<h2 id="docs-training--kaçınma-görsel-yönelme-ve-engel">Kaçınma, görsel yönelme ve engel</h2>
+<p>Bu görevlerin duyusal devreleri, UI adımları, başarı sınırları ve model dışa
+aktarımı <a href="#docs-local-tasks">yerel görevler rehberinde</a> anlatılır. Her görev ayrı
+checkpoint üretir; eğitimler tek modelde birikmez. Yeni görevlerde değerlendirme
+6 koşul × 3 kontrol, yani 18 fizik bölümüdür.</p>
+<h2 id="docs-training--koku-görevinde-ne-öğreniliyor">Koku görevinde ne öğreniliyor?</h2>
 <p>İki antenin sentetik koku yoğunluğu giriş olur. ORN → ALPN → Kenyon → MBON gerçek
 MaleCNS topolojisine bağlanır. Program koku gradyanı örnekleri üretir; öğretmen
 kuralı sağ/sol yön komutu verir. Ağ bunları <strong>denetimli taklit öğrenmesiyle</strong> öğrenir.</p>
@@ -955,6 +970,198 @@ Başka checkpoint için <code>--model</code> yolunu değiştirin. Özel veri diz
 <p>Kaynaklar: <a href="https://github.com/TuragaLab/flybody">FlyBody</a> ·
 <a href="https://doi.org/10.25378/janelia.25309105.v4">Figshare v4 politikaları</a> ·
 <a href="#THIRD_PARTY_NOTICES">Atıflar ve lisanslar</a>.</p></section>
+<section id="docs-local-tasks"><h1 id="docs-local-tasks--yerel-duyusal-görevler-ve-taşınabilir-modeller">Yerel duyusal görevler ve taşınabilir modeller</h1>
+<p>Bu ekleme şu anda yerel çalışma kopyasındadır; GitHub veya PyPI'ye yayımlanmadı.
+Yayımlanmış 0.2.1'in ekran görüntüleri önceki koku/uçuş sürümünü gösterir.</p>
+<h2 id="docs-local-tasks--gerçek-bir-beyin-mi-çalışıyor">Gerçek bir beyin mi çalışıyor?</h2>
+<p>Çalışan bir sinir ağı var. Ağın nöron kimlikleri ve seçilmiş yönlü bağlantıları
+<a href="https://male-cns.janelia.org/">MaleCNS v1.0 anatomik verisinden</a> gelir.
+Bu, yaşayan sineğin beyni veya bütünüyle doğrulanmış dijital kopyası değildir.
+Bağlantı haritası tek başına nöronların bütün çalışma ve öğrenme kurallarını vermez.</p>
+<p>Burada nöronları pozitif normalize bağlantılar ve tanh yanıtlarıyla hesaplıyoruz.
+Fizyolojik işaretler, spike, gecikme, tekrarlayan devre dinamiği ve biyolojik
+plastisite modellenmiyor. Öğretmen kuralından üretilen örnekleri taklit ederek
+son anatomik katmanın bağlantı çarpanlarını ve yapay motor okumasını eğitiyoruz.
+<strong>Katsayılar gerçekten değişiyor ve kaydediliyor; öğrenme biyolojik olarak doğrulanmış değil.</strong></p>
+<p>Sineğin hareketinde bu ağ etkili. Ancak bacak ritmini FlyGym CPG, uçuşta kanatları
+hazır FlyBody politikası üretir. Ağ; göreve göre yönü veya bacak düzeltmesinin
+kazancını belirler. Her eklem komutu bütün MaleCNS beyninden hesaplanmıyor.</p>
+<h2 id="docs-local-tasks--üç-yeni-görev">Üç yeni görev</h2>
+<table>
+<thead>
+<tr>
+<th>Görev</th>
+<th>Girdi → anatomik alt devre</th>
+<th>Öğrenilen motor etkisi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kokudan kaçınma</td>
+<td>İki antenin sentetik kokusu → ORN → ALPN → Kenyon → MBON; 7.075 nöron</td>
+<td>Kaynaktan uzağa dönüş; sıkı kaçış için iç bacak ritmi ters dönebilir</td>
+</tr>
+<tr>
+<td>Görsel yönelme</td>
+<td>İki gerçek MuJoCo göz kamerasının RGB görüntüsü → fotoreseptör → optik ara → görsel projeksiyon → inen katman; 4.387 nöron</td>
+<td>Görüntüdeki kırmızı hedefe dönüş</td>
+</tr>
+<tr>
+<td>Engel aşma</td>
+<td>MuJoCo bacak temas kuvvetleri → dokunma → VNC ara → VNC ön motor → motor; 3.488 nöron</td>
+<td>Hazır takılma / geri çekme düzeltmesinin kazancı</td>
+</tr>
+</tbody>
+</table>
+<p>Görmede kırmızı piksel belirginliği iki gözde ayrı hesaplanır; ağ hedef koordinatını
+almaz. Bu görüntü işleme ve sağ/sol havuzlama yapaydır, biyolojik retinotopi veya
+fotoreseptör tepkisi değildir. Görme ve temas için koku nöronları kullanılmaz.
+Temas kuvveti <code>tanh(force / 5)</code> ile normalize edilir; 100 ms sönümlü iz taşır.
+Engel fiziksel temas geometrisidir; yalnızca render edilmiş bir nesne değildir.</p>
+<p>Görme ve VNC yolları sınıf ve anatomik temas sayısından, sabit hesaplama bütçesiyle
+seçilmiştir. Katmanlar ayrıdır; her düğüm girdi–çıktı yolundadır. Bu seçimin
+biyolojik görsel yönelme veya tırmanma devresini belirlediği iddia edilmez.
+Mevcut bağlantılar eğitilir; yeni anatomik bağlantı eklenmez.</p>
+<h2 id="docs-local-tasks--uida-kullanma">UI'da kullanma</h2>
+<ol>
+<li>Yerel kaynak klasöründe <code>./ui.sh</code> çalıştırın; <code>http://127.0.0.1:8766</code> açın.</li>
+<li><strong>Davranış</strong> menüsünden görevi seçin. Harita, nöron sayısı, katman adları ve
+   canlı aktivite kullanılan devreye geçer. Görmede sol altta göz girdisi görünür.</li>
+<li>Model listesinden mevcut eğitimli kaydı veya aynı koşunun <strong>eğitim öncesi</strong>
+   kaydını seçin. Bir göreve ait model başka duyu devresine uygulanamaz.</li>
+<li><strong>Adım=3000, Tohum=42 → Eğitimi başlat</strong>. Önce 2.048 sentetik örnekle eğitim,
+   ayrı 512 örnekle doğrulama; ardından 6 fizik koşulunda üçlü karşılaştırma yapılır.
+   Mevcut model ve önceki eğitimler korunur.</li>
+<li>İş bitince <strong>Yeni modeli simülasyona al</strong> seçin. Bu işlem otomatik yapılmaz.</li>
+<li><strong>Test karşılaştırması</strong> eğitimli, eğitim öncesi ve motor çıkışı kapalı sonuçları
+   gösterir. <strong>Δ Ağırlık</strong> değişen bağlantı katsayılarını gösterir.</li>
+</ol>
+<p>Engel görevi sabit bir parkurdur; hedef alanları bu görevde kapalıdır. Diğer
+görevlerde serbest hedef, eğitimin sentetik örneklerini veya sabit test listesini
+değiştirmez. Bir göreve ilk geçişte o görevin kayıtlı fizik skoru en yüksek modeli
+seçilir; sonradan worker'ın seçimi korunur. Bütün tamamlanmış koşular menüde kalır.</p>
+<p><strong>Her yeni eğitim anatomik başlangıçtan ayrı checkpoint üretir.</strong> Koku, kaçınma,
+görme ve temas bilgisi şu anda tek modelde birikmez. Birini eğitmek diğerini
+güncellemez. Serbestçe oynatmak veya izlemek de ağırlıkları kendiliğinden değiştirmez.</p>
+<h2 id="docs-local-tasks--bu-bilgisayardaki-sonuçlar">Bu bilgisayardaki sonuçlar</h2>
+<p>14 Eylül 2026; 3.000 adım, tohum 42. Aynı altı fizik koşulu üç modelle tekrarlandı.
+CPG ve ortam her karşılaştırmada aynıdır. “Çıkış kapalı” koşulunda öğrenilmiş
+motor okuması sıfırlanır; hazır yürüme kontrolcüsü çalışmaya devam eder.</p>
+<table>
+<thead>
+<tr>
+<th>Görev</th>
+<th>Eğitim öncesi</th>
+<th>Eğitim sonrası</th>
+<th>Motor çıkışı kapalı</th>
+<th>Yorum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kaçınma</td>
+<td>0/6</td>
+<td>6/6</td>
+<td>0/6</td>
+<td>Bu altı koşulda ağın motor çıkışı gerekliydi</td>
+</tr>
+<tr>
+<td>Görsel yönelme</td>
+<td>2/6</td>
+<td>6/6</td>
+<td>0/6</td>
+<td>Görüntüden öğrenilen yön çıkışı başarıya katkı sağladı</td>
+</tr>
+<tr>
+<td>Engel aşma</td>
+<td>2/6</td>
+<td>2/6</td>
+<td>2/6</td>
+<td>Ağ hareketi değiştirse de başarı artışı gösterilmedi; deneysel</td>
+</tr>
+</tbody>
+</table>
+<p>Üç karşılaştırmada da devrilme olmadı. Başarısız kaçınma koşulları tehlike alanına
+giriş; engel başarısızlıkları verilen süre/koridor ölçütünün karşılanmamasıdır.
+Ek UI akış kontrolünde <strong>200 adım / tohum 43 kaçınma 1/6</strong> verdi; bu kayıt da
+korunur. Düşük MSE veya “eğitim tamamlandı” tek başına başarı değildir.</p>
+<p>Kaçınma motor eşlemesinin ilk denemesinde dönüş yetkisi 0,55 iken 2/6 elde edildi.
+Nihai eşlemede 1,1 kullanılır; iç CPG ters yönde çalışabilir. Başarı ölçütü ve
+altı ortam değiştirilmeden karşılaştırma yeniden çalıştırıldı. Bu bir gövde
+adaptörü düzeltmesidir; biyolojik bir keşif değildir.</p>
+<table>
+<thead>
+<tr>
+<th>Görev</th>
+<th>Sabit test koşulları</th>
+<th>Başarı ölçütü</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kaçınma</td>
+<td><code>(6,±2)</code>, <code>(5,±2)</code>, <code>(7,±2)</code> mm; tohum 10–15</td>
+<td>3 mm tehlike alanına girmeden başlangıca göre 8 mm uzaklaşma</td>
+</tr>
+<tr>
+<td>Görme</td>
+<td><code>(12,±4)</code>, <code>(10,±5)</code>, <code>(14,±3)</code> mm; tohum 10–15</td>
+<td>Hedefe &lt;1,5 mm</td>
+</tr>
+<tr>
+<td>Engel</td>
+<td>5–6,2 mm X aralığında, 20 mm genişliğinde engel; yükseklik 0,25 / 0,35 / 0,45 mm, her birinde iki tohum</td>
+<td>Fiziksel temas sonrası gövde X&gt;9,2 mm, mutlak Y&lt;5 mm</td>
+</tr>
+</tbody>
+</table>
+<p>Fizik adımı 0,1 ms, sensör/karar adımı 10 ms; değerlendirme bölümü en fazla
+2,5 saniyedir. UI bölümü 3 saniye sürer; serbest oturum sayacı bu sabit benchmark
+ile aynı şey değildir. CPU/BLAS/MPS farklılıkları hareket sonucunu değiştirebilir.</p>
+<p>Kayıtlar yerelde <code>models/lab_runs/local-avoidance-seed42</code>, <code>local-vision-seed42</code>,
+<code>local-terrain-seed42</code> dizinlerindedir. İndirilmiş modeller repoya dahil edilmez.</p>
+<table>
+<thead>
+<tr>
+<th>Görev</th>
+<th>Değişen mevcut bağlantı</th>
+<th>Eğitimli checkpoint SHA-256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kaçınma</td>
+<td>57.614</td>
+<td><code>a2d3419f030dadb290970bf990a068373d7b88e928564215196565fce9442146</code></td>
+</tr>
+<tr>
+<td>Görme</td>
+<td>7.781</td>
+<td><code>26a34b50fd88f257230ee75fcf1edf37cc769de9d65233ea4c59562408d86e3e</code></td>
+</tr>
+<tr>
+<td>Engel</td>
+<td>20.253</td>
+<td><code>fa83cffe6da34507b03bf4c0a154b1672e2e16b777c36d537d2353cc460b3822</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="docs-local-tasks--başka-yerde-kullanma">Başka yerde kullanma</h2>
+<p><strong>Modeli indir</strong> seçili modeli ZIP olarak verir: <code>checkpoint.npz</code>, üç anatomik
+matris, nöron kimlikleri, <code>circuit.json</code>, <code>odor_policy.py</code>, <code>infer.py</code>, hash manifesti
+ve Türkçe README. Üç görev için dışa aktarılan paketler ayrı klasörlerde yüklenip
+aynı girdiden aynı çıktıyı üreterek doğrulandı. Tam MaleCNS indirmesi çıkarımda gerekmez.</p>
+<pre><code class="language-bash">python -m venv .venv
+source .venv/bin/activate
+python -m pip install numpy scipy
+python infer.py 0.10 0.12
+</code></pre>
+<p>Bu komut iki duyusal değerden bir motor kararını hesaplar. ZIP, FlyGym/FlyBody
+gövdesini veya simülasyon kurulumunu içermez. Başka simülasyonda sensör ölçümünü
+aynı giriş anlamına ve ağ çıkışını uygun motor komutuna dönüştürmelisiniz.
+Bir robotta ayrıca fiziksel doğrulama ve güvenlik sınırları gerekir. Bu model
+genel amaçlı, her işi öğrenmiş veya yeni donanımda doğrudan çalışacak bir beyin değildir.</p>
+<p><a href="#docs-training">Eğitim rehberine dön</a> · <a href="#docs-usage">UI kullanımı</a></p></section>
 <section id="docs-experiments"><h1 id="docs-experiments--deney-kayıtları-ve-kanıtlar">Deney kayıtları ve kanıtlar</h1>
 <p><strong>Önce koşulu, sonra sonucu okuyun.</strong> Aşağıdaki sayılar küçük sentetik koku
 hedef kümelerine aittir. Fizik simülasyonunda ölçülmüştür; biyolojik doğrulama,

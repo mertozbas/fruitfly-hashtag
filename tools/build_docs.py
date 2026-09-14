@@ -20,7 +20,7 @@ PAGES = {
     "docs/installation.md": "Kurulum", "LAB.md": "Laboratuvar turu",
     "docs/usage.md": "UI kullanımı", "docs/training.md": "Eğitim",
     "SIMULATION.md": "Yürüyüş", "flight/README.md": "Uçuş",
-    "docs/experiments.md": "Deney kayıtları", "docs/data.md": "Veriler",
+    "docs/local-tasks.md": "Yeni yerel görevler", "docs/experiments.md": "Deney kayıtları", "docs/data.md": "Veriler",
     "docs/troubleshooting.md": "Sorun giderme", "docs/development.md": "Geliştirme",
     "docs/media/README.md": "Medya kökeni", "THIRD_PARTY_NOTICES.md": "Kaynaklar",
 }

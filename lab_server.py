@@ -17,9 +17,10 @@ import time
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
+from lab_tasks import TASKS, compatible
 
 ROOT = Path(__file__).resolve().parent
 BASE = ROOT / "models/odor_navigation"
@@ -62,17 +63,31 @@ class Runtime:
             if behavior == self.behavior:
                 return
             if behavior not in self.workers:
-                from lab_flight import FlightProcess
-                if not (ROOT / 'flight/.venv/bin/python').exists() or not (ROOT / 'data/flybody/trained-fly-policies/flight/saved_model.pb').exists():
-                    raise HTTPException(503, 'Uçuş kurulumu eksik: flight/README.md')
-                commands, states = queue.Queue(32), queue.Queue(2)
                 current = self.read()
                 selected = resolve_model(current.get('model', 'trained'))
-                process = FlightProcess(commands, states, selected['path'], selected['id'])
+                if not compatible(behavior, selected.get('task', 'odor')):
+                    available = [m for m in models() if compatible(behavior, m.get('task', 'odor')) and not m.get('before')]
+                    if not available:
+                        from task_circuit import initialize
+                        initialize(behavior)
+                        available = [m for m in models() if m.get('task') == behavior]
+                    selected = max(available, key=lambda m:(m.get('evaluation') or {}).get('success_count', -1))
+                if behavior == 'flight':
+                    from lab_flight import FlightProcess
+                    if not (ROOT / 'flight/.venv/bin/python').exists() or not (ROOT / 'data/flybody/trained-fly-policies/flight/saved_model.pb').exists():
+                        raise HTTPException(503, 'Uçuş kurulumu eksik: flight/README.md')
+                    commands, states = queue.Queue(32), queue.Queue(2)
+                    process = FlightProcess(commands, states, selected['path'], selected['id'])
+                else:
+                    from lab_worker import simulate
+                    ctx = mp.get_context('spawn')
+                    commands, states = ctx.Queue(32), ctx.Queue(2)
+                    process = ctx.Process(target=simulate, args=(commands, states, behavior, str(selected['path']), selected['id']), daemon=True)
+                    process.start()
                 self.workers[behavior] = dict(process=process, commands=commands, states=states, paused=False)
             target = self.workers[behavior]
             if not target['process'].is_alive():
-                raise HTTPException(503, 'Uçuş işlemi durdu; yerel sunucuyu yeniden başlat.')
+                raise HTTPException(503, 'Simülasyon işlemi durdu; yerel sunucuyu yeniden başlat.')
             # Keep the inactive physics state, model and camera intact.
             self.read()
             self.commands.put({'op': 'pause', 'paused': True}, timeout=1)
@@ -151,16 +166,27 @@ def read_json(path):
 def models():
     training = read_json(BASE / "training.json")
     evaluation = read_json(ROOT / "artifacts/simulation/evaluation.json")
-    records = [dict(id="trained", name="Başlangıç / yerelde eğitilmiş", path=BASE / "trained.npz", training=training,
+    records = [dict(id="trained", name="Başlangıç / yerelde eğitilmiş", task="odor", path=BASE / "trained.npz", training=training,
                     evaluation=evaluation["summary"]["trained"] if evaluation else None),
-               dict(id="untrained", name="Eğitim öncesi", path=BASE / "untrained.npz", training=None,
+               dict(id="untrained", name="Eğitim öncesi", task="odor", before=True, path=BASE / "untrained.npz", training=None,
                     evaluation=evaluation["summary"]["untrained"] if evaluation else None)]
     for p in sorted(RUNS.glob("*/run.json"), reverse=True):
         meta = read_json(p)
         if meta.get("status") == "complete":
             task = meta.get('task', 'odor')
-            records.append(dict(id=p.parent.name, name=f"{'Uçuş yönelme' if task=='flight' else 'Koku'} / {meta['created'][11:19]}", task=task, path=p.parent / "trained.npz",
+            records.append(dict(id=p.parent.name, name=f"{TASKS[task]['title']} / {meta['created'][11:19]}", task=task, path=p.parent / "trained.npz",
                                 training=read_json(p.parent / "training.json"), evaluation=read_json(p.parent / "evaluation.json")))
+            if task in {'avoidance','vision','terrain'} and (p.parent / 'untrained.npz').exists():
+                evaluation = read_json(p.parent / 'evaluation.json')
+                records.append(dict(id=p.parent.name+'~before', name=f"{TASKS[task]['title']} / eğitim öncesi", task=task,
+                    before=True, path=p.parent / 'untrained.npz', training=None,
+                    evaluation=evaluation.get('controls', {}).get('untrained') if evaluation else None))
+    from task_circuit import circuit_directory
+    for task in ('avoidance','vision','terrain'):
+        path = circuit_directory(task) / 'untrained.npz'
+        if path.exists():
+            records.append(dict(id=task+'-baseline', name=TASKS[task]['title']+' / eğitilmemiş',
+                task=task, before=True, path=path, training=None, evaluation=None))
     return records
 
 def resolve_model(model_id):
@@ -177,9 +203,7 @@ def health():
 def catalog():
     return dict(models=[{k:v for k,v in m.items() if k != "path"} for m in models()], job=runtime.job,
       experiments=[dict(id="odor", title="Kokuya yönelme", status="validated", detail="Taklit öğrenmesi · 6 fizik koşulu"),
-                   dict(id="avoidance", title="Kokudan kaçınma", status="planned", detail="Ters yönlendirme hedefi ve kaçınma değerlendirmesi hazırlanacak."),
-                   dict(id="vision", title="Görsel yönelme", status="planned", detail="Görsel duyusal kodlama ve yeni devre bağlantısı gerekli."),
-                   dict(id="terrain", title="Engel / arazi", status="planned", detail="Dokunma gözlemleri, arazi görevleri ve ödül tasarımı gerekli."),
+                   *[dict(id=t, title=TASKS[t]['title'], status="experimental", detail=TASKS[t]['sensor']+' → '+TASKS[t]['motor']) for t in ('avoidance','vision','terrain')],
                    dict(id="flight", title="Beyin ile uçuş", status="connected", detail="MaleCNS koku kararı → yön hedefi → FlyBody kanat kontrolü. Canlı 7.075 nöron; yönelme eğitimi ve uçuş testleri.")])
 
 @app.get("/api/state")
@@ -192,8 +216,9 @@ def state():
         return dict(simulation=runtime.read(), job=runtime.job, alive=runtime.process.is_alive())
 
 @app.get("/api/graph")
-def graph():
-    return FileResponse(ROOT / "artifacts/lab/graph.json")
+def graph(model: str = "trained"):
+    from lab_graph import prepare
+    return FileResponse(prepare(directory=resolve_model(model)['path'].parent))
 
 @app.get("/api/anatomy")
 def anatomy():
@@ -204,19 +229,19 @@ def anatomy_segments():
     return FileResponse(ROOT / "artifacts/lab/anatomy.f32", media_type="application/octet-stream")
 
 @app.get("/api/neuron/{body_id}")
-def neuron_details(body_id: int):
+def neuron_details(body_id: int, model: str = "trained"):
     from lab_details import neuron
     try:
-        return neuron(body_id)
+        return neuron(body_id, resolve_model(model)['path'].parent)
     except KeyError as exc:
         raise HTTPException(404, str(exc))
 
 @app.get("/api/neuron/{body_id}/connections")
 def neuron_connections(body_id: int, direction: Literal["in", "out"] = "out",
-                       page: int = Query(0, ge=0, le=100000), limit: int = Query(12, ge=1, le=50)):
+                       page: int = Query(0, ge=0, le=100000), limit: int = Query(12, ge=1, le=50), model: str = "trained"):
     from lab_details import connections
     try:
-        return connections(body_id, direction, page, limit)
+        return connections(body_id, direction, page, limit, resolve_model(model)['path'].parent)
     except KeyError as exc:
         raise HTTPException(404, str(exc))
 
@@ -236,7 +261,8 @@ def model_details(model_id: str):
         return metadata()
     import numpy as np
     record = resolve_model(model_id)
-    graph = read_json(ROOT / "artifacts/lab/graph.json")
+    from lab_graph import prepare
+    graph = read_json(prepare(directory=record['path'].parent))
     with np.load(record["path"], allow_pickle=False) as weights:
         w = weights["weight"]
         gains = [float(w[e["row"],e["col"]] / e["weight"]) if e["layer"] == 2 else 1. for e in graph["edges"]]
@@ -244,14 +270,22 @@ def model_details(model_id: str):
     evaluation_task = record.get('task', 'odor')
     flight_evaluation = record['evaluation'] if evaluation_task=='flight' else read_json(ROOT / 'artifacts/lab/flight/checkpoints' / f'{sha}.json')
     return dict(id=model_id, graph_version=graph["version"], circuit_identity=graph["circuit_identity"],
+                task=evaluation_task, groups=graph['groups'], before=record.get('before', False),
                 gains=gains, sha256=sha, training=record["training"], evaluation=record["evaluation"],
                 evaluation_task=evaluation_task, flight_evaluation=flight_evaluation,
-                walk_evaluation=record['evaluation'] if evaluation_task=='odor' else None)
+                walk_evaluation=record['evaluation'] if evaluation_task!='flight' else None)
+
+@app.get("/api/model/{model_id}/export")
+def export_model(model_id: str):
+    from brain_export import archive
+    record = resolve_model(model_id)
+    return Response(archive(record['path']), media_type='application/zip',
+                    headers={'Content-Disposition':f'attachment; filename="{model_id}-inference.zip"'})
 
 class Control(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     op: Literal["pause", "reset", "model", "camera", "behavior", "next"]
-    behavior: Literal['odor', 'flight'] = 'odor'
+    behavior: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain'] = 'odor'
     paused: bool = False
     goal: tuple[float, float] = (12, 4)
     seed: int = Field(10, ge=0, le=1000000)
@@ -281,6 +315,8 @@ def apply_control(body):
         return {'accepted': True}
     if body.op == "model":
         m = resolve_model(body.model)
+        if not compatible(runtime.behavior, m.get('task', 'odor')):
+            raise HTTPException(409, 'Model başka bir göreve ait. Önce ilgili davranışı seç.')
         command = dict(op="model", path=str(m["path"]), id=body.model)
     elif body.op == "reset":
         if not all(-30 <= x <= 30 for x in body.goal):
@@ -298,7 +334,7 @@ class TrainingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     steps: int = Field(3000, ge=200, le=10000)
     seed: int = Field(42, ge=0, le=1000000)
-    task: Literal['odor', 'flight'] = 'odor'
+    task: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain'] = 'odor'
 
 def training_job(directory, steps, seed, task):
     meta = dict(id=directory.name, status="training", created=datetime.now(timezone.utc).isoformat(), steps=steps, seed=seed, task=task)
@@ -306,8 +342,10 @@ def training_job(directory, steps, seed, task):
     watchdog = None
     message = ""
     try:
+        from task_circuit import build
+        source = build(task)
         for filename in ("circuit.json", "body_ids.npz", "layer0.npz", "layer1.npz", "layer2.npz"):
-            shutil.copy2(BASE / filename, directory / filename)
+            shutil.copy2(source / filename, directory / filename)
         (directory / "run.json").write_text(json.dumps(meta))
         with (directory / "training.log").open("w") as log:
             process = subprocess.Popen([sys.executable, "-u", str(ROOT / "lab_train.py"), "--steps", str(steps), "--seed", str(seed), '--task', task],
@@ -336,7 +374,7 @@ def training_job(directory, steps, seed, task):
         cancelled = runtime.job.get("status") == "cancelling"
         status = "cancelled" if cancelled else "complete" if code == 0 else "failed"
         meta["status"] = status
-        message = "Model kaydedildi ve altı fizik testinde değerlendirildi." if status == "complete" else "İşlem durduruldu." if cancelled else "Deney tamamlanamadı; training.log kaydını incele."
+        message = "Model kaydedildi; fizik sonuçları ve varsa çıkış kapatma kontrolü raporda." if status == "complete" else "İşlem durduruldu." if cancelled else "Deney tamamlanamadı; training.log kaydını incele."
     except Exception as exc:
         meta["status"] = "failed"
         message = str(exc)

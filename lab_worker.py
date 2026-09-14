@@ -6,7 +6,7 @@ import queue
 import time
 from pathlib import Path
 
-def simulate(commands, states):
+def simulate(commands, states, task="odor", initial_path=None, initial_id="trained"):
     # Pending JPEGs can be discarded at shutdown; never wait for a full pipe.
     states.cancel_join_thread()
     import mujoco
@@ -15,10 +15,11 @@ def simulate(commands, states):
     from fly_sim import OdorNavigationEnv
     from odor_brain import Policy, MODEL
     from lab_render import detailed_model, sync_render
+    from lab_tasks import TASKS, compatible
     env = None
     renderer = None
     try:
-        env = OdorNavigationEnv(episode_seconds=3)
+        env = OdorNavigationEnv(episode_seconds=3, task=task)
         model, render_data, render_assets = detailed_model(env)
         width, height = 1920, 1080
         model.vis.global_.offwidth = width
@@ -36,12 +37,18 @@ def simulate(commands, states):
             return env.position if name == "body" else np.array([11., 0., 0.])
         for name in cameras:
             camera_home(name)
-        policy = Policy(MODEL / "trained.npz")
-        model_sha = hashlib.sha256((MODEL / "trained.npz").read_bytes()).hexdigest()
+        model_path = Path(initial_path) if initial_path else MODEL / "trained.npz"
+        policy = Policy(model_path)
+        if not compatible(task, policy.task):
+            raise ValueError("Checkpoint task does not match the simulation")
+        model_sha = hashlib.sha256(model_path.read_bytes()).hexdigest()
         applied_turn = None
-        model_id, camera, paused = "trained", "body", False
-        goal, seed, episode = [12., 4.], 10, 1
+        model_id, camera, paused = initial_id, "body", False
+        goal, seed, episode = TASKS[task]["goal"].copy(), 10, 1
         obs, _ = env.reset(seed=seed, options={"goal": goal})
+        decision_obs, decision_time = obs.copy(), 0.
+        turn, layers = policy.activity(decision_obs)
+        decision_eyes = env.eye_frames
         distance, reward, outcome = env.previous_distance, 0., "running"
         last_position = env.position
         speed, successes, completed, falls = 0., 0, 0, 0
@@ -80,6 +87,8 @@ def simulate(commands, states):
                     reset = True
                 elif op == "model":
                     policy = Policy(Path(command["path"]))
+                    if not compatible(task, policy.task):
+                        raise ValueError("Checkpoint task does not match the simulation")
                     model_sha = hashlib.sha256(Path(command["path"]).read_bytes()).hexdigest()
                     model_id = command["id"]
                     successes = completed = falls = 0
@@ -112,10 +121,15 @@ def simulate(commands, states):
                 hold, trajectory, history = 0., [], []
                 last_position, speed = env.position, 0.
                 applied_turn = None
+                decision_obs, decision_time = obs.copy(), 0.
+                turn, layers = policy.activity(decision_obs)
+                decision_eyes = env.eye_frames
                 episode += 1
             idle = time.monotonic() - last_poll > 30
             if not paused and not idle and not hold:
-                turn = policy(obs)
+                decision_obs, decision_time = obs.copy(), env.elapsed
+                decision_eyes = env.eye_frames
+                turn, layers = policy.activity(decision_obs)
                 applied_turn = turn
                 obs, reward, done, truncated, info = env.step([turn])
                 speed = float(np.linalg.norm(env.position[:2] - last_position[:2]) / env.control_dt)
@@ -126,7 +140,7 @@ def simulate(commands, states):
                     completed += 1
                     successes += int(info["success"])
                     falls += int(info["fallen"])
-                    outcome = "success" if info["success"] else "fallen" if info["fallen"] else "timeout"
+                    outcome = "success" if info["success"] else "fallen" if info["fallen"] else "unsafe" if info.get("unsafe") else "timeout"
                     hold = time.monotonic() + 1.2
                 frame_steps += 1
             else:
@@ -134,7 +148,6 @@ def simulate(commands, states):
             now = time.monotonic()
             if now - last_frame < (1.0 if idle else .09):
                 continue
-            turn, layers = policy.activity(obs)
             cam = cameras[camera]
             cam.lookat[:] = camera_origin(camera) + offsets[camera]
             sync_render(env, model, render_data)
@@ -142,7 +155,7 @@ def simulate(commands, states):
             rgb = renderer.render()
             jpeg = io.BytesIO()
             Image.fromarray(rgb).save(jpeg, format="JPEG", quality=96, subsampling=0)
-            history.append([round(env.elapsed, 3), float(obs[0]), float(obs[1]), turn])
+            history.append([round(decision_time, 3), float(decision_obs[0]), float(decision_obs[1]), turn])
             history = history[-120:]
             seq += 1
             payload = dict(seq=seq, wall_time=time.time(), image=base64.b64encode(jpeg.getvalue()).decode(),
@@ -154,16 +167,25 @@ def simulate(commands, states):
                                  lookat=cam.lookat.tolist(), offset=offsets[camera].tolist()),
                 time_s=round(env.elapsed, 3), distance_mm=float(distance), goal_mm=goal,
                 position_mm=env.position.tolist(), speed_mm_s=speed, reward=float(reward),
-                odor=obs.tolist(), steering=turn, outcome=outcome,
+                odor=decision_obs.tolist(), sensory_now=obs.tolist(), steering=turn, outcome=outcome,
+                task_contract=TASKS[task], barrier_contacts=env.barrier_contacts,
                 successes=successes, completed=completed, falls=falls,
                 rtf=frame_steps * env.control_dt / (now - last_frame),
                 activity=np.concatenate(layers).round(5).tolist(),
-                neural=dict(source="Policy.activity", sample_time_s=round(env.elapsed, 3),
+                neural=dict(source="Policy.activity", sample_time_s=round(decision_time, 3),
                     kind="continuous_forward_response", applied_steering=applied_turn,
-                    cpg_drive=None if applied_turn is None else [.9 - .55 * applied_turn, .9 + .55 * applied_turn]),
+                    decision_applied=applied_turn is not None, policy_connected=True,
+                    correction_gain=env.motor_gain if task == "terrain" else None,
+                    cpg_drive=None if applied_turn is None else env.descending.tolist()),
                 layer_means=[float(a.mean()) for a in layers],
                 trajectory=trajectory[-350:], history=history,
                 contacts=int(env.sim.mj_data.ncon), physics_dt=env.sim.timestep)
+            if decision_eyes is not None:
+                eye_image = Image.fromarray(np.concatenate(decision_eyes, axis=1))
+                eye_image.thumbnail((384,128))
+                buffer = io.BytesIO()
+                eye_image.save(buffer, format="JPEG", quality=85)
+                payload["eyes_image"] = base64.b64encode(buffer.getvalue()).decode()
             send(payload)
             last_frame, frame_steps = now, 0
     except Exception as exc:

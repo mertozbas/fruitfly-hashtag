@@ -45,7 +45,10 @@ class BrainFlight(Flight):
         self.load_brain(model_path)
 
     def load_brain(self, path):
-        self.brain = Policy(Path(path))
+        candidate = Policy(Path(path))
+        if candidate.task not in {'odor', 'flight'}:
+            raise ValueError('Flight requires an odor-navigation checkpoint')
+        self.brain = candidate
         self.brain_sha = hashlib.sha256(Path(path).read_bytes()).hexdigest()
         # Trim the readout's learned neutral bias; equal antennal input must
         # request straight flight. This calibration never uses target bearing.
