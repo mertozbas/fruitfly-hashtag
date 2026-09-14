@@ -1,7 +1,7 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rehber · Hashtag Neural Lab</title><link rel="icon" href="data:,"><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#0c121b;color:#d9e5ee;font:16px/1.75 system-ui,sans-serif}aside{position:fixed;inset:0 auto 0 0;width:220px;padding:28px 22px;overflow-y:auto;border-right:1px solid #263744;background:#101923}aside b{display:block;font-size:14px;letter-spacing:.08em;margin-bottom:25px}aside a{display:block;margin:10px 0}a{color:#7ee3c3}main{margin-left:220px;max-width:1440px;padding:36px 48px}section{padding:0 0 44px;margin-bottom:44px;border-bottom:1px solid #324653}h1{font-size:30px;line-height:1.3}h2{font-size:23px;margin-top:32px}h3{font-size:18px}pre{padding:18px;border:1px solid #2e4455;border-radius:7px;background:#060c13;overflow:auto;line-height:1.5}code{font:13px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}blockquote{border-left:3px solid #7ee3c3;margin-left:0;padding:3px 20px;color:#b6c8d7}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px;border:1px solid #293b4a;vertical-align:top}th{background:#162332}li{margin:7px 0}.meta{color:#98adbd;font-size:13px}@media(max-width:760px){aside{position:static;width:auto}aside a{display:inline-block;margin-right:18px}main{margin:0;padding:24px}table{display:block;overflow:auto}}@media print{aside{display:none}main{margin:0;padding:0}body{background:white;color:black}a{color:#064f44}pre{background:#eee}}
 
 img,video{max-width:100%;height:auto;border-radius:8px}p:has(>img){margin:26px 0}h1,h2,h3{color:#ecf3f6}section{scroll-margin-top:24px}a{overflow-wrap:anywhere}aside a{font-size:14px;margin:7px 0}summary{cursor:pointer}.meta{line-height:1.7}
-</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
+</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-so101-local">SO-101 robot deneyi</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
 
 <h1 id="README--hashtag-neural-lab">Hashtag Neural Lab</h1>
 <p><strong>Gerçek sinek anatomisinden çıkarılan bir devreyi eğitin; yön kararını, canlı nöron yanıtlarını ve fizik simülasyonunu tek ekranda inceleyin.</strong></p>
@@ -23,6 +23,10 @@ yönetir. Öğrenilen şey yön kararı veya motor düzeltme kazancıdır. <a hr
 </blockquote>
 <p>Yerel ek: <strong>kaçınma 6/6, görsel yönelme 6/6, engel 2/6</strong>. Engel eğitiminde başarı
 artışı gösterilmedi. <a href="#docs-local-tasks">Üçlü kontrol deneyleri ve model dışa aktarımı</a>.</p>
+<p>Yerel SO-101 deneyinde aynı arayüz, 3.488 nöronlu anatomik alt ağın yönettiği
+temas tabanlı al ve yerleştirme simülasyonunu gösterir. Ayrı 100 başlangıçta
+94 başarı ve sıfır sınır ihlali ölçüldü. <a href="#docs-so101-local">Kurulum, kullanım, eğitim ve sınırlar</a>.
+Bu yerel ek henüz GitHub/PyPI'ye yayımlanmamıştır.</p>
 <h2 id="README--bir-anatomik-haritadan-çalışan-deneye">Bir anatomik haritadan çalışan deneye</h2>
 <p>Başlangıç sorusu basitti: “İndirilen sinir sistemi verisinden bir devre seçip,
 onun parametrelerini değiştirince davranıştaki farkı görebilir miyiz?”
@@ -314,6 +318,10 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 <tr>
 <td>Kaçınma, görme, engel ve taşınabilir model</td>
 <td><a href="#docs-local-tasks">Yerel görevler</a></td>
+</tr>
+<tr>
+<td>SO-101, temasla al ve yerleştir, canlı ağ ve eğitim</td>
+<td><a href="#docs-so101-local">Yerel robot deneyi</a></td>
 </tr>
 <tr>
 <td>Hangi veriyi, kaç GB ve neden indiriyorum?</td>
@@ -1162,6 +1170,262 @@ aynı giriş anlamına ve ağ çıkışını uygun motor komutuna dönüştürme
 Bir robotta ayrıca fiziksel doğrulama ve güvenlik sınırları gerekir. Bu model
 genel amaçlı, her işi öğrenmiş veya yeni donanımda doğrudan çalışacak bir beyin değildir.</p>
 <p><a href="#docs-training">Eğitim rehberine dön</a> · <a href="#docs-usage">UI kullanımı</a></p></section>
+<section id="docs-so101-local"><h1 id="docs-so101-local--so-101-yerel-sinir-ağı-deneyi">SO-101 yerel sinir ağı deneyi</h1>
+<p>Bu çalışma yalnızca yerel simülasyon içindir. Fiziksel robot sürücüsü çağrılmaz;
+GitHub veya PyPI yayını yapılmaz. Mevcut sinek görevleri ve checkpoint'leri korunur.</p>
+<p><img alt="SO-101 ve aynı kararı üreten canlı anatomik ağ" src="media/so101-lab.jpg"></p>
+<h2 id="docs-so101-local--aç-ve-kullan">Aç ve kullan</h2>
+<pre><code class="language-bash">.venv/bin/python lab_server.py
+</code></pre>
+<p><a href="http://127.0.0.1:8766/">Yerel laboratuvarı aç</a>. Doğrulanmış SO-101 kaydı
+bulunduğunda laboratuvar robotla açılır. Görev menüsünden sinek deneylerine
+geri dönebilirsiniz; aynı beyin, inceleme ve telemetri panelleri kullanılır.</p>
+<ol>
+<li><strong>SO-101 · Al ve yerleştir</strong> görevini seçin. Robot 30 mm küpü kavrar,
+   kaldırır, kutuya taşır, bırakır ve elini geri çeker. Bölümler otomatik yenilenir.</li>
+<li>Görüntüyü mouse ile döndürün, kaydırın ve yakınlaştırın. <strong>Duraklat</strong> hem
+   fizik adımını hem ağ kararını durdurur. Görüntü 1920 × 1080 üretilir.</li>
+<li>Beyindeki nörona veya bağlantıya tıklayın. Aktivite, bağlantı çarpanı,
+   anatomik kimlik, bölge, ısı haritası ve X-ray görünümü aynı hesapla eşleşir.</li>
+<li>Simülasyon üzerindeki sensör seçicisinden <strong>fizik sensörleri</strong> veya
+   <strong>sentetik RGB-D kamera</strong> seçin. Sensör değişimi yeni bölüm başlatır.</li>
+<li>Kutu hedefini milimetre olarak değiştirebilirsiniz: X 125–160, Y −180–−135.
+   <strong>Hedefi uygula</strong> bölümü bu kutu konumuyla sıfırlar.</li>
+<li><strong>Eğitimi başlat</strong>, seçili konum çıktılı modelin bir kopyasında çalışır.
+   Canlı gösterim seçili eski modelle devam eder. Eğitim bitince sonucu okuyun;
+   yeni kaydı <strong>Yeni modeli yükle</strong> ile açın veya menüden önce/sonra karşılaştırın.</li>
+</ol>
+<p>Yeni aday fizik karşılaştırmasını iyileştirmezse önceki ağırlıklar korunur.
+Öğrenme kaybının azalması otomatik olarak daha iyi robot anlamına gelmez.
+İptal edilen işin günlükleri saklanır; aktif model değiştirilmez.</p>
+<h2 id="docs-so101-local--doğrulanmış-yerel-sonuç">Doğrulanmış yerel sonuç</h2>
+<p>Seçilen kayıt: <code>models/lab_runs/local-so101-validated-seed42/</code>.
+Checkpoint SHA-256:
+<code>31ed4107db97458838319e4b789c259426e33a4a680b5a40348a970f6226f374</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Deney</th>
+<th style="text-align: right;">Başarılı / toplam</th>
+<th style="text-align: right;">Sınır ihlali</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Geliştirme: uzanma</td>
+<td style="text-align: right;">12 / 12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Geliştirme: kaldırma</td>
+<td style="text-align: right;">12 / 12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Geliştirme: tam yerleştirme</td>
+<td style="text-align: right;">12 / 12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Ayrı test: eğitilmiş anatomik ağ</td>
+<td style="text-align: right;">94 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Aynı tohumlar: eğitim öncesi ağ</td>
+<td style="text-align: right;">0 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Aynı tohumlar: nöron yanıtları sıfır</td>
+<td style="text-align: right;">0 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Aynı eğitim yöntemi: anatomik çarpanlar sabit</td>
+<td style="text-align: right;">37 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Aynı tohumlar: MLP referansı</td>
+<td style="text-align: right;">62 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Sentetik RGB-D kamera ile ayrı test</td>
+<td style="text-align: right;">93 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Kavrama öncesi 150 mN, 50 ms yatay itme</td>
+<td style="text-align: right;">12 / 12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Kaldırdıktan sonra 600 ms zorla açılan kavrayıcı</td>
+<td style="text-align: right;">0 / 12</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>Ana test tohumları 8000–8099; model seçimi 4000–4011 üzerinde yapıldı.
+Eğitim gösterimleri 2000–2099 ve 2200–2359 aralıklarından gelir. Bölüm
+kimliği beşin katı olan gösterimler eğitim doğrulamasına ayrılır.
+Testten önce seçilen modelin 100 denemesinde altı başarısızlık da rapora dahildir.
+Sonuç, tanımlanan küp/kutu ve çalışma alanı içindir; başka nesnelere genellenmiş
+robot becerisi veya fiziksel robot başarısı değildir.</p>
+<p>MLP referansı aynı gözlem seçimi, öğrenilmiş aşama belleği, 16.000 eğitim
+adımı ve konum okuması uydurmasını kullanır; gizli katmanları 128'er birimdir.
+Parametre sayıları eşit değildir. Bu tek veri kümesindeki kontrol deneyidir;
+anatomik ağların genel olarak üstün olduğuna dair kanıt sayılmaz.</p>
+<p>Ham sonuçlar <code>artifacts/so101/holdout-*.json</code>, başarısız geliştirme denemeleri
+aynı dizinde, seçili sonuç özeti modelin <code>evaluation.json</code> dosyasındadır.
+Zorla düşürülen küpü yeniden kavrama bu sürümde öğrenilmiş değildir.</p>
+<h2 id="docs-so101-local--kullanılan-parçalar-ve-fizik">Kullanılan parçalar ve fizik</h2>
+<ul>
+<li>Robot: yerel <code>SO-ARM100/Simulation/SO101/so101_new_calib.xml</code> ve özgün STL'ler.</li>
+<li>Aksesuarlar: <code>so101-aksesuar/v3</code> içindeki 30 mm kırmızı küp ve ayırma kutusu;
+  siyah tag ve logo dolguları dahil gerçek renk gövdeleri gösterilir.</li>
+<li>Kutu: 76 × 76 × 26 mm; iç açıklık 71,2 mm, taban 2,4 mm. Çarpışma modeli
+  ayrı taban/duvarlardan oluşur; boşluk tek bir dışbükey gövdeyle doldurulmaz.</li>
+<li>Çeneler: özgün mesh'lerin dilimler halinde dışbükey çarpışma ayrıştırması.
+  Görsel STL değiştirilmez. Temas geometrisi yine bir fizik yaklaşımıdır.</li>
+<li>Fizik adımı 1 ms; robot kararı 50 ms. PGS, eliptik sürtünme konisi, 100 iterasyon.
+  Newton çözücüsüyle kararsızlık üreten denemeler başarısız olarak kaydedildi.</li>
+<li>Küp kütlesi 12 g ve çene sürtünmesi 0,9 simülasyon varsayımlarıdır;
+  basılı parçanın gerçek kütlesi/sürtünmesi ölçülmüş değildir.</li>
+<li>Robot eklem sınırları korunur; kavrayıcı torku 0,25 Nm ile sınırlandırılır.
+  Yerçekimi, sıfır hızlı model hesabından pozisyon servosuna sınırlı ileri besleme
+  olarak eklenir. Nesneler için yerçekimi kapatılmaz ve taşıma kuvveti eklenmez.</li>
+</ul>
+<p>Nesnenin konumu yalnızca bölüm sıfırlamada atanır. Taşıma sırasında <code>qpos</code>
+değiştirme, kaynak, weld, mocap ile taşıma veya kavrama yardımcısı yoktur.</p>
+<h2 id="docs-so101-local--ağın-yaptığı-iş">Ağın yaptığı iş</h2>
+<p>MaleCNS Touch → VNC ara → VNC ön motor → Motor alt devresi, SO-101 için
+yeniden amaçlandırılır: <strong>3.488 nöron ve 81.104 yönlü bağlantı</strong>.
+30 robot/görev özelliği kaydedilir. Seçilen giriş adaptörü bunlardan 15'ini
+kullanır: kavrayıcı konumu, uç nokta/nesne/hedef geometrisi ve temas/ilerleme
+işaretleri. Kol açıları, hızları ve önceki komutlar bu adayın öğrenilmiş
+hareketinde kullanılmaz; bu açık özellik seçimi kontrol yolunu ezberlemeyi azaltır.</p>
+<p>Sekizli öğrenilmiş aşama okuması, bir sonraki kararın girişine geri beslenir.
+Bu bellek mühendislik ekidir; anatomik nöron sayısına katılmaz. Dört katmandaki
+nöron yanıtları bağımsız sigmoid hesaplarıdır. Seçilen modelde üç anatomik
+katmanın mevcut bağlantı çarpanları, giriş adaptörü ve hareket okuması eğitilir.
+Çarpanlar exp(−1,5)–exp(1,5) aralığındadır. 80.598 bağlantının çarpanı
+başlangıca göre %0,1'den fazla değişmiştir. <strong>Yeni anatomik bağlantı eklenmez.</strong>
+İç devreyi atlayarak hareket üreten bir yan yol yoktur.</p>
+<p>Seçilen modelin çıktısı dört değerdir: <strong>uç noktanın hedef X/Y/Z konumu ve
+kavrayıcı</strong>. Konum okuması da gösterimlerden öğrenilir; canlı yolda öğretmen,
+hazır konum listesi veya zamanlanmış görev betiği yoktur. Konum hedefi sınırlı
+oransal izleme, ters kinematik ve servolardan geçer; karar başına istenen
+ilerleme en fazla 3 mm'dir. Eski araştırma adaylarının ΔXYZ çıktıları da
+checkpoint şemasıyla desteklenir. Ters kinematik ile servo kontrolü ayrı
+mühendislik katmanlarıdır. Bu, sineğin doğal kol kontrol devresi
+veya yaşayan bir beynin aktarımı değildir. Girdi kodlaması biyolojik dokunma
+reseptörlerini taklit ettiği iddiası taşımaz.</p>
+<p>Başka araştırma adaylarında sekiz ayrı öğrenilmiş hareket okuması veya
+gösterimlerden çıkarılan aşama geçiş izinleri denenmiştir. Seçilen son model
+tek hareket okuması kullanır ve bu geçiş izinlerine ihtiyaç duymaz. Bunlar
+kontrolcü mimarisi seçenekleridir; sineğin anatomisine yeni devre eklemek değildir.</p>
+<p>UI'daki nöron değerleri, robot hareketini üreten son ileri hesaplamadan gelir.
+Bağlantı katkısı <code>yanıt kazancı × kaynak aktivitesi × mevcut ağırlık / hedefe
+gelen ağırlık toplamı</code> olarak hesaplanır. Katmanların sabit eşik terimi bağlantı
+katkısına dahil edilmez. Bunlar aksiyon potansiyeli veya ölçülmüş voltaj değildir.</p>
+<p>3B atlas üzerinde gerçek soma koordinatı bulunan 1.623 nöron ve iki ucu da
+konumlu 29.528 bağlantı çizilebilir. Konumu eksik hücrelere hayalî anatomik
+konum atanmaz. Canlı hesap ve katman ortalamaları 3.488 nöronun tamamını içerir;
+özellikle giriş duyusal hücrelerinin eksik soma konumu, çalışmadıkları anlamına gelmez.</p>
+<h2 id="docs-so101-local--eğitim-ve-değerlendirme">Eğitim ve değerlendirme</h2>
+<p>Önce temas fiziğiyle başarılı öğretmen gösterileri üretilir. Eğitim ve doğrulama
+bölüm kimliğiyle ayrılır; komşu kareler rastgele iki kümeye bölünmez. Uzanma,
+kaldırma ve tam yerleştirme sırasıyla öğrenilir ve fizik içinde ayrıca sınanır.
+Ağın ziyaret ettiği hatalı durumlar için açıkça işaretlenmiş öğretmen
+müdahaleleriyle düzeltme verisi toplanabilir (DAgger).</p>
+<p>Seçilen son modelin eğitimi: 98 başarılı temiz gösterim + 159 başarılı,
+küçük hareket sapmaları içeren gösterim; toplam 92.683 kare. 16.000 optimizasyon
+adımından sonra yalnızca XYZ okuması, eğitim bölümlerindeki hedef konumlarına
+ridge regresyonuyla uyduruldu (λ = 0,0001). Anatomik çekirdek, kavrayıcı ve
+aşama okuması bu son uydurmada sabit kaldı. Hedef etiketleri, kayıtlı öğretmen
+komutlarıyla bütün karelerde karşılaştırıldı; en büyük normalize fark 0,0000011.</p>
+<p>Ödül, sayısal geri bildirimdir: kavrama, kaldırma, bırakma ve tam başarı için
+birer kez puan; ilerleme için sınırlı puan; zaman, hareket ve yasak temas için
+ceza. Şeker maddesi kullanılmaz. PPO ile gerçek ödül gradyanı denemeleri ayrı
+adaylara kaydedilir. Son seçili checkpoint gösterim + konum okuması eğitimidir;
+ödül güncellemesi uygulanmış adayla karıştırılmamalıdır.</p>
+<p>UI'daki devam eğitimi mevcut modelin kopyasını alır, uzanma/kaldırma kontrolü,
+gösterim eğitimi, konum okuması uydurma ve 3 × 4 bölümlük PPO denemesi yapar.
+Adaylar aynı 12 geliştirme konumunda karşılaştırılır; eşitlikte eski model
+korunur. Ardından 100 konumda seçilen model, eğitim öncesi kopya ve susturulan
+nöron kontrolü ölçülür. Tohum 70 için bu son test 17000–17099'dur.
+Bir işi iptal etmek veya aşama kapısında durmak başarı sayılmaz.</p>
+<p>Eğitim hatasının düşmesi görev başarısı sayılmaz. Tam başarı: küpün bütün
+izdüşümü kutu içinde, nesne serbest ve durgun, kavrayıcı en az 65 mm uzakta;
+bu durum 0,5 saniye sürmeli ve yasak temas / fizik uyarısı bulunmamalıdır.
+Ödüller ve aşama işaretleri fizik ölçümlerinden hesaplanır. Ara başarı
+ödülleri bölüm başına bir kez verilir.</p>
+<p>Geliştirme denemeleri ve başarısız adaylar <code>artifacts/so101/</code> altında tutulur.
+Checkpoint'ler <code>models/lab_runs/</code> altındadır. Son test kümesi, eğitim ve model
+seçiminde kullanılan tohumlardan ayrı olmalıdır.</p>
+<h2 id="docs-so101-local--kamera-gözlemi">Kamera gözlemi</h2>
+<p>Kamera modunda kırmızı küp RGB görüntüsünde bulunur; <strong>sentetik derinlik</strong> ve
+kamera kalibrasyonuyla 3B merkez tahmin edilir. Küpün 30 mm olduğu bilinir.
+Kavrama sırasında görünmeyen yüzler için eklem konumundan hareket tahmini ve
+görüntü birleştirilir. Bu, nesneye fiziksel bağ/kuvvet eklemez. Algı katmanı
+küpün MuJoCo gövde konumunu veya segmentasyon kimliğini okumaz.</p>
+<p>Robot eklemleri ve temas bilgisi simülasyon sensörlerinden, kutu hedefi bilinen
+kalibrasyondan gelir. Kutu görüntüden keşfedilmez. Görüntü kaybı 0,5 saniyeyi
+aşarsa hareket durur; gizlice kusursuz nesne konumuna geçilmez. Bu sistem sıradan
+tek RGB kamera ile gerçek robota hazır algılama çözümü değildir.</p>
+<p>Başarı ve hata metrikleri kamera modunda da fizik durumundan ölçülür; bu
+değerlendirme değerleri nesne konumu olarak politikaya geri verilmez.</p>
+<h2 id="docs-so101-local--yerel-hazırlık">Yerel hazırlık</h2>
+<p>Var olan bilimsel <code>.venv</code> kullanılır; kökte <code>uv sync</code> çalıştırarak bu ortamı
+hafif paket ortamıyla değiştirmeyin. Ek geometri bağımlılığı:</p>
+<pre><code class="language-bash">uv pip install --python .venv/bin/python -r so101/requirements.txt
+</code></pre>
+<p>Varsayılan varlık yolları aşağıdadır; farklı makinede ortam değişkenleriyle
+değiştirilebilir. Ana aksesuar dosyaları mm, MuJoCo robot mesh'leri metredir.</p>
+<pre><code class="language-bash">export SO101_MODEL_DIR=&quot;$HOME/.cache/robot_descriptions/SO-ARM100/Simulation/SO101&quot;
+export SO101_ACCESSORIES_DIR=&quot;$HOME/so101-aksesuar/v3&quot;
+</code></pre>
+<p>Kayıtlı veriyle seçilen mimariyi yeniden eğitmek:</p>
+<pre><code class="language-bash">.venv/bin/python -m so101.train \
+  --output models/lab_runs/my-so101 \
+  --dataset artifacts/so101/target-demonstrations.npz \
+  --stage place --steps 16000 --seed 42 --learning-rate .001 \
+  --memory --all-core --task-features --position-loss-weight 1
+.venv/bin/python -m so101.fit_readout models/lab_runs/my-so101/trained.npz \
+  --dataset artifacts/so101/target-demonstrations.npz
+.venv/bin/python -m so101.evaluate models/lab_runs/my-so101/readout-0.0001.npz \
+  --episodes 100 --start-seed 8000 --output artifacts/so101/my-evaluation.json
+</code></pre>
+<p>Veri yoksa <code>.venv/bin/python -m so101.train_job --output models/lab_runs/my-curriculum --steps 8000</code>
+temas gösterimlerini üretir ve sıfırdan aşamalı eğitimi dener. Her aşama en fazla
+dört deneme yapar; test kapısı geçilemezse hata ve aday dosyaları korunur.
+Gösterim üretiminde <code>so101.demonstrations</code>, delta etiketlerinden hedef etiketlerine
+doğrulanmış dönüşümde <code>so101.target_demonstrations</code> kullanılır.</p>
+<p>Mevcut modeli kopyalayarak UI ile aynı devam eğitimi:</p>
+<pre><code class="language-bash">.venv/bin/python -m so101.train_job \
+  --output models/lab_runs/my-refinement --steps 3000 --seed 70 \
+  --resume models/lab_runs/local-so101-validated-seed42/trained.npz
+</code></pre>
+<h2 id="docs-so101-local--kaydet-ve-başka-ortamda-kullan">Kaydet ve başka ortamda kullan</h2>
+<p>UI'daki model indirme düğmesi checkpoint, anatomik matrisler, nöron kimlikleri,
+giriş ölçekleri/özellik seçimi, öğrenilmiş bellek, çıkarım kodu, şema ve dosya
+hash'lerini içeren ZIP üretir. ZIP içinde <code>python infer.py</code> örneği bulunur.
+Çıkarım yalnızca NumPy/SciPy ister; MuJoCo veya PyTorch şart değildir.</p>
+<p>Aynı <code>Policy</code> nesnesini kararlar boyunca koruyun, yeni bölümde <code>reset()</code> çağırın.
+Her karar 30 özellik alır ve dört normalize kontrol değeri döndürür. Konum
+modunda metre hedefi <code>merkez + ölçek × çıktı</code> ile hesaplanır; tam sıra/birimler
+<code>observation-schema.json</code> içindedir. CLI örneği yalnızca sayısal çıkarımdır,
+robot hareketi başlatmaz. Model başka yazılımda kullanılabilir; başka robotun
+gözlem/aksiyon sözleşmesine kendiliğinden uyum sağlamaz.</p>
+<h2 id="docs-so101-local--gerçek-robota-geçmeden-önce">Gerçek robota geçmeden önce</h2>
+<p>Bu deney gerçek SO-101'e doğrudan yüklenmez. Kamera/nesne konumu eşlemesi,
+eklem sırası, derece/radyan dönüşümü, kavrayıcı yönü, mevcut kalibrasyon,
+çalışma alanı, hız sınırları, gecikme, bağlantı kesilince durma ve acil durdurma
+ayrıca doğrulanmalıdır. Simülasyondaki kusursuz nesne durumunun gerçek karşılığı
+bir algılama sistemi gerektirir. Fiziksel denemeler bu yerel çalışmanın dışındadır.</p></section>
 <section id="docs-experiments"><h1 id="docs-experiments--deney-kayıtları-ve-kanıtlar">Deney kayıtları ve kanıtlar</h1>
 <p><strong>Önce koşulu, sonra sonucu okuyun.</strong> Aşağıdaki sayılar küçük sentetik koku
 hedef kümelerine aittir. Fizik simülasyonunda ölçülmüştür; biyolojik doğrulama,
@@ -1654,7 +1918,12 @@ politikası <a href="https://github.com/TuragaLab/flybody">FlyBody</a> kaynaklı
 alınması dış kaynakları projenin MIT lisansına dönüştürmez. İlgili kod, veri ve
 politika lisansları <a href="#THIRD_PARTY_NOTICES">üçüncü taraf bildirimlerinde</a>
 ayrı belirtilmiştir. Araştırma ekipleri bu proje için onay veya ortaklık vermiş
-olarak gösterilmez.</p></section>
+olarak gösterilmez.</p>
+<h2 id="docs-media-README--yerel-so-101-görüntüsü">Yerel SO-101 görüntüsü</h2>
+<p><code>so101-lab.jpg</code>, yerel MuJoCo ve tarayıcı arayüzünden alınmış gerçek ekran
+görüntüsüdür. Model <code>31ed4107db97…</code>, tohum 9000; robot hedef konumunu
+anatomik ağın öğrenilmiş okuması üretir. Nesne temasla taşınır. Bu görüntü
+fiziksel robot kaydı değildir. Ayrıntılar: <a href="#docs-so101-local">SO-101 rehberi</a>.</p></section>
 <section id="THIRD_PARTY_NOTICES"><h1 id="THIRD_PARTY_NOTICES--kaynaklar-ve-lisans-bildirimleri">Kaynaklar ve lisans bildirimleri</h1>
 <p>Neural Lab bağımsız bir Hashtag projesidir; aşağıdaki projelerle resmi bağlantı
 veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politikaları kapsamaz.</p>

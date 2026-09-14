@@ -6,9 +6,12 @@ export function modelMatches(graph, simulation, model) {
     model.gains.length===graph.edges.length);
 }
 export function edgeSignal(graph, edge, activity, gain) {
-  // Contribution to target pre-tanh input: the actual forward pass uses tanh(2 * sum(a*w)).
+  // Contribution to the target's actual pre-activation input. SO-101 uses
+  // independent sigmoid responses and fixed per-target incoming-weight sums.
   const value=activity?.[graph.nodes[edge.a].index];
-  return Number.isFinite(value)&&Number.isFinite(gain)?2*value*edge.weight*gain:0;
+  const factor=graph.response_gains?.[edge.layer]??2;
+  const denominator=graph.input_sums?.[edge.layer]?.[edge.col]??1;
+  return Number.isFinite(value)&&Number.isFinite(gain)?factor*value*edge.weight*gain/Math.max(denominator,1e-8):0;
 }
 export function groupActivity(graph, activity) {
   return graph.group_ranges.map(group=>{

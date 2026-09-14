@@ -51,6 +51,13 @@ export function createAnalyses(graph,{getSelection}){
     const drive=current.neural?.cpg_drive;
     $('motor-drive').title=current.neural?.brain_connected?'Son beyin kararından üretilen yön hızı: nötr değer çıkarılmış MBON okuması × 60; ±8 rad/s sınırı. Kanat torku değildir.':'Son fizik adımında CPG sürüşü; VNC nöron aktivitesi değildir.';
     $('motor-drive').textContent=current.behavior==='terrain'?`Düzeltme ×${Number(current.neural?.correction_gain||0).toFixed(2)}`:current.neural?.brain_connected?`Yaw ${Number(current.neural.yaw_rate_rad_s).toFixed(2)} rad/s`:drive?`CPG ${drive[0].toFixed(2)} / ${drive[1].toFixed(2)}`:'CPG henüz sürülmedi';
+    if(current.behavior==='so101'){
+      const action=current.neural?.applied_action;
+      const target=current.robot?.action_mode==='target';
+      const values=target?current.robot.target_mm:action?.slice(0,3).map(x=>x*3);
+      $('motor-drive').textContent=action?`${target?'Hedef':'ΔXYZ'} ${values.map(x=>x.toFixed(1)).join(' / ')} mm`:'Henüz hareket uygulanmadı';
+      $('motor-drive').title='Bu nöron hesabından çıkan konum komutu; ardından sınırlı IK ve servo kontrolü uygulanır.';
+    }
     const region=setup($('region-map'),allBounds);
     if(region){
       background(region,surface,allBounds);

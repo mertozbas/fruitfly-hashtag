@@ -68,6 +68,8 @@ class Runtime:
                 if not compatible(behavior, selected.get('task', 'odor')):
                     available = [m for m in models() if compatible(behavior, m.get('task', 'odor')) and not m.get('before')]
                     if not available:
+                        if behavior == 'so101':
+                            raise HTTPException(503, 'Önce yerel SO-101 eğitimini tamamla: docs/so101-local.md')
                         from task_circuit import initialize
                         initialize(behavior)
                         available = [m for m in models() if m.get('task') == behavior]
@@ -78,6 +80,12 @@ class Runtime:
                         raise HTTPException(503, 'Uçuş kurulumu eksik: flight/README.md')
                     commands, states = queue.Queue(32), queue.Queue(2)
                     process = FlightProcess(commands, states, selected['path'], selected['id'])
+                elif behavior == 'so101':
+                    from so101.worker import simulate as robot_simulate
+                    ctx = mp.get_context('spawn')
+                    commands, states = ctx.Queue(32), ctx.Queue(2)
+                    process = ctx.Process(target=robot_simulate, args=(commands,states,str(selected['path']),selected['id']), daemon=True)
+                    process.start()
                 else:
                     from lab_worker import simulate
                     ctx = mp.get_context('spawn')
@@ -131,6 +139,13 @@ async def lifespan(app):
     for path in RUNS.glob("*/run.json"):
         record = read_json(path)
         if record.get("status") in {"training", "evaluating", "cancelling"}:
+            owner=record.get('owner_pid')
+            if isinstance(owner,int) and owner>0:
+                try:
+                    os.kill(owner,0)
+                    continue # A CLI job or another local server still owns it.
+                except ProcessLookupError:pass
+                except PermissionError:continue
             record["status"] = "interrupted"
             path.write_text(json.dumps(record, indent=2))
     ctx = mp.get_context("spawn")
@@ -138,6 +153,10 @@ async def lifespan(app):
     runtime.process = ctx.Process(target=simulate, args=(runtime.commands, runtime.states), daemon=True)
     runtime.process.start()
     runtime.workers['odor'] = dict(process=runtime.process, commands=runtime.commands, states=runtime.states, paused=False)
+    robot_models=[m for m in models() if m.get('task')=='so101' and not m.get('before')]
+    default_task=os.environ.get('FRUITFLY_DEFAULT_TASK','so101' if robot_models else 'odor')
+    if default_task!='odor':
+        runtime.switch(default_task)
     try:
         yield
     finally:
@@ -176,7 +195,7 @@ def models():
             task = meta.get('task', 'odor')
             records.append(dict(id=p.parent.name, name=f"{TASKS[task]['title']} / {meta['created'][11:19]}", task=task, path=p.parent / "trained.npz",
                                 training=read_json(p.parent / "training.json"), evaluation=read_json(p.parent / "evaluation.json")))
-            if task in {'avoidance','vision','terrain'} and (p.parent / 'untrained.npz').exists():
+            if task in {'avoidance','vision','terrain','so101'} and (p.parent / 'untrained.npz').exists():
                 evaluation = read_json(p.parent / 'evaluation.json')
                 records.append(dict(id=p.parent.name+'~before', name=f"{TASKS[task]['title']} / eğitim öncesi", task=task,
                     before=True, path=p.parent / 'untrained.npz', training=None,
@@ -204,7 +223,8 @@ def catalog():
     return dict(models=[{k:v for k,v in m.items() if k != "path"} for m in models()], job=runtime.job,
       experiments=[dict(id="odor", title="Kokuya yönelme", status="validated", detail="Taklit öğrenmesi · 6 fizik koşulu"),
                    *[dict(id=t, title=TASKS[t]['title'], status="experimental", detail=TASKS[t]['sensor']+' → '+TASKS[t]['motor']) for t in ('avoidance','vision','terrain')],
-                   dict(id="flight", title="Beyin ile uçuş", status="connected", detail="MaleCNS koku kararı → yön hedefi → FlyBody kanat kontrolü. Canlı 7.075 nöron; yönelme eğitimi ve uçuş testleri.")])
+                   dict(id="flight", title="Beyin ile uçuş", status="connected", detail="MaleCNS koku kararı → yön hedefi → FlyBody kanat kontrolü. Canlı 7.075 nöron; yönelme eğitimi ve uçuş testleri."),
+                   dict(id="so101",title=TASKS['so101']['title'],status="experimental",detail=TASKS['so101']['sensor'])])
 
 @app.get("/api/state")
 def state():
@@ -265,12 +285,26 @@ def model_details(model_id: str):
     graph = read_json(prepare(directory=record['path'].parent))
     with np.load(record["path"], allow_pickle=False) as weights:
         w = weights["weight"]
-        gains = [float(w[e["row"],e["col"]] / e["weight"]) if e["layer"] == 2 else 1. for e in graph["edges"]]
+        learned_weights={2:w,**{i:weights[f'weight{i}'] for i in range(2) if f'weight{i}' in weights}}
+        gains = [float(learned_weights[e['layer']][e["row"],e["col"]] / e["weight"]) if e["layer"] in learned_weights else 1. for e in graph["edges"]]
+        input_sums=None
+        robot_adapter=None
+        if record.get('task')=='so101':
+            from odor_policy import Circuit
+            circuit=Circuit(record['path'].parent)
+            input_sums=[np.asarray(learned_weights.get(i,layer).sum(axis=0)).ravel().tolist() for i,layer in enumerate(circuit.layers)]
+            robot_adapter=dict(external_observations=30,learned_memory=8 if 'memory_weight' in weights else 0,
+                learned_motor_heads=int(weights['motor_heads']) if 'motor_heads' in weights else 1,
+                trainable_anatomical_layers=sorted(learned_weights),
+                learned_transition_support=bool(np.any(weights['transition_counts'])) if 'transition_counts' in weights else False,
+                active_external_features=np.flatnonzero(weights['input_mask'][:30]).tolist() if 'input_mask' in weights else list(range(30)),
+                action_mode=str(weights['action_mode']) if 'action_mode' in weights else 'delta',
+                outputs=['x','y','z','gripper'],teacher_in_rollout=False)
     sha = hashlib.sha256(record['path'].read_bytes()).hexdigest()
     evaluation_task = record.get('task', 'odor')
     flight_evaluation = record['evaluation'] if evaluation_task=='flight' else read_json(ROOT / 'artifacts/lab/flight/checkpoints' / f'{sha}.json')
     return dict(id=model_id, graph_version=graph["version"], circuit_identity=graph["circuit_identity"],
-                task=evaluation_task, groups=graph['groups'], before=record.get('before', False),
+                task=evaluation_task, groups=graph['groups'], before=record.get('before', False), input_sums=input_sums,robot_adapter=robot_adapter,
                 gains=gains, sha256=sha, training=record["training"], evaluation=record["evaluation"],
                 evaluation_task=evaluation_task, flight_evaluation=flight_evaluation,
                 walk_evaluation=record['evaluation'] if evaluation_task!='flight' else None)
@@ -279,13 +313,15 @@ def model_details(model_id: str):
 def export_model(model_id: str):
     from brain_export import archive
     record = resolve_model(model_id)
+    if record.get('task')=='so101':
+        from so101.export import archive
     return Response(archive(record['path']), media_type='application/zip',
                     headers={'Content-Disposition':f'attachment; filename="{model_id}-inference.zip"'})
 
 class Control(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
-    op: Literal["pause", "reset", "model", "camera", "behavior", "next"]
-    behavior: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain'] = 'odor'
+    op: Literal["pause", "reset", "model", "camera", "behavior", "next", "sensor"]
+    behavior: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101'] = 'odor'
     paused: bool = False
     goal: tuple[float, float] = (12, 4)
     seed: int = Field(10, ge=0, le=1000000)
@@ -297,6 +333,7 @@ class Control(BaseModel):
     dx: float = Field(0, ge=-1, le=1)
     dy: float = Field(0, ge=-1, le=1)
     reset_view: bool = False
+    sensor: Literal['state','camera'] = 'state'
 
 @app.post("/api/control")
 def control(body: Control):
@@ -309,9 +346,13 @@ def apply_control(body):
         runtime.switch(body.behavior)
         return {'accepted': True, 'behavior': runtime.behavior}
     if body.op == 'next':
-        if runtime.behavior != 'flight':
-            raise HTTPException(409, 'Sonraki rota yalnızca uçuşta kullanılabilir.')
+        if runtime.behavior not in {'flight','so101'}:
+            raise HTTPException(409, 'Sonraki bölüm bu davranışta kullanılamaz.')
         runtime.control({'op': 'next'})
+        return {'accepted': True}
+    if body.op=='sensor':
+        if runtime.behavior!='so101':raise HTTPException(409,'Sensör seçimi SO-101 için kullanılabilir.')
+        runtime.control(dict(op='sensor',sensor=body.sensor))
         return {'accepted': True}
     if body.op == "model":
         m = resolve_model(body.model)
@@ -319,7 +360,10 @@ def apply_control(body):
             raise HTTPException(409, 'Model başka bir göreve ait. Önce ilgili davranışı seç.')
         command = dict(op="model", path=str(m["path"]), id=body.model)
     elif body.op == "reset":
-        if not all(-30 <= x <= 30 for x in body.goal):
+        if runtime.behavior=='so101':
+            if not (125<=body.goal[0]<=160 and -180<=body.goal[1]<=-135):
+                raise HTTPException(422,'SO-101 kutu merkezi: X 125–160 mm, Y −180…−135 mm')
+        elif not all(-30 <= x <= 30 for x in body.goal):
             raise HTTPException(422, "Hedef koordinatları -30 ile 30 mm arasında olmalı")
         command = dict(op="reset", goal=list(body.goal), seed=body.seed)
     elif body.op == "pause":
@@ -334,25 +378,32 @@ class TrainingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     steps: int = Field(3000, ge=200, le=10000)
     seed: int = Field(42, ge=0, le=1000000)
-    task: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain'] = 'odor'
+    task: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101'] = 'odor'
 
-def training_job(directory, steps, seed, task):
-    meta = dict(id=directory.name, status="training", created=datetime.now(timezone.utc).isoformat(), steps=steps, seed=seed, task=task)
+def training_job(directory, steps, seed, task, initial_model=None):
+    meta = dict(id=directory.name, status="training", created=datetime.now(timezone.utc).isoformat(), steps=steps, seed=seed, task=task,owner_pid=os.getpid())
     env = dict(os.environ, FRUITFLY_MODEL_DIR=str(directory), PYTHONUNBUFFERED="1")
     watchdog = None
     message = ""
     try:
-        from task_circuit import build
-        source = build(task)
-        for filename in ("circuit.json", "body_ids.npz", "layer0.npz", "layer1.npz", "layer2.npz"):
-            shutil.copy2(source / filename, directory / filename)
+        if task=='so101':
+            from so101.policy import prepare
+            prepare(directory)
+        else:
+            from task_circuit import build
+            source = build(task)
+            for filename in ("circuit.json", "body_ids.npz", "layer0.npz", "layer1.npz", "layer2.npz"):
+                shutil.copy2(source / filename, directory / filename)
         (directory / "run.json").write_text(json.dumps(meta))
         with (directory / "training.log").open("w") as log:
-            process = subprocess.Popen([sys.executable, "-u", str(ROOT / "lab_train.py"), "--steps", str(steps), "--seed", str(seed), '--task', task],
+            command=([sys.executable,'-u','-m','so101.train_job','--output',str(directory),'--steps',str(steps),'--seed',str(seed)]
+                     if task=='so101' else [sys.executable, "-u", str(ROOT / "lab_train.py"), "--steps", str(steps), "--seed", str(seed), '--task', task])
+            if task=='so101' and initial_model is not None:command.extend(['--resume',str(initial_model)])
+            process = subprocess.Popen(command,
                                        cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             runtime.job_process = process
             # Bound a stalled backend even when stdout stops producing events.
-            watchdog = threading.Timer(600, lambda: process.terminate() if process.poll() is None else None)
+            watchdog = threading.Timer(1800 if task=='so101' else 600, lambda: process.terminate() if process.poll() is None else None)
             watchdog.daemon = True
             watchdog.start()
             if runtime.job.get("status") == "cancelling":
@@ -375,6 +426,11 @@ def training_job(directory, steps, seed, task):
         status = "cancelled" if cancelled else "complete" if code == 0 else "failed"
         meta["status"] = status
         message = "Model kaydedildi; fizik sonuçları ve varsa çıkış kapatma kontrolü raporda." if status == "complete" else "İşlem durduruldu." if cancelled else "Deney tamamlanamadı; training.log kaydını incele."
+        if status=='complete' and task=='so101':
+            result=read_json(directory/'evaluation.json') or {}
+            meta['acceptance_passed']=result.get('acceptance_passed',False)
+            message=f"Fizik testi: {result.get('success_count',0)} / {result.get('episodes',100)}. "+('Kabul ölçütü geçti. ' if meta['acceptance_passed'] else 'Kabul ölçütü henüz geçmedi. ')
+            if result.get('selected_model_changed') is False:message+='Yeni adaylar iyileştirmedi; önceki model korundu.'
     except Exception as exc:
         meta["status"] = "failed"
         message = str(exc)
@@ -396,7 +452,14 @@ def train(body: TrainingRequest):
         directory = RUNS / run_id
         directory.mkdir()
         runtime.job = dict(id=run_id, status="training", steps=body.steps, step=0, seed=body.seed, task=body.task, history=[], started=time.time())
-        threading.Thread(target=training_job, args=(directory,body.steps,body.seed,body.task), daemon=True).start()
+        initial_model=None
+        if body.task=='so101':
+            current=runtime.read()
+            if current.get('behavior')=='so101' and current.get('model'):
+                candidate=resolve_model(current['model'])
+                from so101.policy import Policy
+                if Policy(candidate['path']).action_mode=='target':initial_model=candidate['path']
+        threading.Thread(target=training_job, args=(directory,body.steps,body.seed,body.task,initial_model), daemon=True).start()
     return runtime.job
 
 @app.post("/api/train/cancel")

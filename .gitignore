@@ -16,3 +16,4 @@ dist/
 build/
 *.egg-info/
 .pytest_cache/
+/MUJOCO_LOG.TXT

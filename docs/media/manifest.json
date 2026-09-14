@@ -61,6 +61,11 @@
       "file": "walking-comparison.mp4",
       "bytes": 149935,
       "sha256": "81971ba366903a1b1b34c0eaa418ec55f0c0beaad8c396109aba62a2a13845b3"
+    },
+    {
+      "file": "so101-lab.jpg",
+      "bytes": 239942,
+      "sha256": "d8437af0652c9fa68d4bfade5161a76c825319efa2b50d8816d94e5b0fe0b094"
     }
   ]
 }

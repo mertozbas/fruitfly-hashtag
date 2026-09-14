@@ -8,7 +8,7 @@ from brain import neurons, context_mesh, load_neuron, CACHE, DATA
 from odor_brain import Circuit, GROUPS, MODEL
 
 ROOT = Path(__file__).resolve().parent
-VERSION = 3
+VERSION = 4
 _prepare_lock = threading.RLock()
 
 def prepare(*, force=False, directory=None):
@@ -61,6 +61,7 @@ def _prepare(*, force=False, directory=None):
         nodes=records, edges=edges, vertices=vertices.round(3).ravel().tolist(), faces=faces.ravel().tolist(),
         groups=circuit.metadata["groups"], group_ranges=groups, layer_counts=layer_counts, total=offset,
         model_index=model_index, task=circuit.metadata.get("task", "odor"),
+        response_gains=circuit.metadata.get("response_gains"),
         scope="True soma locations in micrometers. All located model links, drawn soma-to-soma, not axons. Missing coordinates are never invented.")
     skeletons, arrays, segment_offset = [], [], 0
     entries = json.loads((CACHE / "selected-skeletons.json").read_text()) if directory is None else []

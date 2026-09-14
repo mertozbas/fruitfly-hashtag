@@ -1,5 +1,9 @@
 """Shared task contracts; all scientific scope is explicit and task-specific."""
 TASKS = {
+    "so101": dict(title="SO-101 · Al ve yerleştir", goal=[145.,-155.],
+        sensor="Robot konumu ve fiziksel temas → 30 özellik → MaleCNS alt devresi",
+        motor="ΔXYZ ve kavrayıcı → sınırlandırılmış ters kinematik",
+        success="Küp kutu içinde serbest ve durgun; kol en az 65 mm uzakta · 0,5 s"),
     "odor": dict(title="Kokuya yönelme", goal=[12., 4.],
         sensor="Sol / sağ antenin sentetik koku yoğunluğu", motor="CPG yön komutu",
         success="Hedefe uzaklık < 1,5 mm"),

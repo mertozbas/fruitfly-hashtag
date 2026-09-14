@@ -106,9 +106,16 @@ def connection(source, target, model_path):
             base = float(circuit(directory).layers[level][row,col])
             if base:
                 with np.load(model_path,allow_pickle=False) as saved:
-                    trained = float(saved["weight"][row,col]) if level==2 else base
+                    key='weight' if level==2 else f'weight{level}'
+                    trainable=key in saved
+                    trained = float(saved[key][row,col]) if trainable else base
+                    total=float(saved[key][:,col].sum()) if trainable else float(circuit(directory).layers[level][:,col].sum())
+                response_gains=circuit(directory).metadata.get('response_gains')
                 model = dict(layer=f"{a['group']} → {b['group']}", base_weight=base, current_weight=trained,
-                             gain=trained/base, change_percent=(trained/base-1)*100, trainable=level==2)
+                             gain=trained/base, change_percent=(trained/base-1)*100, trainable=trainable,
+                             response_gain=response_gains[level] if response_gains else 2,
+                             input_weight_sum=total if response_gains else 1,
+                             response='sigmoid' if response_gains else 'tanh')
         return dict(source=identity(source, directory),target=identity(target, directory),anatomical_contacts=contacts,
                     model=model, dataset="MaleCNS v1.0", sign="Unknown in this model; contact counts are unsigned",
                     geometry="The displayed line connects somata and is not reconstructed axon geometry")

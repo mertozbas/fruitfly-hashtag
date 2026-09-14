@@ -53,3 +53,10 @@ alınması dış kaynakları projenin MIT lisansına dönüştürmez. İlgili ko
 politika lisansları [üçüncü taraf bildirimlerinde](../../THIRD_PARTY_NOTICES.md)
 ayrı belirtilmiştir. Araştırma ekipleri bu proje için onay veya ortaklık vermiş
 olarak gösterilmez.
+
+## Yerel SO-101 görüntüsü
+
+`so101-lab.jpg`, yerel MuJoCo ve tarayıcı arayüzünden alınmış gerçek ekran
+görüntüsüdür. Model `31ed4107db97…`, tohum 9000; robot hedef konumunu
+anatomik ağın öğrenilmiş okuması üretir. Nesne temasla taşınır. Bu görüntü
+fiziksel robot kaydı değildir. Ayrıntılar: [SO-101 rehberi](../so101-local.md).

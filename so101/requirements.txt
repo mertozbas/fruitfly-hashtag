@@ -1,0 +1,8 @@
+# Install into the existing scientific runtime, not the lightweight pipx env.
+shapely==2.1.2
+mujoco==3.9.0
+numpy==2.5.3
+scipy==1.18.1
+torch==2.14.0
+trimesh==5.1.0
+Pillow==12.3.0

@@ -37,7 +37,7 @@ export function createInspector({api,onSelect}) {
         content.append(section('Anatomik bağlantı',[['Kaynak',`${data.source.type||'Tip yok'} · ${data.source.id}`],['Hedef',`${data.target.type||'Tip yok'} · ${data.target.id}`],['Yön','Kaynak → hedef'],['Sinaptik temas',num(data.anatomical_contacts,0)],['Kaynak nörotransmiteri',data.source.neurotransmitter]]));
         const navigation=el('div',undefined,'detail-actions');
         for(const [label,node] of [['Kaynak nöron',data.source],['Hedef nöron',data.target]]){const b=el('button',label,'secondary');b.onclick=()=>{onSelect({kind:'node',id:node.id});show({kind:'node',id:node.id},model);};navigation.append(b);}content.append(navigation);
-        content.append(m?section('Seçili modelde',[['Katman',m.layer],['Anatomik başlangıç ağırlığı',num(m.base_weight,8)],['Güncel model ağırlığı',num(m.current_weight,8)],['Eğitim çarpanı',num(m.gain,5)+' ×'],['Değişim',num(m.change_percent,2)+' %'],['Eğitilebilir',m.trainable?'Evet · son anatomik katman':'Hayır · sabit katman']]):note('Bu anatomik bağlantı kullanılan ileri beslemeli alt devreye dahil değil.'));
+        content.append(m?section('Seçili modelde',[['Katman',m.layer],['Anatomik başlangıç ağırlığı',num(m.base_weight,8)],['Güncel model ağırlığı',num(m.current_weight,8)],['Eğitim çarpanı',num(m.gain,5)+' ×'],['Değişim',num(m.change_percent,2)+' %'],['Eğitilebilir',m.trainable?'Evet · mevcut anatomik bağlantı':'Hayır · sabit katman']]):note('Bu anatomik bağlantı kullanılan ileri beslemeli alt devreye dahil değil.'));
         const live=el('div',undefined,'detail-live');live.id='detail-live';content.append(live);tick(activity);
         content.append(note('Temas sayısı anatomik veridir. Normalize model ağırlığı ve eğitim çarpanı farklı niceliklerdir.'));
       }
@@ -76,7 +76,8 @@ export function createInspector({api,onSelect}) {
     live.textContent=selection.kind==='node'?`Canlı model aktivitesi: ${text(data)}`:`Kaynak aktivitesi: ${text(data.source)} · Hedef: ${text(data.target)}`;
     if(selection.kind==='edge'&&data.model){
       const source=activity[data.source.circuit.activity_index];
-      live.textContent+=activityModel===model?` · Girdi katkısı (2 × a × w): ${num(2*source*data.model.current_weight,7)}`:' · Model eşleştiriliyor…';
+      const factor=data.model.response_gain??2,denominator=data.model.input_weight_sum??1;
+      live.textContent+=activityModel===model?` · ${data.model.response||'tanh'} öncesi katkı: ${num(factor*source*data.model.current_weight/Math.max(denominator,1e-8),7)}`:' · Model eşleştiriliyor…';
     }
   }
   document.getElementById('detail-close').onclick=()=>{host.classList.add('hidden');};

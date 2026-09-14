@@ -35,6 +35,11 @@ haritası ve saydam kesit. Ekrandaki oturum sayacı aynı koşulun tekrarlarıd�
 Yerel ek: **kaçınma 6/6, görsel yönelme 6/6, engel 2/6**. Engel eğitiminde başarı
 artışı gösterilmedi. [Üçlü kontrol deneyleri ve model dışa aktarımı](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/local-tasks.md).
 
+Yerel SO-101 deneyinde aynı arayüz, 3.488 nöronlu anatomik alt ağın yönettiği
+temas tabanlı al ve yerleştirme simülasyonunu gösterir. Ayrı 100 başlangıçta
+94 başarı ve sıfır sınır ihlali ölçüldü. [Kurulum, kullanım, eğitim ve sınırlar](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/so101-local.md).
+Bu yerel ek henüz GitHub/PyPI'ye yayımlanmamıştır.
+
 ## Bir anatomik haritadan çalışan deneye
 
 Başlangıç sorusu basitti: “İndirilen sinir sistemi verisinden bir devre seçip,
