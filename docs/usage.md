@@ -1,5 +1,9 @@
 # UI kullanımı
 
+![Canlı fizik ve devreyi aynı ekranda inceleyin](media/neural-lab.jpg)
+
+[Rehber dizini](README.md) · [Kurulum](installation.md) · [Kullanım](usage.md) · [Eğitim](training.md)
+
 Sağ üstte **⛶** tam ekranı açar. **Rehber** ayrı sekmede çevrimdışı kılavuzu açar.
 Masaüstü düzeni tek ekran için tasarlanmıştır.
 
@@ -17,7 +21,7 @@ Her serbest hedefte başarı garanti edilmez; kısa uçuşta gerideki hedefe eri
 | İşlem | Kontrol |
 | --- | --- |
 | Döndür | Sol tuşla sürükle |
-| Kaydır | Sağ tuşla sürükle |
+| Kaydır | Sağ tuş veya Shift + sol tuşla sürükle |
 | Yakınlaş/uzaklaş | Tekerlek / trackpad kaydırma |
 | Sineğe odaklan | Gövde kamera seçeneği |
 | Hedefi ve ortamı gör | Arena kamera seçeneği |
@@ -66,3 +70,13 @@ farkı değildir. İki modelde aynı bağlantıyı ayrı ayrı seçerek karşıl
 
 ORN / ALPN / Kenyon / MBON hücre grupları ve hesaplama aşamalarıdır; anatomik
 bölge sınırlarının segmentasyonu olarak yorumlamayın.
+
+## Bir kaydı inceleyin
+
+![Nöron ayrıntıları ve model üyeliği](media/neuron-inspector.jpg)
+
+**Nöron seç / Bağlantı seç** yoğun bölgelerde seçim türünü belirler. Özet,
+bağlantılar ve kaynak alanları aynı panelde açılır. Model dışındaki hücre için
+aktivite hesaplanmaz. Uzun kayıt panelin içinde kayar; ana laboratuvar sabit kalır.
+
+[Laboratuvar turu](../LAB.md) · [Ölçümleri yorumlama](experiments.md)

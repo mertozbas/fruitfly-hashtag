@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-14",
+  "files": [
+    {
+      "file": "anatomy-atlas.jpg",
+      "bytes": 138005,
+      "sha256": "03156617727bd1e71953c63061f84a98cccc0a745c7cf013b6e20e255d373df4"
+    },
+    {
+      "file": "experiments.json",
+      "bytes": 23617,
+      "sha256": "54190ad11a397845409c67f6956a8585a429ac3608ed2cb4646ebbabda22b7dc"
+    },
+    {
+      "file": "flight-lab.jpg",
+      "bytes": 183637,
+      "sha256": "a0e0c92e79594024844a9b0acacf664b6bfff1a7893b3948f9af766050f798e4"
+    },
+    {
+      "file": "flight.gif",
+      "bytes": 2435317,
+      "sha256": "bf5f49a42c1c3573dbff9423262bdfdd0e16ba6f2e9d588b7ae5620cdcf7387c"
+    },
+    {
+      "file": "flight.mp4",
+      "bytes": 1378547,
+      "sha256": "df12789047f5d317fb00d36e0daff831586fd3b7823698724bfe0472f341c118"
+    },
+    {
+      "file": "hero.svg",
+      "bytes": 6622,
+      "sha256": "c5da52d142d29e5ac0d3ba365b8ab8f7ee5d4bfd08f3cc2198d0dfa99df75a51"
+    },
+    {
+      "file": "learning-delta.jpg",
+      "bytes": 187983,
+      "sha256": "1ee6f0c2d905919eaba544a6859708e080102b2b9c708b5ffac2fe676d8624ba"
+    },
+    {
+      "file": "neural-lab.jpg",
+      "bytes": 177694,
+      "sha256": "6758d8e70050a0b8bc7f1b208e24d9e3f22d950bd7bb3e1eabe2700be74eae41"
+    },
+    {
+      "file": "neuron-inspector.jpg",
+      "bytes": 180854,
+      "sha256": "2ea291e59adb89546539c6e2f6263d6af5cbb1a7c6845f509a5ba8b9d26449d4"
+    },
+    {
+      "file": "pipeline.svg",
+      "bytes": 2683,
+      "sha256": "8fbcc36c5471fbf0179634a8f97a19a5a381d7a0e33591fa111975a4fd5e5b94"
+    },
+    {
+      "file": "walking-comparison.gif",
+      "bytes": 602565,
+      "sha256": "559bbbbbba7003836c485060eee39439357e26dd65bce99c479968a043d1e28c"
+    },
+    {
+      "file": "walking-comparison.mp4",
+      "bytes": 149935,
+      "sha256": "81971ba366903a1b1b34c0eaa418ec55f0c0beaad8c396109aba62a2a13845b3"
+    }
+  ]
+}

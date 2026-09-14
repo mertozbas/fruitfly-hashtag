@@ -1,0 +1,826 @@
+{
+  "schema_version": 1,
+  "captured_on": "2026-09-14",
+  "scope": "Küçük, kontrollü sentetik koku deneyleri; biyolojik doğruluk veya genel başarı iddiası değildir.",
+  "historical_walking": {
+    "source": "artifacts/simulation/evaluation.json",
+    "source_sha256": "f3fb90ec51bd3737f768a819af9fce846bace6adfb19d0e7e9ccc79e7d3f0fcd",
+    "summary": {
+      "untrained": {
+        "episodes": 6,
+        "success_count": 0,
+        "falls": 0,
+        "mean_final_distance_mm": 20.45292798074427
+      },
+      "trained": {
+        "episodes": 6,
+        "success_count": 5,
+        "falls": 0,
+        "mean_final_distance_mm": 4.113113483367681
+      }
+    },
+    "results": [
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          12,
+          4
+        ],
+        "initial_distance_mm": 12.12585757687917,
+        "final_distance_mm": 21.217794007635202,
+        "success": false,
+        "fallen": false,
+        "policy": "untrained",
+        "seed": 10
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          12,
+          4
+        ],
+        "initial_distance_mm": 12.12585757687917,
+        "final_distance_mm": 1.4986704832608324,
+        "success": true,
+        "fallen": false,
+        "policy": "trained",
+        "seed": 10
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          12,
+          -4
+        ],
+        "initial_distance_mm": 12.125850526843395,
+        "final_distance_mm": 19.804495555485552,
+        "success": false,
+        "fallen": false,
+        "policy": "untrained",
+        "seed": 11
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          12,
+          -4
+        ],
+        "initial_distance_mm": 12.125850526843395,
+        "final_distance_mm": 1.4498366393661242,
+        "success": true,
+        "fallen": false,
+        "policy": "trained",
+        "seed": 11
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          10,
+          5
+        ],
+        "initial_distance_mm": 10.688685688646492,
+        "final_distance_mm": 24.14290999397044,
+        "success": false,
+        "fallen": false,
+        "policy": "untrained",
+        "seed": 12
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          10,
+          5
+        ],
+        "initial_distance_mm": 10.688685688646492,
+        "final_distance_mm": 17.682889845820945,
+        "success": false,
+        "fallen": false,
+        "policy": "trained",
+        "seed": 12
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          10,
+          -5
+        ],
+        "initial_distance_mm": 10.688675691188978,
+        "final_distance_mm": 21.537739763336926,
+        "success": false,
+        "fallen": false,
+        "policy": "untrained",
+        "seed": 13
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          10,
+          -5
+        ],
+        "initial_distance_mm": 10.688675691188978,
+        "final_distance_mm": 1.2888193695324026,
+        "success": true,
+        "fallen": false,
+        "policy": "trained",
+        "seed": 13
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          14,
+          3
+        ],
+        "initial_distance_mm": 13.777693645847974,
+        "final_distance_mm": 18.418416013708917,
+        "success": false,
+        "fallen": false,
+        "policy": "untrained",
+        "seed": 14
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          14,
+          3
+        ],
+        "initial_distance_mm": 13.777693645847974,
+        "final_distance_mm": 1.2978413153556532,
+        "success": true,
+        "fallen": false,
+        "policy": "trained",
+        "seed": 14
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          14,
+          -3
+        ],
+        "initial_distance_mm": 13.777688992254191,
+        "final_distance_mm": 17.59621255032857,
+        "success": false,
+        "fallen": false,
+        "policy": "untrained",
+        "seed": 15
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          14,
+          -3
+        ],
+        "initial_distance_mm": 13.777688992254191,
+        "final_distance_mm": 1.4606232468701268,
+        "success": true,
+        "fallen": false,
+        "policy": "trained",
+        "seed": 15
+      },
+      {
+        "start_mm": [
+          0.5528896009980355,
+          -1.0685963107817793e-05,
+          1.1588775431357388
+        ],
+        "goal_mm": [
+          12,
+          4
+        ],
+        "initial_distance_mm": 12.12585757687917,
+        "final_distance_mm": 1.4972878123973274,
+        "success": true,
+        "fallen": false,
+        "policy": "teacher"
+      }
+    ],
+    "checkpoint_sha256": null,
+    "note": "Tarihsel rapor checkpoint hash alanı içermiyor; bugünkü medya kaydı ayrı hash ile izlenir."
+  },
+  "flight_3000": {
+    "source": "models/lab_runs/run-20260913T222316229102/evaluation.json",
+    "source_sha256": "8ab80dc098b00fa30f85f18029c3cf9c0304969c4b11f1f472c0bdef7d31083a",
+    "report": {
+      "task": "flight",
+      "episodes": 6,
+      "success_count": 6,
+      "falls": 0,
+      "mean_final_distance_mm": 1.993306288333584,
+      "model_sha256": "a28ea2dd4518efe4409ee6770bf6e389fb974292bf737770ee77f2aa2cf12af4",
+      "circuit_identity": "2eb1b0230f77db63009db9157c4f912ae5c612015964efeb216ddbac741eb748",
+      "controller": {
+        "yaw_gain": 60.0,
+        "max_yaw_rate_rad_s": 8.0,
+        "speed_cm_s": 10.0,
+        "brain_dt": 0.01
+      },
+      "motor": "FlyBody pretrained wing controller",
+      "scope": "Synthetic odor navigation via a MaleCNS-derived subgraph and artificial motor adapter",
+      "results": [
+        {
+          "goal_mm": [
+            22.0,
+            6.0
+          ],
+          "seed": 101,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.20999999999998503,
+          "initial_distance_mm": 22.807758591385042,
+          "final_distance_mm": 1.9876673103179157,
+          "closest_distance_mm": 1.9876673103179157,
+          "position_mm": [
+            20.313002346696866,
+            4.9488766702921225,
+            9.998482098804793
+          ],
+          "min_altitude_mm": 9.97416562533009,
+          "max_tracking_error_mm": 0.14916331475408492,
+          "yaw_range_rad_s": [
+            1.0427722334861755,
+            3.622651621699333
+          ]
+        },
+        {
+          "goal_mm": [
+            22.0,
+            -6.0
+          ],
+          "seed": 102,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.20899999999998514,
+          "initial_distance_mm": 22.803958119169206,
+          "final_distance_mm": 1.9940289358052996,
+          "closest_distance_mm": 1.9940289358052996,
+          "position_mm": [
+            20.094580129578716,
+            -5.412184965969265,
+            9.997537539567746
+          ],
+          "min_altitude_mm": 9.95532575251293,
+          "max_tracking_error_mm": 0.18469936406815973,
+          "yaw_range_rad_s": [
+            -3.9959022402763367,
+            0.8747166395187378
+          ]
+        },
+        {
+          "goal_mm": [
+            28.0,
+            9.0
+          ],
+          "seed": 103,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.2773999999999776,
+          "initial_distance_mm": 29.41437858093849,
+          "final_distance_mm": 1.9983870780561452,
+          "closest_distance_mm": 1.9983870780561452,
+          "position_mm": [
+            26.387008437241292,
+            7.820250394273853,
+            9.997784408782351
+          ],
+          "min_altitude_mm": 9.968106818499784,
+          "max_tracking_error_mm": 0.1696181013666278,
+          "yaw_range_rad_s": [
+            0.8507175743579865,
+            3.4483907371759415
+          ]
+        },
+        {
+          "goal_mm": [
+            28.0,
+            -9.0
+          ],
+          "seed": 104,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.2765999999999777,
+          "initial_distance_mm": 29.37433362362406,
+          "final_distance_mm": 1.9960922257920997,
+          "closest_distance_mm": 1.9960922257920997,
+          "position_mm": [
+            26.137568606212604,
+            -8.281854139256659,
+            10.001537297468104
+          ],
+          "min_altitude_mm": 9.911934823435722,
+          "max_tracking_error_mm": 0.1928966125122405,
+          "yaw_range_rad_s": [
+            -3.5551777482032776,
+            0.9762583673000336
+          ]
+        },
+        {
+          "goal_mm": [
+            24.0,
+            10.0
+          ],
+          "seed": 105,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.24499999999998118,
+          "initial_distance_mm": 25.96385930300455,
+          "final_distance_mm": 1.9845116007655987,
+          "closest_distance_mm": 1.9845116007655987,
+          "position_mm": [
+            22.558573449971707,
+            8.635970750149847,
+            10.003834858854258
+          ],
+          "min_altitude_mm": 9.937954260082973,
+          "max_tracking_error_mm": 0.12203263697986778,
+          "yaw_range_rad_s": [
+            1.076066493988037,
+            3.7547318637371063
+          ]
+        },
+        {
+          "goal_mm": [
+            24.0,
+            -10.0
+          ],
+          "seed": 106,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.24339999999998135,
+          "initial_distance_mm": 25.961530874012606,
+          "final_distance_mm": 1.999150579264443,
+          "closest_distance_mm": 1.999150579264443,
+          "position_mm": [
+            22.25165991667218,
+            -9.030510447914665,
+            10.002176808645565
+          ],
+          "min_altitude_mm": 9.961795753703417,
+          "max_tracking_error_mm": 0.24686916536272765,
+          "yaw_range_rad_s": [
+            -4.948768615722656,
+            0.44090554118156433
+          ]
+        }
+      ]
+    }
+  },
+  "flight_causal_6000": {
+    "source": "artifacts/lab/flight/checkpoints/e3928ec2fa60074b1c24dab8b76b46c3723fe7a2d7e8d51fbe1bdf92e8e2d087.json",
+    "source_sha256": "2ff919020d41db48165d87145dc2d3e262c615b062ed35838e8f71ce8df913c3",
+    "report": {
+      "task": "flight",
+      "episodes": 6,
+      "success_count": 6,
+      "falls": 0,
+      "mean_final_distance_mm": 1.9903543664082024,
+      "model_sha256": "e3928ec2fa60074b1c24dab8b76b46c3723fe7a2d7e8d51fbe1bdf92e8e2d087",
+      "circuit_identity": "2eb1b0230f77db63009db9157c4f912ae5c612015964efeb216ddbac741eb748",
+      "controller": {
+        "yaw_gain": 60.0,
+        "max_yaw_rate_rad_s": 8.0,
+        "speed_cm_s": 10.0,
+        "brain_dt": 0.01
+      },
+      "motor": "FlyBody pretrained wing controller",
+      "scope": "Synthetic odor navigation via a MaleCNS-derived subgraph and artificial motor adapter",
+      "causal_check_passed": true,
+      "results": [
+        {
+          "goal_mm": [
+            22.0,
+            6.0
+          ],
+          "seed": 101,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.20979999999998505,
+          "initial_distance_mm": 22.807758591385042,
+          "final_distance_mm": 1.9988584713923836,
+          "closest_distance_mm": 1.9988584713923836,
+          "position_mm": [
+            20.29595851027457,
+            4.955166142417163,
+            9.998718135685131
+          ],
+          "min_altitude_mm": 9.974191197126917,
+          "max_tracking_error_mm": 0.1490906602493047,
+          "yaw_range_rad_s": [
+            0.9783925116062164,
+            3.6772762541659176
+          ]
+        },
+        {
+          "goal_mm": [
+            22.0,
+            -6.0
+          ],
+          "seed": 102,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.20899999999998514,
+          "initial_distance_mm": 22.803958119169206,
+          "final_distance_mm": 1.9894170136031586,
+          "closest_distance_mm": 1.9894170136031586,
+          "position_mm": [
+            20.09394509395642,
+            -5.430144975313095,
+            9.997452038386651
+          ],
+          "min_altitude_mm": 9.955302860996483,
+          "max_tracking_error_mm": 0.18560720773753328,
+          "yaw_range_rad_s": [
+            -4.0823909640312195,
+            0.980655625462532
+          ]
+        },
+        {
+          "goal_mm": [
+            28.0,
+            9.0
+          ],
+          "seed": 103,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.2773999999999776,
+          "initial_distance_mm": 29.41437858093849,
+          "final_distance_mm": 1.9883530907590774,
+          "closest_distance_mm": 1.9883530907590774,
+          "position_mm": [
+            26.38680605250447,
+            7.837608800233347,
+            9.997834956941933
+          ],
+          "min_altitude_mm": 9.968104236378624,
+          "max_tracking_error_mm": 0.16962547265149014,
+          "yaw_range_rad_s": [
+            0.7848579436540604,
+            3.5023999493569136
+          ]
+        },
+        {
+          "goal_mm": [
+            28.0,
+            -9.0
+          ],
+          "seed": 104,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.2765999999999777,
+          "initial_distance_mm": 29.37433362362406,
+          "final_distance_mm": 1.9871171725112489,
+          "closest_distance_mm": 1.9871171725112489,
+          "position_mm": [
+            26.13930143266659,
+            -8.302550719541205,
+            10.001441166521891
+          ],
+          "min_altitude_mm": 9.911932861992517,
+          "max_tracking_error_mm": 0.19349604066286552,
+          "yaw_range_rad_s": [
+            -3.6328357458114624,
+            1.0774312913417816
+          ]
+        },
+        {
+          "goal_mm": [
+            24.0,
+            10.0
+          ],
+          "seed": 105,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.2447999999999812,
+          "initial_distance_mm": 25.96385930300455,
+          "final_distance_mm": 1.9938716822136135,
+          "closest_distance_mm": 1.9938716822136135,
+          "position_mm": [
+            22.538801651723887,
+            8.64337784474508,
+            10.00392600470686
+          ],
+          "min_altitude_mm": 9.937952603928284,
+          "max_tracking_error_mm": 0.12231975882253232,
+          "yaw_range_rad_s": [
+            1.0059184581041336,
+            3.811313956975937
+          ]
+        },
+        {
+          "goal_mm": [
+            24.0,
+            -10.0
+          ],
+          "seed": 106,
+          "intervention": "connected",
+          "success": true,
+          "fallen": false,
+          "time_s": 0.24339999999998135,
+          "initial_distance_mm": 25.961530874012606,
+          "final_distance_mm": 1.9845087679697329,
+          "closest_distance_mm": 1.9845087679697329,
+          "position_mm": [
+            22.251974679801585,
+            -9.06048814265387,
+            10.002106992659286
+          ],
+          "min_altitude_mm": 9.961716939919288,
+          "max_tracking_error_mm": 0.24732640489837043,
+          "yaw_range_rad_s": [
+            -5.086306929588318,
+            0.5321748554706573
+          ]
+        }
+      ],
+      "interventions": {
+        "zero": {
+          "task": "flight",
+          "episodes": 2,
+          "success_count": 0,
+          "falls": 0,
+          "mean_final_distance_mm": 23.71105692459979,
+          "results": [
+            {
+              "goal_mm": [
+                22.0,
+                6.0
+              ],
+              "seed": 101,
+              "intervention": "zero",
+              "success": false,
+              "fallen": false,
+              "time_s": 0.44879999999995873,
+              "initial_distance_mm": 22.807758591385042,
+              "final_distance_mm": 23.71711166199217,
+              "closest_distance_mm": 6.022414318503298,
+              "position_mm": [
+                44.93961613714093,
+                -0.0229060318112514,
+                9.999937295382487
+              ],
+              "min_altitude_mm": 9.973460245101979,
+              "max_tracking_error_mm": 0.16617698114761273,
+              "yaw_range_rad_s": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "goal_mm": [
+                22.0,
+                -6.0
+              ],
+              "seed": 102,
+              "intervention": "zero",
+              "success": false,
+              "fallen": false,
+              "time_s": 0.44879999999995873,
+              "initial_distance_mm": 22.803958119169206,
+              "final_distance_mm": 23.705002187207413,
+              "closest_distance_mm": 5.978054821791916,
+              "position_mm": [
+                44.93910762581603,
+                -0.02300493335178827,
+                10.000631294064274
+              ],
+              "min_altitude_mm": 9.956578146204421,
+              "max_tracking_error_mm": 0.1521895576239381,
+              "yaw_range_rad_s": [
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        "reverse": {
+          "task": "flight",
+          "episodes": 2,
+          "success_count": 0,
+          "falls": 0,
+          "mean_final_distance_mm": 42.45495370606713,
+          "results": [
+            {
+              "goal_mm": [
+                22.0,
+                6.0
+              ],
+              "seed": 101,
+              "intervention": "reverse",
+              "success": false,
+              "fallen": false,
+              "time_s": 0.44879999999995873,
+              "initial_distance_mm": 22.807758591385042,
+              "final_distance_mm": 42.26190800776738,
+              "closest_distance_mm": 14.239833113470489,
+              "position_mm": [
+                11.165554538361349,
+                -34.84952459938513,
+                10.000374933713099
+              ],
+              "min_altitude_mm": 9.974278659544522,
+              "max_tracking_error_mm": 0.21847586257541116,
+              "yaw_range_rad_s": [
+                -8.0,
+                -0.1693931221961975
+              ]
+            },
+            {
+              "goal_mm": [
+                22.0,
+                -6.0
+              ],
+              "seed": 102,
+              "intervention": "reverse",
+              "success": false,
+              "fallen": false,
+              "time_s": 0.44879999999995873,
+              "initial_distance_mm": 22.803958119169206,
+              "final_distance_mm": 42.647999404366885,
+              "closest_distance_mm": 14.50273012509533,
+              "position_mm": [
+                11.827610538100775,
+                35.4170779489611,
+                10.002412762032302
+              ],
+              "min_altitude_mm": 9.956654576633857,
+              "max_tracking_error_mm": 0.1734169850395398,
+              "yaw_range_rad_s": [
+                -0.016991570591926575,
+                8.0
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "new_recordings": {
+    "walking": {
+      "behavior": "walking",
+      "seed": 10,
+      "model_sha256": "a28ea2dd4518efe4409ee6770bf6e389fb974292bf737770ee77f2aa2cf12af4",
+      "goal_mm": [
+        12,
+        4
+      ],
+      "playback_speed": 0.2,
+      "resolution": [
+        640,
+        480
+      ],
+      "runs": {
+        "untrained": {
+          "start_mm": [
+            0.5528896009980355,
+            -1.0685963107817793e-05,
+            1.1588775431357388
+          ],
+          "goal_mm": [
+            12,
+            4
+          ],
+          "initial_distance_mm": 12.12585757687917,
+          "final_distance_mm": 27.596032684198875,
+          "success": false,
+          "fallen": false,
+          "model_sha256": "9863d9a5671b6322e6be59fb2ded70dbbf6aaecfa33872a9954fe32038601459"
+        },
+        "trained": {
+          "start_mm": [
+            0.5528896009980355,
+            -1.0685963107817793e-05,
+            1.1588775431357388
+          ],
+          "goal_mm": [
+            12,
+            4
+          ],
+          "initial_distance_mm": 12.12585757687917,
+          "final_distance_mm": 1.4986704832608324,
+          "success": true,
+          "fallen": false,
+          "model_sha256": "a28ea2dd4518efe4409ee6770bf6e389fb974292bf737770ee77f2aa2cf12af4"
+        }
+      }
+    },
+    "flight": {
+      "behavior": "flight",
+      "seed": 10,
+      "model_sha256": "a28ea2dd4518efe4409ee6770bf6e389fb974292bf737770ee77f2aa2cf12af4",
+      "goal_mm": [
+        22,
+        6
+      ],
+      "resolution": [
+        1280,
+        720
+      ],
+      "fps": 30,
+      "physics_seconds_per_frame": 0.001,
+      "playback_speed": 0.03,
+      "final": {
+        "time_s": 0.210399999999985,
+        "position_mm": [
+          20.323561838609447,
+          4.915837108900599,
+          9.999729550774628
+        ],
+        "altitude_mm": 9.999729550774628,
+        "speed_mm_s": 116.9766813645991,
+        "tracking_error_mm": 0.0850585583591148,
+        "wing_hz": 218.218,
+        "wing_angles": [
+          1.3944255506516772,
+          -0.19477666632234716,
+          1.247266655092461,
+          1.3439388872163733,
+          -0.1826777301316516,
+          1.2437103844212585
+        ],
+        "reward": 0.9710208123118853,
+        "trajectory_id": -1,
+        "done": true,
+        "success": true,
+        "physics_dt": 5e-05,
+        "goal_mm": [
+          22.0,
+          6.0
+        ],
+        "distance_mm": 1.9964603886387404,
+        "odor": [
+          0.9102450609207153,
+          0.9081512689590454
+        ],
+        "steering": -0.07650299370288849,
+        "yaw_rate_rad_s": 1.7014458775520325,
+        "brain_sample_time_s": 0.20999999999998503,
+        "applied_steering": 0.028357431292533875,
+        "neutral_steering": -0.10486042499542236,
+        "brain_step": 1052,
+        "desired_heading_rad": 0.4564207939803637,
+        "reference_position_mm": [
+          20.24012639610475,
+          4.932759838489677,
+          10.0
+        ]
+      }
+    }
+  }
+}

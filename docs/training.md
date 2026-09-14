@@ -1,5 +1,12 @@
 # Eğitim ve deney rehberi
 
+![Öğrenme eğrisi ve mevcut bağlantıların değişimi](media/learning-delta.jpg)
+
+**Amaç:** yeni bir yönelme modeli üretmek, fizik testini görmek ve eski kayıtla
+aynı koşullarda karşılaştırmak. Bu rehberdeki adımlar mevcut UI ile yapılır.
+
+[Rehber dizini](README.md) · [Kurulum](installation.md) · [Kullanım](usage.md) · [Eğitim](training.md)
+
 <a id="ilk-egitim"></a>
 ## İlk yürüyüş eğitimi
 
@@ -95,3 +102,9 @@ biyolojik plastisite modellenmez. İskelet örnekleri tam sinir sistemi değildi
 Isı/kesit görünümleri hesaplanan yanıtın görselleştirmesidir. Bu laboratuvar bu
 sınırlı varsayımlarla deney yapmak içindir; yaşayan sineğin bütün beyninin veya
 biyolojik öğrenmesinin yeniden üretildiğini iddia etmez.
+
+## Sonucunuzu karşılaştırın
+
+[Deney kayıtları](experiments.md) başarısız hedefleri de içerir.
+[Önce/sonra yürüyüş videosu](media/walking-comparison.mp4) tek koşulu gösterir;
+[uçuş rehberi](../flight/README.md) aynı ağın ayrı motor adaptörünü açıklar.

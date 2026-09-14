@@ -1,5 +1,11 @@
 # Veriler ve modeller
 
+![Kaynak anatominin keşif görünümü](media/anatomy-atlas.jpg)
+
+*Gerçek anatomik örnek koleksiyonu; renkler kimliktir, canlı aktivite değildir.*
+
+[Rehber dizini](README.md) · [Kurulum](installation.md) · [Kullanım](usage.md) · [Eğitim](training.md)
+
 ## “Beyni indirmek” ne demek?
 
 Tek bir 3 GB hazır beyin checkpoint'i indirilmez. Önce MaleCNS'in **anatomik

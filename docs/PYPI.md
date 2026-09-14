@@ -1,10 +1,10 @@
-<p align="center"><img src="docs/media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
 
 <!-- online-badges -->
 <p align="center">
 <a href="https://pypi.org/project/fruitfly-hashtag/"><img src="https://img.shields.io/pypi/v/fruitfly-hashtag?color=61cfc0" alt="PyPI sürümü"></a>
 <a href="https://github.com/mertozbas/fruitfly-hashtag/actions/workflows/ci.yml"><img src="https://github.com/mertozbas/fruitfly-hashtag/actions/workflows/ci.yml/badge.svg" alt="Paket testleri"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/kod-MIT-7b9cb8" alt="Kod lisansı MIT"></a>
+<a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/LICENSE"><img src="https://img.shields.io/badge/kod-MIT-7b9cb8" alt="Kod lisansı MIT"></a>
 <a href="https://labs.hashtagworldcompany.com"><img src="https://img.shields.io/badge/Hashtag-Robotics-243d49" alt="Hashtag Robotics"></a>
 </p>
 <!-- /online-badges -->
@@ -19,9 +19,9 @@ hesabı incelersiniz. Yeni eğitim ayrı kaydedilir; eski ve yeni modeli aynı h
 karşılaştırabilirsiniz. Büyük veri ve modeller uygulama paketinden ayrı indirilir.
 API anahtarı gerekmez; eğitimleriniz bilgisayarınızda kalır.
 
-[Başla](#basla) · [Anatomiyi keşfet](#anatomi) · [Eğit](#egitim) · [Uçuşu izle](#ucus) · [Kanıtlar](#kanitlar) · [Rehber dizini](docs/README.md)
+[Başla](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/README.md#basla) · [Anatomiyi keşfet](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/README.md#anatomi) · [Eğit](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/README.md#egitim) · [Uçuşu izle](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/README.md#ucus) · [Kanıtlar](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/README.md#kanitlar) · [Rehber dizini](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/README.md)
 
-![Canlı yürüyüş, kullanılan devre ve üç beyin analiz paneli](docs/media/neural-lab.jpg)
+![Canlı yürüyüş, kullanılan devre ve üç beyin analiz paneli](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/neural-lab.jpg)
 
 *Gerçek UI kaydı: HD fizik, hesaplanan model aktivitesi, anatomik konum, aktivite
 haritası ve saydam kesit. Ekrandaki oturum sayacı aynı koşulun tekrarlarıdır;
@@ -30,7 +30,7 @@ haritası ve saydam kesit. Ekrandaki oturum sayacı aynı koşulun tekrarlarıd�
 > Bu proje **tam beyin emülasyonu değildir**. MaleCNS anatomisinden türetilmiş
 > **7.075 nöronluk basitleştirilmiş yönelme ağıdır**. Renkler hesaplanan model
 > yanıtıdır. Bacakları FlyGym, kanatları FlyBody'nin hazır motor kontrolcüleri
-> yönetir. Öğrenilen şey yön kararıdır. [Bilimsel kapsam](docs/training.md#bilimsel-kapsam).
+> yönetir. Öğrenilen şey yön kararıdır. [Bilimsel kapsam](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/training.md#bilimsel-kapsam).
 
 ## Bir anatomik haritadan çalışan deneye
 
@@ -39,7 +39,7 @@ onun parametrelerini değiştirince davranıştaki farkı görebilir miyiz?”
 Bu repo o sorunun izlenebilir bir prototipidir: anatomi → devre → eğitim → fizik.
 Her aşamanın kaynağı, modeli ve ölçümü ayrı tutulur.
 
-![Resmi veriden yerel eğitime, motor kontrolcülerine ve yeni anten ölçümüne akış](docs/media/pipeline.svg)
+![Resmi veriden yerel eğitime, motor kontrolcülerine ve yeni anten ölçümüne akış](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/pipeline.svg)
 
 <a id="basla"></a>
 ## 01 — Kendi laboratuvarını aç
@@ -48,7 +48,7 @@ Doğrulanan tam platform **Apple Silicon macOS**; Linux bilimsel kurulumu deneys
 Windows yerel simülasyonu desteklenmiyor. Python **3.11+**, **pipx** ve uçuş için
 **Git** gerekir. **15 GiB boş disk**, en az **16 GB RAM**, tercihen **32 GB RAM**
 ile planlayın. RAM rakamları kapasite önerisidir; 16 GB cihazda performans ölçümü
-anlamına gelmez. [Platform ve donanım ayrıntıları](docs/installation.md).
+anlamına gelmez. [Platform ve donanım ayrıntıları](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/installation.md).
 
 macOS'ta pipx yoksa:
 
@@ -90,7 +90,7 @@ paketle gelen yerel kılavuzu açar.
 <a id="anatomi"></a>
 ## 02 — Haritayı ve çalışan devreyi ayır
 
-![MaleCNS atlasından gerçek beyin ve VNC yüzeyi üzerinde 28 seçilmiş nöron](docs/media/anatomy-atlas.jpg)
+![MaleCNS atlasından gerçek beyin ve VNC yüzeyi üzerinde 28 seçilmiş nöron](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/anatomy-atlas.jpg)
 
 *İlk keşif atlasından gerçek ekran görüntüsü. Buradaki renkler hücre kimliğidir;
 elektriksel aktivite değildir. Uzun alt yapı ventral sinir kordonudur (VNC).*
@@ -111,10 +111,10 @@ Bir nörona veya bağlantıya tıklayın: gerçek body ID, hücre tipi, taraf, k
 anotasyonları, anatomik temaslar ve varsa seçili modeldeki değerleri açılır.
 Düz bağlantı çizgileri soma–soma ilişkisidir; aksonun gerçek güzergâhı değildir.
 
-![Nöronun kaynak kimliği, anatomik bağlantıları ve model üyeliği](docs/media/neuron-inspector.jpg)
+![Nöronun kaynak kimliği, anatomik bağlantıları ve model üyeliği](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/neuron-inspector.jpg)
 
 *DNa02 kaydı çalışan yönelme devresinin dışındadır. UI bu nedenle canlı aktivite
-uydurmak yerine “Devre dışında” gösterir. [Kontroller ve metrikler](docs/usage.md).*
+uydurmak yerine “Devre dışında” gösterir. [Kontroller ve metrikler](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/usage.md).*
 
 <a id="egitim"></a>
 ## 03 — Yönelmeyi eğit, değişimi gör
@@ -131,40 +131,40 @@ kontrolcüsünün cevabını taklit eder.
 5. **Δ Ağırlık** görünümünü açın; değişen mevcut bağlantıları inceleyin.
 6. Eski ve yeni modeli aynı hedefte karşılaştırın. MSE ile fizik başarısını birlikte okuyun.
 
-![Kaydedilmiş öğrenme eğrisi ve anatomik başlangıca göre bağlantı değişimleri](docs/media/learning-delta.jpg)
+![Kaydedilmiş öğrenme eğrisi ve anatomik başlangıca göre bağlantı değişimleri](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/learning-delta.jpg)
 
 **Her eğitim aynı anatomik başlangıçtan yeni bir deneydir.** Seçili checkpoint'in
 kaldığı yerden devam etmez. Hedef X/Y canlı değerlendirmeyi değiştirir; eğitim
 örneklerini değiştirmez. İlk iki anatomik katman sabittir; KC→MBON çarpanları ve
-yapay motor okuması öğrenilir. [Adım adım eğitim rehberi](docs/training.md).
+yapay motor okuması öğrenilir. [Adım adım eğitim rehberi](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/training.md).
 
 ### Aynı hedef, iki model
 
-![Solda eğitim öncesi, sağda eğitim sonrası gerçek MuJoCo yürüyüşü](docs/media/walking-comparison.gif)
+![Solda eğitim öncesi, sağda eğitim sonrası gerçek MuJoCo yürüyüşü](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/walking-comparison.gif)
 
 **Sol: eğitim öncesi. Sağ: 3.000 adım / tohum 42 sonrası.** Hedef `(12, 4)` mm,
 fizik tohumu 10. Yeni kayıt: son mesafe **27,60 → 1,50 mm**, devrilme yok.
 İki kayıt 5× yavaşlatılmıştır; sağ taraf hedefe ulaştıktan sonra son karede kalır.
-Bu tek koşulun gösterimidir. [MP4 kaydı](docs/media/walking-comparison.mp4) · [Kayıt ve test kanıtları](docs/experiments.md).
+Bu tek koşulun gösterimidir. [MP4 kaydı](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/media/walking-comparison.mp4) · [Kayıt ve test kanıtları](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/experiments.md).
 
 <a id="ucus"></a>
 ## 04 — Aynı yönelme ağını uçuşta kullan
 
-![MaleCNS yön kararıyla çalışan FlyBody uçuş kaydı](docs/media/flight.gif)
+![MaleCNS yön kararıyla çalışan FlyBody uçuş kaydı](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/flight.gif)
 
 *Gerçek MuJoCo / FlyBody kaydı, hedef `(22, 6)` mm. 0,03× oynatım; kanatları
-incelemek için yavaşlatılmıştır. [720p MP4](docs/media/flight.mp4).*
+incelemek için yavaşlatılmıştır. [720p MP4](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/media/flight.mp4).*
 
 Uçuş kurulduğunda **Davranış → Uçuş · beyin bağlı** seçin. Aynı MaleCNS alt ağı
 kokuya göre yön komutu üretir; sınırlandırılmış komut FlyBody'nin hazır kanat
 politikasına referans olur. Beyin paneli o anda kullanılan hesabı gösterir.
 
-![Uçuş fiziği, canlı devre ve anatomik analizler aynı ekranda](docs/media/flight-lab.jpg)
+![Uçuş fiziği, canlı devre ve anatomik analizler aynı ekranda](https://raw.githubusercontent.com/mertozbas/fruitfly-hashtag/v0.2.1/docs/media/flight-lab.jpg)
 
 Uçuş seçiliyken **Yönelme ağını eğit**, yeni ağı altı uçuş hedefinde de sınar.
 **Sinek havada başlar.** Kalkış, iniş, irtifa öğrenimi ve kanat politikasını yeniden
 eğitme bu sürümde yoktur. Koku yönelmesi dışındaki “hazırlık” seçenekleri de
-uygulanmış eğitimler değildir. [Uçuş kontrol yolu ve kullanım](flight/README.md).
+uygulanmış eğitimler değildir. [Uçuş kontrol yolu ve kullanım](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/flight/README.md).
 
 <a id="kanitlar"></a>
 ## 05 — Sonucu neyle doğruluyoruz?
@@ -178,22 +178,22 @@ uygulanmış eğitimler değildir. [Uçuş kontrol yolu ve kullanım](flight/REA
 
 Bu sayılar genel başarı oranı veya biyolojik doğruluk iddiası değildir. Kayıt
 kaynakları, checkpoint özetleri, başarısızlıklar ve yeniden üretme komutları
-[deney kayıtlarında](docs/experiments.md) bulunur. Paket CI'ı macOS/Linux'ta
+[deney kayıtlarında](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/experiments.md) bulunur. Paket CI'ı macOS/Linux'ta
 kurulumu ve rehberi sınar; bilimsel Linux doğrulaması yerine geçmez.
 
 ## Rehberler ve depo haritası
 
 | Başlamak istediğiniz yer | Belge |
 | --- | --- |
-| Tüm belgelerin başlangıç noktası | [Rehber dizini](docs/README.md) |
-| pipx, indirme, disk, platformlar ve ilk açılış | [Kurulum](docs/installation.md) |
-| Mouse, parlaklık, seçim ve metrikler | [UI kullanımı](docs/usage.md) · [Laboratuvar turu](LAB.md) |
-| Eğitim, kayıt, karşılaştırma, bilimsel kapsam | [Eğitim](docs/training.md) |
-| Fizik ve videolar | [Yürüyüş](SIMULATION.md) · [Uçuş](flight/README.md) |
-| Kaynak URL'leri, dosyalar ve SHA256 | [Veriler ve modeller](docs/data.md) |
-| Gerçek ölçümler ve görsel kökeni | [Deneyler](docs/experiments.md) · [Medya dizini](docs/media/README.md) |
-| Güncelleme, yedekleme, sorunlar | [Sorun giderme](docs/troubleshooting.md) |
-| Kod, build, test ve yayın | [Geliştirici rehberi](docs/development.md) |
+| Tüm belgelerin başlangıç noktası | [Rehber dizini](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/README.md) |
+| pipx, indirme, disk, platformlar ve ilk açılış | [Kurulum](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/installation.md) |
+| Mouse, parlaklık, seçim ve metrikler | [UI kullanımı](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/usage.md) · [Laboratuvar turu](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/LAB.md) |
+| Eğitim, kayıt, karşılaştırma, bilimsel kapsam | [Eğitim](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/training.md) |
+| Fizik ve videolar | [Yürüyüş](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/SIMULATION.md) · [Uçuş](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/flight/README.md) |
+| Kaynak URL'leri, dosyalar ve SHA256 | [Veriler ve modeller](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/data.md) |
+| Gerçek ölçümler ve görsel kökeni | [Deneyler](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/experiments.md) · [Medya dizini](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/media/README.md) |
+| Güncelleme, yedekleme, sorunlar | [Sorun giderme](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/troubleshooting.md) |
+| Kod, build, test ve yayın | [Geliştirici rehberi](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/development.md) |
 
 ```text
 src/fruitfly_lab/       Hafif CLI, kurulum ekranı ve kaynak manifesti
@@ -223,10 +223,10 @@ Bu laboratuvar [MaleCNS](https://male-cns.janelia.org/download/),
 Gövde, anatomi ve motor politikaları farklı araştırma kaynaklarından gelir;
 birleştirilmiş sistem taranan bireyin dijital ikizi değildir.
 
-Orijinal kod **[MIT](LICENSE)**. MaleCNS verisi **CC BY 4.0**, FlyBody kodu
+Orijinal kod **[MIT](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/LICENSE)**. MaleCNS verisi **CC BY 4.0**, FlyBody kodu
 **Apache 2.0**, Figshare politika/veri arşivleri **GPL 3.0+**, Three.js **MIT**.
 Dış kaynaklar uygulamanın MIT lisansına dönüşmez. Görsellerin kaynakları ve
-uyarlamaları [medya bildiriminde](docs/media/README.md), tam atıflar
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) dosyasında bulunur.
+uyarlamaları [medya bildiriminde](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/docs/media/README.md), tam atıflar
+[THIRD_PARTY_NOTICES.md](https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/THIRD_PARTY_NOTICES.md) dosyasında bulunur.
 
 [Mert Özbaş](https://github.com/mertozbas) · [Hashtag World Company](https://hashtagworldcompany.com) · [Hashtag Robotics](https://labs.hashtagworldcompany.com)

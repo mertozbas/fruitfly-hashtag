@@ -1,0 +1,55 @@
+# Görseller, videolar ve kökenleri
+
+**Buradaki UI ve sinek görüntüleri gerçek uygulama / fizik çıktılarıdır.**
+Ekranlar 14 Eylül 2026'da Chrome sekmelerinden alındı. Görüntülere sonradan
+sonuç, nöron, sayı veya model aktivitesi eklenmedi. Hero ve akış çizimi açıklayıcı
+SVG şemalarıdır; anatomik ölçüm gibi sunulmaz.
+
+[Rehber dizini](../README.md) · [Deney sonuçları](../experiments.md) · [Lisans bildirimleri](../../THIRD_PARTY_NOTICES.md)
+
+| Dosya | Kaynak ve gösterdiği şey |
+| --- | --- |
+| [hero.svg](hero.svg) | Repo için çizilmiş tipografik kapak ve temsili devre noktaları; anatomi değil |
+| [pipeline.svg](pipeline.svg) | Kaynak → devre → eğitim → fizik ilişkisini gösteren şema |
+| [neural-lab.jpg](neural-lab.jpg) | Yerel 8766 UI; yürüyüş, anatomik konum ve model analizleri |
+| [anatomy-atlas.jpg](anatomy-atlas.jpg) | Yerel 8765 keşif sayfası; MaleCNS 28 SWC + JRCFIB2022M yüzeyi, kimlik renkleri |
+| [flight-lab.jpg](flight-lab.jpg) | Ayrı 8772 UI; yerelde oluşturulmuş başlangıç modeliyle uçuş |
+| [learning-delta.jpg](learning-delta.jpg) | Aynı oturum; Δ Ağırlık ve kaydedilmiş öğrenme eğrisi |
+| [neuron-inspector.jpg](neuron-inspector.jpg) | DNa02 / body 523769 anatomik kaydı; çalışan alt devrenin dışında |
+| [walking-comparison.mp4](walking-comparison.mp4) / [GIF](walking-comparison.gif) | Yeni gerçek yürüyüş kayıtları; solda önce, sağda sonra, 0,2× hız |
+| [flight.mp4](flight.mp4) / [GIF](flight.gif) | Yeni gerçek beyne bağlı uçuş; 720p kaynak, 0,03× hız |
+| [experiments.json](experiments.json) | Kısaltılmış ölçüm raporları ve kaynak / checkpoint SHA256 kayıtları |
+| [manifest.json](manifest.json) | Görsel dosyaların boyutları ve SHA256 özetleri |
+
+## Video işlemleri
+
+Yürüyüşte iki 640×480 arena kaydı 384×288'e ölçeklenip yan yana birleştirildi.
+Başarılı koşu sonlandıktan sonra sağdaki son kare tutulur; soldaki kayıt sürer.
+GIF 10 FPS'e indirildi. Uçuş MP4'ü 1280×720 / 30 FPS; GIF 640×360 / 8 FPS.
+GIF'lerde palet azaltımı uygulanır. Fizik sonucu veya model hesabı değiştirilmez.
+Tam kaynak kayıtları çalışma dizinindedir; küçük gösterim dosyaları repodadır.
+
+## Tekrar üretim
+
+[tools/record_media.py](../../tools/record_media.py) kurulu bilimsel ortamın
+kendi modelini okur; checkpoint yazmaz. Yürüyüşte iki modeli aynı hedefte çalıştırır,
+uçuşta kullanılan motor adaptörüyle gerçek MuJoCo kareleri üretir. Komutlar ve
+FFmpeg birleştirmesi [geliştirici rehberindedir](../development.md#medya-uretimi).
+
+UI görüntüleri programatik olarak çizilmiş taklitler değil, tarayıcı ekran
+kayıtlarıdır. Farklı donanım, kamera, paket veya hedef aynı piksel çıktısını garanti
+etmez. Görsellerdeki MSE eğitim ölçümüdür; başlıkta görülen canlı oturum sayısı
+çok hedefli benchmark değildir. İlk başlangıç modelinin test skoru boş olabilir.
+
+## Atıf ve lisans
+
+UI ve özgün şemalar Hashtag Neural Lab projesinden, MIT lisanslıdır. Anatomik
+görünümler [MaleCNS v1.0](https://male-cns.janelia.org/download/) verisinden
+uyarlanmıştır (**CC BY 4.0**); yüzey kaynağı
+[navis-flybrains / JRCFIB2022M](https://github.com/navis-org/navis-flybrains).
+Yürüyüş gövdesi [NeuroMechFly / FlyGym](https://neuromechfly.org/), uçuş gövdesi ve
+politikası [FlyBody](https://github.com/TuragaLab/flybody) kaynaklıdır. Render
+alınması dış kaynakları projenin MIT lisansına dönüştürmez. İlgili kod, veri ve
+politika lisansları [üçüncü taraf bildirimlerinde](../../THIRD_PARTY_NOTICES.md)
+ayrı belirtilmiştir. Araştırma ekipleri bu proje için onay veya ortaklık vermiş
+olarak gösterilmez.

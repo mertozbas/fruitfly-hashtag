@@ -1,5 +1,10 @@
 # Sorun giderme, bakım ve yedekleme
 
+Önce çalışan terminalin günlüğünü ve `fruitfly doctor` çıktısını inceleyin.
+Aşağıdaki işlemlerde uygulama sürümü ile kişisel veri dizinini ayrı tutun.
+
+[Rehber dizini](README.md) · [Kurulum](installation.md) · [Kullanım](usage.md) · [Eğitim](training.md)
+
 ## Komut bulunamıyor
 
 `fruitfly: command not found`: `pipx ensurepath` çalıştırıp terminali yeniden açın.
@@ -77,7 +82,7 @@ yedektir. En az `models/`, `data/` manifestleri, `.fruitfly-bundle.json` ve ilgi
 taşımak yerine yeni makinede kurulumu yeniden yapın. Koşu klasörlerini bütün taşıyın.
 
 Eski uygulama sürümüne dönmek için kayıtlı wheel'inizi `pipx install --force
-./fruitfly_hashtag-0.2.0-py3-none-any.whl` biçiminde kurun. Gelecekte devre şeması
+./fruitfly_hashtag-0.2.1-py3-none-any.whl` biçiminde kurun. Gelecekte devre şeması
 değişirse checkpoint uyumluluğunu ayrıca kontrol edin; eski veri dizinini yedekte tutun.
 
 ## Kaldırma

@@ -1,6 +1,12 @@
 # Kurulum
 
-<a id="gereksinimler"></a>
+Uygulama önce veri olmadan açılır; büyük indirmeyi kurulum ekranından başlatırsınız.
+Bu rehber boş bir bilgisayardan ilk canlı deneye kadar yolu anlatır.
+
+![Kurulumun hazırladığı veri, devre ve fizik akışı](media/pipeline.svg)
+
+[Rehber dizini](README.md) · [Kurulum](installation.md) · [Kullanım](usage.md) · [Eğitim](training.md)
+
 ## Gereksinimler
 
 İlk aşama küçük UI/başlatıcı paketi, ikinci aşama bilimsel ortamdır.
@@ -49,14 +55,14 @@ Terminali yeniden açın; `pipx --version` çalışmalı. Eski Python seçilirse
 ## 2. Uygulamayı kurun
 
 ```bash
-pipx install git+https://github.com/mertozbas/fruitfly-hashtag.git
+pipx install fruitfly-hashtag
 fruitfly --version
 fruitfly ui
 ```
 
-Klonlanmış repoda `pipx install .` kullanın. PyPI sürümü yayımlandığında
+Klonlanmış repoda `pipx install .` kullanın. Yayımlanmış PyPI sürümü için
 `pipx install fruitfly-hashtag` aynı işi yapar. İndirilen wheel de kurulabilir:
-`pipx install ./fruitfly_hashtag-0.2.0-py3-none-any.whl`.
+`pipx install ./fruitfly_hashtag-0.2.1-py3-none-any.whl`.
 
 http://127.0.0.1:8766/ açılır. İlk açılışta kurulum ekranı gelir; veri olmadan
 çalışır. Büyük indirme düğmeye bastıktan sonra başlar. Terminali açık tutun.

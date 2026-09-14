@@ -24,7 +24,7 @@ def main():
             assert size < 4_000_000, name
         assert any(name.endswith("docs/index.html") for name, _ in records)
         assert any(name.endswith("THREE-LICENSE.txt") for name, _ in records)
-        assert path.stat().st_size < 2_000_000
+        assert path.stat().st_size < 8_000_000  # Offline screenshots and short simulation recordings.
         print(f"{path.name}: {path.stat().st_size:,} bytes, {len(records)} entries; no brain/model/user data")
 
 
