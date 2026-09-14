@@ -9,12 +9,14 @@ import numpy as np
 
 
 class RGBDCubeTracker:
-    def __init__(self,model,width=640,height=480):
+    def __init__(self,model,width=640,height=480,camera='wrist'):
         self.model=model
         self.width,self.height=width,height
         self.renderer=mujoco.Renderer(model,height=height,width=width)
-        self.camera_name='front'
+        if camera not in {'wrist','front'}:raise ValueError('Expected wrist or front camera')
+        self.camera_name=camera
         self.camera_id=model.camera(self.camera_name).id
+        self.depth_range=(.02,.45) if camera=='wrist' else (.2,1.)
         self.position=None
         self.last_seen=None
         self.visible=False
@@ -54,7 +56,10 @@ class RGBDCubeTracker:
         return dict(position=None if self.position is None else self.position.copy(),visible=self.visible,
                     pixels=self.pixels,age_s=age if np.isfinite(age) else None,
                     valid=self.position is not None and age<=.5,
-                    frame_id=self.frame_id,sample_time_s=self.sample_time_s,
+                    frame_id=self.frame_id,sample_time_s=self.sample_time_s,camera_name=self.camera_name,
+                    camera_position_m=data.cam_xpos[self.camera_id].tolist(),
+                    camera_rotation=data.cam_xmat[self.camera_id].reshape(3,3).tolist(),
+                    camera_mount='gripper' if self.camera_name=='wrist' else 'world',
                     bbox=[int(u.min()),int(v.min()),int(u.max()),int(v.max())] if self.visible else None)
 
     def previews(self):
@@ -71,7 +76,8 @@ class RGBDCubeTracker:
             draw.rectangle(box,outline=(98,216,208),width=2)
             draw.text((box[0],max(0,box[1]-14)),"RED CUBE",fill=(98,216,208))
         # Fixed metric scale, not per-frame min/max that hides distance changes.
-        near=np.clip((1.-self.depth)/.8,0,1)
+        lower,upper=self.depth_range
+        near=np.clip((upper-self.depth)/(upper-lower),0,1)
         colors=np.stack([30+65*near,40+175*near,65+150*near],axis=-1).astype(np.uint8)
         colors[~np.isfinite(self.depth)]=0
         result={}
@@ -90,8 +96,8 @@ class CameraObservation:
     The evaluator may use true state to score the task, but this observation
     builder never reads the cube's body position or orientation.
     """
-    def __init__(self,env):
-        self.env=env;self.tracker=RGBDCubeTracker(env.model)
+    def __init__(self,env,camera='wrist'):
+        self.env=env;self.tracker=RGBDCubeTracker(env.model,camera=camera)
         self.lifted=False;self.held_offset=None;self.last=None
 
     def reset(self):
@@ -103,7 +109,7 @@ class CameraObservation:
             **{k:v for k,v in measurement.items() if k!='position'},
             estimated_cube=None,kinematic_prediction=False,
             goal_source='calibrated workspace destination',width=self.tracker.width,height=self.tracker.height,
-            depth_range_m=[.2,1.])
+            depth_range_m=list(self.tracker.depth_range))
         contacts=set(e.contacts())
         holding={'gripper','moving_jaw_so101_v1'}<=contacts
         cube=measurement['position']

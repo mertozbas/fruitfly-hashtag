@@ -8,7 +8,7 @@ from .policy import Policy
 from .task import PickPlaceEnv
 
 
-def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",output=None,event=None,sensor="state",max_attempts=1,disturbance=None):
+def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",output=None,event=None,sensor="state",max_attempts=1,disturbance=None,camera_name='wrist'):
     if disturbance not in {None,'forced_release','pregrasp_push'}:raise ValueError('Unknown disturbance')
     from .recovery import RetrySupervisor
     recovery=RetrySupervisor(max_attempts)
@@ -21,7 +21,7 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
     camera=None
     if sensor=='camera':
         from .perception import CameraObservation
-        camera=CameraObservation(env)
+        camera=CameraObservation(env,camera=camera_name)
     records=[]
     try:
         for i in range(episodes):
@@ -66,7 +66,7 @@ def evaluate(path,episodes=12,start_seed=4000,stage="place",variant="trained",ou
                 event(status="evaluating",evaluated=i+1,evaluation_total=episodes,variant=variant,success_count=sum(r["stage_success"] for r in records))
             else:
                 print(json.dumps(dict(episode=i,variant=variant,stage=stage,**record)),flush=True)
-        summary=dict(stage=stage,variant=variant,sensor=sensor,episodes=episodes,success_count=sum(r["stage_success"] for r in records),
+        summary=dict(stage=stage,variant=variant,sensor=sensor,camera_name=camera_name if camera else None,episodes=episodes,success_count=sum(r["stage_success"] for r in records),
             max_attempts=max_attempts,disturbance=disturbance,disturbance_triggered_count=sum(r['disturbance_triggered'] for r in records),
             recovered_successes=sum(r['stage_success'] and r['recovery']['retries']>0 for r in records),
             action_mode=policy.action_mode,
@@ -88,4 +88,5 @@ if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("model");p.add_argument("--episodes",type=int,default=12);p.add_argument("--start-seed",type=int,default=4000);p.add_argument("--stage",choices=["reach","lift","place"],default="place");p.add_argument("--variant",choices=["trained","silenced","mlp"],default="trained");p.add_argument("--output")
     p.add_argument('--sensor',choices=['state','camera'],default='state')
     p.add_argument('--max-attempts',type=int,default=1);p.add_argument('--disturbance',choices=['forced_release','pregrasp_push'])
-    a=p.parse_args();evaluate(a.model,a.episodes,a.start_seed,a.stage,a.variant,a.output,sensor=a.sensor,max_attempts=a.max_attempts,disturbance=a.disturbance)
+    p.add_argument('--camera',choices=['wrist','front'],default='wrist')
+    a=p.parse_args();evaluate(a.model,a.episodes,a.start_seed,a.stage,a.variant,a.output,sensor=a.sensor,max_attempts=a.max_attempts,disturbance=a.disturbance,camera_name=a.camera)

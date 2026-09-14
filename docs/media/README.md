@@ -60,3 +60,9 @@ olarak gösterilmez.
 görüntüsüdür. Model `31ed4107db97…`, tohum 9000; robot hedef konumunu
 anatomik ağın öğrenilmiş okuması üretir. Nesne temasla taşınır. Bu görüntü
 fiziksel robot kaydı değildir. Ayrıntılar: [SO-101 rehberi](../so101-local.md).
+
+`so101-wrist.png`, aynı yerel laboratuvarın bilek kamerası ve **Tekrarla**
+kontrolünü gösteren değiştirilmemiş tarayıcı ekran görüntüsüdür. Model
+`8e0a777881a9…`; küçük pencere hareketli bilek gözünün karar karesidir, büyük
+pencere bağımsız seyirci kamerasıdır. Görüntü duraklatılmış başlangıç durumunu
+gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.

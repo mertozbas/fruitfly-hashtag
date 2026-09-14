@@ -36,7 +36,7 @@ def simulate(commands,states,initial_path,initial_id):
         model_id=initial_id
         seed,episode,seq=9000,1,0
         obs=perception.observation();decision_obs=obs.copy();action,layers=policy.activity(obs)
-        applied=None;sample_time=0.;speed=0.;paused=False;camera="body"
+        applied=None;sample_time=0.;speed=0.;paused=False;camera="body";auto_loop=True
         successes=completed=unsafe_count=0
         pinned_goal=None
         sensor_mode='camera';sensor_error=None
@@ -69,6 +69,9 @@ def simulate(commands,states,initial_path,initial_id):
                     reset=True;paused=False
                 elif op=="next":
                     seed+=1;reset=True;paused=False
+                elif op=='loop':
+                    auto_loop=cmd['enabled']
+                    if hold and env.outcome in {'success','timeout','retry_exhausted'}:paused=not auto_loop
                 elif op=='sensor':
                     if perception:perception.close();perception=None
                     sensor_mode=cmd['sensor']
@@ -94,6 +97,8 @@ def simulate(commands,states,initial_path,initial_id):
                         c.distance=float(np.clip(c.distance,.15,2.))
                         c.elevation=float(np.clip(c.elevation,-89,65))
             now=time.monotonic()
+            if auto_loop and hold and now>=hold and not paused and now-last_poll<=30:
+                seed+=1;reset=True
             if reset:
                 obs=env.reset(seed,goal=pinned_goal)
                 policy.reset();recovery.reset();preview_key=None;eye_frames=None
@@ -113,7 +118,7 @@ def simulate(commands,states,initial_path,initial_id):
                         completed+=1;hold=now+2.;paused=True;continue
                 recovery.observe(obs,float(env.data.time),policy,perception)
                 if recovery.exhausted:
-                    env.outcome='retry_exhausted';applied=None;completed+=1;hold=now+2.;paused=True;continue
+                    env.outcome='retry_exhausted';applied=None;completed+=1;hold=now+2.;paused=not auto_loop;continue
                 decision_obs=obs.copy();sample_time=float(env.data.time)
                 decision_frame_id=perception.tracker.frame_id if perception else None
                 action,layers=policy.activity(decision_obs,advance=True)
@@ -124,7 +129,7 @@ def simulate(commands,states,initial_path,initial_id):
                 trajectory.append((env.ee[:2]*1000).tolist())
                 if done:
                     completed+=1;successes+=int(env.success);unsafe_count+=int(env.unsafe)
-                    hold=now+2.;paused=True
+                    hold=now+2.;paused=not auto_loop or env.unsafe
                 frame_steps+=1
                 next_step=max(next_step+CONTROL_DT,now)
             else:time.sleep(.005)
@@ -155,10 +160,11 @@ def simulate(commands,states,initial_path,initial_id):
                 activity=np.concatenate(layers).round(6).tolist(),layer_means=[float(a.mean()) for a in layers],
                 neural=dict(source="so101.policy.Policy.activity",sample_time_s=sample_time,kind="continuous_forward_response",
                     sensor_frame_id=decision_frame_id,
+                    sensor_camera=perception.tracker.camera_name if perception else None,
                     applied_steering=float(applied[2]) if applied is not None else None,
                     applied_action=applied.tolist() if applied is not None else None,decision_applied=applied is not None,policy_connected=True),
                 robot=dict(phase=phase,observation_names=OBSERVATION_NAMES,decision_observation=decision_obs.tolist(),action=action.tolist(),
-                    recovery=recovery.status(),
+                    recovery=recovery.status(),loop_enabled=auto_loop,awaiting_next=bool(hold and auto_loop and not paused),
                     action_mode=policy.action_mode,
                     target_mm=((TARGET_CENTER+TARGET_SCALE*action[:3])*1000).tolist() if policy.action_mode=='target' else None,
                     learned_memory=policy.last_memory.tolist() if policy.has_memory else None,
@@ -166,7 +172,7 @@ def simulate(commands,states,initial_path,initial_id):
                     joints=env.data.qpos[env.qadr].tolist(),holding=holding,inside_bin=inside,cube_height_mm=float(env.cube[2]*1000),
                     reward_components=env.reward_components,physics_warnings=int(env.data.warning.number.sum()),
                     sensor_mode=sensor_mode,sensor_error=sensor_error,perception=perception.last if perception else None,
-                    sensor_source='Sentetik RGB-D · eklem ve temas sensörleri' if perception else 'Fizik sensörleri · kamera algısı kapalı'),
+                    sensor_source='Bilek RGB-D · eklem ve temas sensörleri' if perception else 'Fizik sensörleri · kamera algısı kapalı'),
                 trajectory=trajectory[-350:],history=history,contacts=int(env.data.ncon),physics_dt=DT,control_dt=CONTROL_DT))
             last_frame=now;frame_steps=0
     except Exception as exc:

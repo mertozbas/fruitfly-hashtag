@@ -53,6 +53,14 @@ def check(base,output,train_cancel=False):
         page.locator('#robot-sensor').select_option('camera')
         camera=until(lambda s:s['simulation'].get('robot',{}).get('sensor_mode')=='camera' and s['simulation']['episode']>sensor_episode)['simulation']
         checks['camera_observation']=bool(camera['robot']['perception'])
+        checks['wrist_eye_is_policy_input']=camera['robot']['perception']['camera_name']==camera['neural']['sensor_camera']=='wrist'
+        checks['loop_toggle_visible']=page.locator('#robot-loop').is_visible()
+        page.locator('#robot-loop').uncheck()
+        until(lambda s:not s['simulation']['robot']['loop_enabled'])
+        page.wait_for_function("!document.querySelector('#robot-loop').checked")
+        page.locator('#robot-loop').check()
+        until(lambda s:s['simulation']['robot']['loop_enabled'])
+        checks['loop_toggle_controls_worker']=True
         page.wait_for_function("document.querySelector('#eye-image').naturalWidth===640")
         checks['eye_preview_visible']=page.locator('#eye-preview').is_visible()
         checks['eye_has_actual_camera_resolution']=page.locator('#eye-image').evaluate('(e)=>e.naturalHeight===480')

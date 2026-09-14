@@ -14,16 +14,18 @@ from .policy import Policy,PHASES,TARGET_CENTER,TARGET_SCALE
 from .recovery import RetrySupervisor
 
 
-def collect(output,episodes=24,start_seed=3200,learner=None,append_source=None):
+def collect(output,episodes=24,start_seed=3400,learner=None,append_source=None,camera_name='wrist'):
     output=Path(output);output.parent.mkdir(parents=True,exist_ok=True)
     original=None
     if append_source:
         with np.load(append_source,allow_pickle=False) as d:
+            source_camera=str(d['camera_name']) if 'camera_name' in d else 'front'
+            if source_camera!=camera_name:raise ValueError('Cannot append demonstrations from a different camera mount')
             original={k:d[k].copy() for k in ('observations','actions','phases','episode_ids','memory')}
         if np.intersect1d(original['episode_ids'],np.arange(start_seed,start_seed+episodes)).size:
             raise ValueError('Correction episode IDs overlap the source dataset')
     env=PickPlaceEnv();env.step_limit=1200
-    camera=CameraObservation(env);records=[];rows=[]
+    camera=CameraObservation(env,camera=camera_name);records=[];rows=[]
     policy=Policy(learner) if learner else None
     try:
         for i in range(episodes):
@@ -67,21 +69,22 @@ def collect(output,episodes=24,start_seed=3200,learner=None,append_source=None):
             print(json.dumps(dict(episode=i,success=record['success'],outcome=record['outcome'],steps=record['steps'],retries=retry.status()['retries'])),flush=True)
             (output.with_suffix('.json')).write_text(json.dumps(dict(episodes=len(records),
                 success_count=sum(r['success'] for r in records),unsafe_count=sum(r['unsafe'] for r in records),
-                appended_source=str(append_source) if append_source else None,
+                appended_source=str(append_source) if append_source else None,camera_name=camera_name,
                 source='RGB-D observations; feedback teacher labels; optional learner roll-in then teacher correction; forced release in alternate episodes; no object resets within a task',results=records),indent=2))
         if not rows:raise RuntimeError('No successful visual demonstrations')
         ids,obs,actions,phases,memory=zip(*rows)
         values=dict(observations=np.asarray(obs),actions=np.asarray(actions),phases=np.asarray(phases),
             memory=np.asarray(memory),episode_ids=np.asarray(ids))
         if original:values={k:np.concatenate([original[k],values[k]]) for k in values}
-        np.savez_compressed(output,**values,action_mode='target')
+        np.savez_compressed(output,**values,action_mode='target',camera_name=camera_name)
         return output
     finally:camera.close();env.close()
 
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--output',required=True);p.add_argument('--episodes',type=int,default=24)
-    p.add_argument('--start-seed',type=int,default=3200)
+    p.add_argument('--start-seed',type=int,default=3400)
     p.add_argument('--learner')
     p.add_argument('--append-source')
-    a=p.parse_args();collect(a.output,a.episodes,a.start_seed,a.learner,a.append_source)
+    p.add_argument('--camera',choices=['wrist','front'],default='wrist')
+    a=p.parse_args();collect(a.output,a.episodes,a.start_seed,a.learner,a.append_source,a.camera)

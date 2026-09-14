@@ -52,6 +52,7 @@ class VisualSelectionTests(unittest.TestCase):
         from so101 import vision_job
         with tempfile.TemporaryDirectory() as root:
             root=Path(root);initial=root/'trained.npz';initial.write_bytes(b'original')
+            np.savez(root/'data.npz',camera_name='wrist')
             (root/'training.json').write_text(json.dumps(dict(after_mse=.02,steps=16000)))
             directory=root/'candidate';directory.mkdir()
             def train(*args,**kwargs):
@@ -75,6 +76,13 @@ class VisualSelectionTests(unittest.TestCase):
             self.assertEqual(report['after_mse'],.02);self.assertEqual(report['steps'],16000)
             self.assertEqual(json.loads((directory/'candidate-training.json').read_text())['steps'],100)
             self.assertEqual(calls[-3:],[(40,24400,None),(24,24440,None),(8,24400,'silenced')])
+
+    def test_front_camera_data_cannot_silently_train_wrist_policy(self):
+        from so101.vision_job import refine
+        with tempfile.TemporaryDirectory() as root:
+            root=Path(root);np.savez(root/'front.npz',camera_name='front')
+            with self.assertRaisesRegex(ValueError,'camera differs'):
+                refine(root/'candidate',root/'front.npz',200,44,root/'unused.npz')
 
 
 @unittest.skipUnless(os.environ.get('SO101_TEST_ASSETS')=='1','requires local MuJoCo assets')
@@ -105,6 +113,29 @@ class CameraTests(unittest.TestCase):
         np.testing.assert_array_equal(e.data.qpos,before)
         self.assertEqual(c.tracker.frame_id,frame)
         np.testing.assert_allclose(obs[15:18]*.15+e.ee,estimate,atol=1e-7)
+
+    def test_wrist_camera_moves_and_rotates_rigidly_with_gripper(self):
+        import mujoco
+        c=self.camera;e=self.env;c.observation()
+        cam=c.tracker.camera_id;body=e.model.body('gripper').id
+        self.assertEqual(c.last['camera_name'],'wrist');self.assertEqual(c.last['camera_mount'],'gripper')
+        before=e.data.cam_xpos[cam].copy();rotation=e.data.cam_xmat[cam].reshape(3,3).copy()
+        rb=e.data.xmat[body].reshape(3,3).copy()
+        offset=rb.T@(before-e.data.xpos[body]);local_rotation=rb.T@rotation
+        e.data.qpos[e.qadr[0]]+=.1;e.data.qpos[e.qadr[4]]+=.3
+        mujoco.mj_forward(e.model,e.data);c.observation()
+        rb=e.data.xmat[body].reshape(3,3)
+        self.assertGreater(np.linalg.norm(e.data.cam_xpos[cam]-before),.005)
+        self.assertGreater(np.linalg.norm(e.data.cam_xmat[cam].reshape(3,3)-rotation),.1)
+        np.testing.assert_allclose(rb.T@(e.data.cam_xpos[cam]-e.data.xpos[body]),offset,atol=1e-8)
+        np.testing.assert_allclose(rb.T@e.data.cam_xmat[cam].reshape(3,3),local_rotation,atol=1e-8)
+        self.assertLess(np.linalg.norm(np.asarray(c.last['estimated_cube'])-e.cube),.008)
+
+    def test_spectator_orbit_does_not_change_the_robot_eye(self):
+        c=self.camera;e=self.env;c.observation();before=c.tracker.rgb.copy()
+        e.camera.azimuth+=90;e.camera.elevation=-80;e.camera.distance=.2
+        c.observation()
+        np.testing.assert_array_equal(c.tracker.rgb,before)
 
     def test_invisible_cube_stops_without_truth_fallback(self):
         c=self.camera;e=self.env

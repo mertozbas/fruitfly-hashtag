@@ -66,6 +66,11 @@
       "file": "so101-lab.jpg",
       "bytes": 239942,
       "sha256": "d8437af0652c9fa68d4bfade5161a76c825319efa2b50d8816d94e5b0fe0b094"
+    },
+    {
+      "file": "so101-wrist.png",
+      "bytes": 571615,
+      "sha256": "6dc61000cecc428e7adb3f0fa392a88a8bb20f48989b2bb1b4d39320a6cc6d83"
     }
   ]
 }

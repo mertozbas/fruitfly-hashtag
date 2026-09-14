@@ -1182,14 +1182,15 @@ bulunduğunda laboratuvar robotla açılır. Görev menüsünden sinek deneyleri
 geri dönebilirsiniz; aynı beyin, inceleme ve telemetri panelleri kullanılır.</p>
 <ol>
 <li><strong>SO-101 · Al ve yerleştir</strong> görevini seçin. Robot 30 mm küpü kavrar,
-   kaldırır, kutuya taşır, bırakır ve elini geri çeker. Görev sonunda durur;
-   <strong>Yeni görev</strong> ile yeni sahne başlatılır.</li>
+   kaldırır, kutuya taşır, bırakır ve elini geri çeker. <strong>Tekrarla</strong> başlangıçta
+   açıktır: görev sonunda 2 saniye beklenir ve yeni sahne başlar. Kapatırsanız
+   tek görev sonunda durur. <strong>Duraklat</strong> döngüyü de durdurur.</li>
 <li>Görüntüyü mouse ile döndürün, kaydırın ve yakınlaştırın. <strong>Duraklat</strong> hem
    fizik adımını hem ağ kararını durdurur. Görüntü 1920 × 1080 üretilir.</li>
 <li>Beyindeki nörona veya bağlantıya tıklayın. Aktivite, bağlantı çarpanı,
    anatomik kimlik, bölge, ısı haritası ve X-ray görünümü aynı hesapla eşleşir.</li>
 <li>Simülasyon üzerindeki sensör seçicisinden <strong>fizik sensörleri</strong> veya
-   <strong>sentetik RGB-D kamera</strong> seçin. Sensör değişimi yeni bölüm başlatır.</li>
+   <strong>Göz · Bilek RGB-D</strong> seçin. Sensör değişimi yeni bölüm başlatır.</li>
 <li>Kutu hedefini milimetre olarak değiştirebilirsiniz: X 125–160, Y −180–−135.
    <strong>Hedefi uygula</strong> bölümü bu kutu konumuyla sıfırlar.</li>
 <li><strong>Eğitimi başlat</strong>, seçili konum çıktılı modelin bir kopyasında çalışır.
@@ -1199,8 +1200,46 @@ geri dönebilirsiniz; aynı beyin, inceleme ve telemetri panelleri kullanılır.
 <p>Yeni aday fizik karşılaştırmasını iyileştirmezse önceki ağırlıklar korunur.
 Öğrenme kaybının azalması otomatik olarak daha iyi robot anlamına gelmez.
 İptal edilen işin günlükleri saklanır; aktif model değiştirilmez.</p>
-<h2 id="docs-so101-local--görsel-model-mevcut-sonuç">Görsel model: mevcut sonuç</h2>
-<p>UI'daki <strong>Görsel küp · toparlanma deneysel</strong> kaydı:
+<h2 id="docs-so101-local--bilek-gözü-mevcut-çalışma">Bilek gözü: mevcut çalışma</h2>
+<p><img alt="Bilek kamerası, aynı kararı üreten sinir ağı ve Tekrarla kontrolü" src="media/so101-wrist.png"></p>
+<p>Seçili kayıt <strong>Bilek gözü · toparlanma deneysel</strong> olarak görünür. Sinir ağı
+checkpoint'i değişmedi; sabit ön kameranın yerine bileğe bağlı kameradan
+üretilen gözlemleri kullanır. Ana HD görüntü, mouse ile çevirdiğiniz seyirci
+kamerasıdır. <strong>Robotun gözü · Bilek kamerası</strong> penceresi robotun algısıdır.</p>
+<table>
+<thead>
+<tr>
+<th>Bilek kamerası testi</th>
+<th style="text-align: right;">Başarılı / toplam</th>
+<th style="text-align: right;">Sınır ihlali</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Normal yerleştirme, tohumlar 27100–27119</td>
+<td style="text-align: right;">20 / 20</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Zorla bırakma, tohumlar 27120–27127</td>
+<td style="text-align: right;">3 / 8</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Nöron yanıtları sıfır, tohumlar 27100–27103</td>
+<td style="text-align: right;">0 / 4</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>Bu, bilek görüşüne geçiş için sınırlı bir doğrulamadır; yeni bir eğitim veya
+40/24 bölümlük tam kabul testi diye sunulmaz. Toparlanma deneysel kalır.
+Canlı worker ayrıca tek görevde durma, iki otomatik başarılı bölümden sonra
+üçüncüsünü başlatma ve döngü sırasında duraklatma kontrollerini geçti.
+Ham sonuçlar <code>artifacts/so101/wrist-camera/</code> altındadır. Ön kameranın eski
+sonuçları model dizinindeki <code>evaluation-front.json</code> dosyasında korunur.</p>
+<h2 id="docs-so101-local--ön-kamera-ile-görsel-model-sonucu">Ön kamera ile görsel model sonucu</h2>
+<p>Önceki ön kamera ölçümlerinde kullanılan kayıt:
 <code>models/lab_runs/local-so101-vision-seed44/</code>. Checkpoint SHA-256:
 <code>8e0a777881a9e88847875cc44b6dd7f510001ead55e21e6c900673873f18bbb2</code>.</p>
 <table>
@@ -1243,7 +1282,7 @@ görev başarısı yukarıdaki fizik testlerinden gelir. Sonradan toplanan 19 ba
 düzeltici gösterimle ve yalnızca aşama okumasıyla eğitilen iki aday, geliştirme
 testlerinde iyileşme sağlamadı; canlı model olarak seçilmedi.</p>
 <p>Ham ölçümler <code>artifacts/so101/vision-final-*.json</code>, aday özeti
-<code>artifacts/so101/vision-summary.json</code> ve modelin <code>evaluation.json</code> dosyasındadır.
+<code>artifacts/so101/vision-summary.json</code> ve modelin <code>evaluation-front.json</code> dosyasındadır.
 Test sonuçları bu simülasyonun nesne, kamera ve çalışma alanı dağılımına aittir.</p>
 <h2 id="docs-so101-local--önceki-modelin-doğrulanmış-sonucu">Önceki modelin doğrulanmış sonucu</h2>
 <p>Görsel eğitime başlangıç olan kayıt: <code>models/lab_runs/local-so101-validated-seed42/</code>.
@@ -1415,13 +1454,21 @@ bu durum 0,5 saniye sürmeli ve yasak temas / fizik uyarısı bulunmamalıdır.
 Checkpoint'ler <code>models/lab_runs/</code> altındadır. Son test kümesi, eğitim ve model
 seçiminde kullanılan tohumlardan ayrı olmalıdır.</p>
 <h2 id="docs-so101-local--kamera-gözlemi">Kamera gözlemi</h2>
-<p>SO-101 canlı görünümü artık <strong>Göz · RGB-D kamera</strong> modunda açılır. Sol simülasyon
-alanındaki <strong>Robotun gördüğü</strong> penceresi, karar için gerçekten kullanılan ön
-kamera karesini gösterir. Ana HD görüntü bağımsız seyirci kamerasıdır.</p>
+<p>SO-101 canlı görünümü <strong>Göz · Bilek RGB-D</strong> modunda açılır. Sol simülasyon
+alanındaki <strong>Robotun gözü · Bilek kamerası</strong> penceresi, karar için gerçekten
+kullanılan bilek karesini gösterir. Ana HD görüntü bağımsız seyirci kamerasıdır.</p>
+<p>Kamera <code>gripper</code> gövdesine rijit bağlıdır; kolun ve bileğin hareketiyle birlikte
+yer değiştirir ve döner. <code>targetbody</code> ile küpü otomatik takip etmez. Kamera
+kalibrasyonu her karede bileğin dünya dönüşümüyle uygulanır. Seyirci kamerasını
+mouse ile çevirmek robotun gözünü değiştirmez. Robot üstündeki küçük kamera
+gövdesi ve braketi bu montajı görünür kılar; görsel parçalardır, temas fiziğine
+kütle veya kavrama desteği eklemezler.</p>
+<p>Bu montajın ofseti <code>[7,1; −55; −20]</code> mm ve dikey görüş açısı 90° simülasyon
+ayarlarıdır; gerçek bilek kameranızın ölçülmüş kalibrasyonu değildir.</p>
 <ul>
 <li><strong>Algılama:</strong> renk görüntüsü ve tespit edilen kırmızı küpün işareti.</li>
 <li><strong>Renk:</strong> aynı karara giren ham RGB görüntüsü.</li>
-<li><strong>Derinlik:</strong> aynı karenin sabit 200–1000 mm ölçekli derinlik görünümü.</li>
+<li><strong>Derinlik:</strong> aynı karenin sabit 20–450 mm ölçekli derinlik görünümü.</li>
 <li><strong>⤢:</strong> göz penceresini simülasyon alanı içinde büyütür; beyin paneli yerinde kalır.</li>
 <li>Kare numarası ve simülasyon zamanı, aynı paketteki sinir ağı kararına bağlıdır.
   Duraklatmada yeni algı karesi üretilmez. Önizleme ek bir render çağrısı yapmaz.</li>
@@ -1445,9 +1492,11 @@ değerlendirme değerleri nesne konumu olarak politikaya geri verilmez.</p>
 yeniden başlatır. Kolun ve küpün konumu sıfırlanmaz; bütün hareket hedeflerini
 yine sinir ağı üretir. Yeniden deneme zamanlaması mühendislik kuralıdır,
 ağın bağımsız olarak öğrendiği bir davranış diye sunulmaz.</p>
-<p>Başarıda, girişim sınırında, görüş kaybında veya fizik sınırı ihlalinde görev
-durur. <strong>Yeni görev</strong> yeni bir sahne oluşturur; bu, aynı sahnedeki girişim
-sayacından ayrıdır. Durmuş görevin <strong>Devam et</strong> düğmesi yeni görevi başlatır.</p>
+<p><strong>Tekrarla</strong> açıksa başarı, girişim sınırı veya süre sonunda 2 saniye beklenir
+ve yeni sahneyle döngü sürer. Tekrarla kapalıysa görev sonunda durur.
+Görüş kaybı ve fizik sınırı ihlali döngüyü de durdurur. <strong>Yeni görev</strong> yeni
+bir sahne oluşturur; bu, aynı sahnedeki üç girişim sayacından ayrıdır.
+Durmuş görevin <strong>Devam et</strong> düğmesi yeni görevi başlatır.</p>
 <h3 id="docs-so101-local--görsel-eğitim">Görsel eğitim</h3>
 <p>Göz modu seçiliyken <strong>Eğitimi başlat</strong>, seçili modelin kopyasına görsel gösterim
 ve toparlanma eğitimi uygular. Bu eğitim davranış klonlama ve öğrenilmiş konum
@@ -1459,12 +1508,13 @@ yeniden alır. Öğretici yalnızca eğitim etiketleri üretir, öğrenilmiş mo
 canlı kontrolüne girmez. Veriler bütün bölümler bazında eğitim/doğrulamaya
 ayrılır; son fizik testlerinin tohumları ayrıca ayrıdır.</p>
 <pre><code class="language-bash">.venv/bin/python -m so101.vision_training \
-  --output artifacts/so101/visual-demonstrations.npz --episodes 24 --start-seed 3200
+  --output artifacts/so101/wrist-demonstrations.npz --episodes 24 --start-seed 3400 \
+  --camera wrist
 
 .venv/bin/python -m so101.train_job \
-  --output models/lab_runs/my-so101-vision --steps 10000 --seed 44 \
-  --resume models/lab_runs/local-so101-validated-seed42/trained.npz \
-  --sensor camera --dataset artifacts/so101/visual-demonstrations.npz
+  --output models/lab_runs/my-so101-wrist --steps 10000 --seed 46 \
+  --resume models/lab_runs/local-so101-vision-seed44/trained.npz \
+  --sensor camera --camera wrist --dataset artifacts/so101/wrist-demonstrations.npz
 </code></pre>
 <p>Adaylar kamera ve zorla bırakma testleriyle önceki modelle karşılaştırılır.
 Son kabul eşiği 40 yeni kamera sahnesinde en az 36 başarı, 24 yeni düşürme
@@ -1474,15 +1524,19 @@ sıfırlanmış kontrol de ayrı çalıştırılır. Sonuçlar model dizinindeki
 bitmesi kabul eşiğinin geçildiği anlamına gelmez.</p>
 <p>Öğrenilmiş modelin ulaştığı durumlardan düzeltici gösterim toplamak için:</p>
 <pre><code class="language-bash">.venv/bin/python -m so101.vision_training \
-  --output artifacts/so101/visual-training.npz --episodes 24 --start-seed 3260 \
-  --learner models/lab_runs/my-so101-vision/trained.npz \
-  --append-source artifacts/so101/visual-demonstrations.npz
+  --output artifacts/so101/wrist-training.npz --episodes 24 --start-seed 3460 \
+  --learner models/lab_runs/my-so101-wrist/trained.npz --camera wrist \
+  --append-source artifacts/so101/wrist-demonstrations.npz
 </code></pre>
 <p>Bu toplamada ilk bölümü ağ sürer; öğretici daha sonra kontrolü devralıp etiketli
 gösterimi tamamlar. Yalnızca başarılı bölümler eğitim dosyasına girer; bütün
 başarısız sonuçlar JSON raporunda saklanır. Eğitim sırasında kullanılan önceki
-aşama geri bildirimi de kaydedilir. UI varsa <code>visual-training.npz</code> dosyasını,
-yoksa ilk görsel gösterimleri kullanır. Her eğitim işi en fazla bir saat sürer;
+aşama geri bildirimi ve kamera montajı da kaydedilir. UI varsa <code>wrist-training.npz</code>
+dosyasını, yoksa <code>wrist-demonstrations.npz</code> dosyasını kullanır; veri yoksa bilek
+gösterimlerini toplar. Ön kamera verileri bilek verisine sessizce karıştırılmaz.
+Eski ön kamera deneylerini yeniden üretmek için toplama, eğitim ve
+<code>so101.evaluate</code> komutlarında <code>--camera front</code> seçin.
+Her eğitim işi en fazla bir saat sürer;
 iptal veya zaman aşımı mevcut canlı modeli değiştirmez.</p>
 <h2 id="docs-so101-local--yerel-hazırlık">Yerel hazırlık</h2>
 <p>Var olan bilimsel <code>.venv</code> kullanılır; kökte <code>uv sync</code> çalıştırarak bu ortamı
@@ -2029,7 +2083,12 @@ olarak gösterilmez.</p>
 <p><code>so101-lab.jpg</code>, yerel MuJoCo ve tarayıcı arayüzünden alınmış gerçek ekran
 görüntüsüdür. Model <code>31ed4107db97…</code>, tohum 9000; robot hedef konumunu
 anatomik ağın öğrenilmiş okuması üretir. Nesne temasla taşınır. Bu görüntü
-fiziksel robot kaydı değildir. Ayrıntılar: <a href="#docs-so101-local">SO-101 rehberi</a>.</p></section>
+fiziksel robot kaydı değildir. Ayrıntılar: <a href="#docs-so101-local">SO-101 rehberi</a>.</p>
+<p><code>so101-wrist.png</code>, aynı yerel laboratuvarın bilek kamerası ve <strong>Tekrarla</strong>
+kontrolünü gösteren değiştirilmemiş tarayıcı ekran görüntüsüdür. Model
+<code>8e0a777881a9…</code>; küçük pencere hareketli bilek gözünün karar karesidir, büyük
+pencere bağımsız seyirci kamerasıdır. Görüntü duraklatılmış başlangıç durumunu
+gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.</p></section>
 <section id="THIRD_PARTY_NOTICES"><h1 id="THIRD_PARTY_NOTICES--kaynaklar-ve-lisans-bildirimleri">Kaynaklar ve lisans bildirimleri</h1>
 <p>Neural Lab bağımsız bir Hashtag projesidir; aşağıdaki projelerle resmi bağlantı
 veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politikaları kapsamaz.</p>

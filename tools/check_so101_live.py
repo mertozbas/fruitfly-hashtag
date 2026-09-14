@@ -33,6 +33,8 @@ def check(base,model,output):
         perception=s['robot']['perception']
         assert s['neural']['sensor_frame_id']==perception['frame_id']
         assert s['neural']['sample_time_s']==perception['sample_time_s']
+        assert perception['camera_name']==s['neural']['sensor_camera']=='wrist'
+        assert perception['camera_mount']=='gripper'
         assert set(s['eyes'])=={'rgb','depth','detection'}
     details=request('/api/model/'+s['model'])
     assert details['sha256']==s['model_sha256']

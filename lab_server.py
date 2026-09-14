@@ -324,7 +324,7 @@ def export_model(model_id: str):
 
 class Control(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
-    op: Literal["pause", "reset", "model", "camera", "behavior", "next", "sensor"]
+    op: Literal["pause", "reset", "model", "camera", "behavior", "next", "sensor", "loop"]
     behavior: Literal['odor', 'flight', 'avoidance', 'vision', 'terrain', 'so101'] = 'odor'
     paused: bool = False
     goal: tuple[float, float] = (12, 4)
@@ -338,6 +338,7 @@ class Control(BaseModel):
     dy: float = Field(0, ge=-1, le=1)
     reset_view: bool = False
     sensor: Literal['state','camera'] = 'state'
+    enabled: bool = True
 
 @app.post("/api/control")
 def control(body: Control):
@@ -357,6 +358,10 @@ def apply_control(body):
     if body.op=='sensor':
         if runtime.behavior!='so101':raise HTTPException(409,'Sensör seçimi SO-101 için kullanılabilir.')
         runtime.control(dict(op='sensor',sensor=body.sensor))
+        return {'accepted': True}
+    if body.op=='loop':
+        if runtime.behavior!='so101':raise HTTPException(409,'Görev döngüsü SO-101 için kullanılabilir.')
+        runtime.control(dict(op='loop',enabled=body.enabled))
         return {'accepted': True}
     if body.op == "model":
         m = resolve_model(body.model)

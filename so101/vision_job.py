@@ -3,12 +3,16 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import numpy as np
 from .train import train,event
 from .fit_readout import fit
 from .evaluate import evaluate
 
 
-def refine(directory,dataset,steps,seed,initial):
+def refine(directory,dataset,steps,seed,initial,camera_name='wrist'):
+    with np.load(dataset,allow_pickle=False) as data:
+        source_camera=str(data['camera_name']) if 'camera_name' in data else 'front'
+    if source_camera!=camera_name:raise ValueError('Training camera differs from the evaluation camera; collect matching demonstrations')
     directory=Path(directory);baseline=directory/'untrained.npz'
     shutil.copy2(initial,baseline)
     train(directory,dataset,steps=steps,seed=seed,resume=baseline,learning_rate=.0001,
@@ -19,9 +23,9 @@ def refine(directory,dataset,steps,seed,initial):
     fit(bc,dataset,ridges=(1e-4,))
     scored=[];development_seed=5000+(seed%10)*20
     for index,path in enumerate((baseline,bc,directory/'readout-0.0001.npz')):
-        normal=evaluate(path,episodes=8,start_seed=development_seed,sensor='camera',max_attempts=3,
+        normal=evaluate(path,episodes=8,start_seed=development_seed,sensor='camera',camera_name=camera_name,max_attempts=3,
             output=directory/f'visual-gate-{index}.json',event=event)
-        recovery=evaluate(path,episodes=8,start_seed=development_seed,sensor='camera',max_attempts=3,
+        recovery=evaluate(path,episodes=8,start_seed=development_seed,sensor='camera',camera_name=camera_name,max_attempts=3,
             disturbance='forced_release',output=directory/f'recovery-gate-{index}.json',event=event)
         scored.append((normal,recovery,path))
     # Keep the previous model on ties. Recovery must not hide a normal-task regression.
@@ -32,10 +36,10 @@ def refine(directory,dataset,steps,seed,initial):
     selected=max(eligible,key=lambda r:r[0]['success_count']+r[1]['success_count']) if eligible else reference
     shutil.copy2(selected[2],directory/'trained.npz')
     start_seed=20000+seed*100
-    normal=evaluate(directory/'trained.npz',episodes=40,start_seed=start_seed,sensor='camera',max_attempts=3,event=event)
-    recovery=evaluate(directory/'trained.npz',episodes=24,start_seed=start_seed+40,sensor='camera',max_attempts=3,
+    normal=evaluate(directory/'trained.npz',episodes=40,start_seed=start_seed,sensor='camera',camera_name=camera_name,max_attempts=3,event=event)
+    recovery=evaluate(directory/'trained.npz',episodes=24,start_seed=start_seed+40,sensor='camera',camera_name=camera_name,max_attempts=3,
         disturbance='forced_release',event=event)
-    silenced=evaluate(directory/'trained.npz',episodes=8,start_seed=start_seed,sensor='camera',max_attempts=3,
+    silenced=evaluate(directory/'trained.npz',episodes=8,start_seed=start_seed,sensor='camera',camera_name=camera_name,max_attempts=3,
         variant='silenced',event=event)
     normal.update(controls={'silenced':silenced,'untrained':reference[0]},recovery_evaluation=recovery,
         acceptance_passed=normal['success_count']>=36 and recovery['success_count']>=18
@@ -53,6 +57,7 @@ def refine(directory,dataset,steps,seed,initial):
         selected_candidate=selected[2].name,selected_model_changed=normal['selected_model_changed'],
         candidate_checkpoint_sha256=candidate_report['checkpoint_sha256'],checkpoint_sha256=normal['checkpoint_sha256'],
         attempted_training_report='candidate-training.json',
-        sensor='camera',recovery_scope='Up to 3 attempts in one unchanged scene; engineered retry supervisor resets learned memory')
+        sensor='camera',training_camera=source_camera,evaluation_camera=camera_name,
+        recovery_scope='Up to 3 attempts in one unchanged scene; engineered retry supervisor resets learned memory')
     (directory/'training.json').write_text(json.dumps(report,indent=2))
     return normal

@@ -61,7 +61,7 @@ def refinement(directory,dataset,steps,seed,initial):
     return evaluation
 
 
-def run(output,steps=3000,seed=42,dataset=None,resume=None,sensor='state'):
+def run(output,steps=3000,seed=42,dataset=None,resume=None,sensor='state',camera_name='wrist'):
     directory=Path(output);directory.mkdir(parents=True,exist_ok=True)
     if not (directory/'circuit.json').exists():prepare(directory)
     manifest(directory/'assets-manifest.json')
@@ -70,13 +70,14 @@ def run(output,steps=3000,seed=42,dataset=None,resume=None,sensor='state'):
         from .vision_job import refine
         if dataset is None:
             artifacts=Path(__file__).resolve().parents[1]/'artifacts/so101'
-            dataset=artifacts/'visual-training.npz'
-            if not dataset.exists():dataset=artifacts/'visual-demonstrations.npz'
+            prefix='wrist' if camera_name=='wrist' else 'visual'
+            dataset=artifacts/f'{prefix}-training.npz'
+            if not dataset.exists():dataset=artifacts/f'{prefix}-demonstrations.npz'
             if not dataset.exists():
                 from .vision_training import collect
                 event(status='training',stage='visual demonstrations',step=0,steps=steps)
-                dataset=collect(directory/'visual-demonstrations.npz',episodes=24,start_seed=3200)
-        return refine(directory,dataset,steps,seed,resume)
+                dataset=collect(directory/f'{prefix}-demonstrations.npz',episodes=24,start_seed=3400 if camera_name=='wrist' else 3200,camera_name=camera_name)
+        return refine(directory,dataset,steps,seed,resume,camera_name=camera_name)
     if dataset is None:
         default=Path(__file__).resolve().parents[1]/'artifacts/so101/target-demonstrations.npz'
         dataset=default if default.exists() else directory/'demonstrations/demonstrations.npz'
@@ -135,14 +136,14 @@ def run(output,steps=3000,seed=42,dataset=None,resume=None,sensor='state'):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--output',required=True);p.add_argument('--steps',type=int,default=3000)
-    p.add_argument('--seed',type=int,default=42);p.add_argument('--dataset');p.add_argument('--resume');p.add_argument('--sensor',choices=['state','camera'],default='state');a=p.parse_args()
+    p.add_argument('--seed',type=int,default=42);p.add_argument('--dataset');p.add_argument('--resume');p.add_argument('--sensor',choices=['state','camera'],default='state');p.add_argument('--camera',choices=['wrist','front'],default='wrist');a=p.parse_args()
     if not 200<=a.steps<=10000:p.error('steps must be 200..10000 per stage')
     directory=Path(a.output);directory.mkdir(parents=True,exist_ok=True)
     owns_metadata=not (directory/'run.json').exists()
     meta=dict(id=directory.name,status='training',created=datetime.now(timezone.utc).isoformat(),task='so101',steps=a.steps,seed=a.seed,owner_pid=os.getpid())
     if owns_metadata:(directory/'run.json').write_text(json.dumps(meta,indent=2))
     try:
-        result=run(a.output,a.steps,a.seed,a.dataset,a.resume,a.sensor)
+        result=run(a.output,a.steps,a.seed,a.dataset,a.resume,a.sensor,a.camera)
         meta.update(status='complete',acceptance_passed=result['acceptance_passed'])
     except BaseException:
         meta['status']='failed'

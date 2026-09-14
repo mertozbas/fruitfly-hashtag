@@ -16,14 +16,15 @@ bulunduğunda laboratuvar robotla açılır. Görev menüsünden sinek deneyleri
 geri dönebilirsiniz; aynı beyin, inceleme ve telemetri panelleri kullanılır.
 
 1. **SO-101 · Al ve yerleştir** görevini seçin. Robot 30 mm küpü kavrar,
-   kaldırır, kutuya taşır, bırakır ve elini geri çeker. Görev sonunda durur;
-   **Yeni görev** ile yeni sahne başlatılır.
+   kaldırır, kutuya taşır, bırakır ve elini geri çeker. **Tekrarla** başlangıçta
+   açıktır: görev sonunda 2 saniye beklenir ve yeni sahne başlar. Kapatırsanız
+   tek görev sonunda durur. **Duraklat** döngüyü de durdurur.
 2. Görüntüyü mouse ile döndürün, kaydırın ve yakınlaştırın. **Duraklat** hem
    fizik adımını hem ağ kararını durdurur. Görüntü 1920 × 1080 üretilir.
 3. Beyindeki nörona veya bağlantıya tıklayın. Aktivite, bağlantı çarpanı,
    anatomik kimlik, bölge, ısı haritası ve X-ray görünümü aynı hesapla eşleşir.
 4. Simülasyon üzerindeki sensör seçicisinden **fizik sensörleri** veya
-   **sentetik RGB-D kamera** seçin. Sensör değişimi yeni bölüm başlatır.
+   **Göz · Bilek RGB-D** seçin. Sensör değişimi yeni bölüm başlatır.
 5. Kutu hedefini milimetre olarak değiştirebilirsiniz: X 125–160, Y −180–−135.
    **Hedefi uygula** bölümü bu kutu konumuyla sıfırlar.
 6. **Eğitimi başlat**, seçili konum çıktılı modelin bir kopyasında çalışır.
@@ -34,9 +35,31 @@ Yeni aday fizik karşılaştırmasını iyileştirmezse önceki ağırlıklar ko
 Öğrenme kaybının azalması otomatik olarak daha iyi robot anlamına gelmez.
 İptal edilen işin günlükleri saklanır; aktif model değiştirilmez.
 
-## Görsel model: mevcut sonuç
+## Bilek gözü: mevcut çalışma
 
-UI'daki **Görsel küp · toparlanma deneysel** kaydı:
+![Bilek kamerası, aynı kararı üreten sinir ağı ve Tekrarla kontrolü](media/so101-wrist.png)
+
+Seçili kayıt **Bilek gözü · toparlanma deneysel** olarak görünür. Sinir ağı
+checkpoint'i değişmedi; sabit ön kameranın yerine bileğe bağlı kameradan
+üretilen gözlemleri kullanır. Ana HD görüntü, mouse ile çevirdiğiniz seyirci
+kamerasıdır. **Robotun gözü · Bilek kamerası** penceresi robotun algısıdır.
+
+| Bilek kamerası testi | Başarılı / toplam | Sınır ihlali |
+| --- | ---: | ---: |
+| Normal yerleştirme, tohumlar 27100–27119 | 20 / 20 | 0 |
+| Zorla bırakma, tohumlar 27120–27127 | 3 / 8 | 0 |
+| Nöron yanıtları sıfır, tohumlar 27100–27103 | 0 / 4 | 0 |
+
+Bu, bilek görüşüne geçiş için sınırlı bir doğrulamadır; yeni bir eğitim veya
+40/24 bölümlük tam kabul testi diye sunulmaz. Toparlanma deneysel kalır.
+Canlı worker ayrıca tek görevde durma, iki otomatik başarılı bölümden sonra
+üçüncüsünü başlatma ve döngü sırasında duraklatma kontrollerini geçti.
+Ham sonuçlar `artifacts/so101/wrist-camera/` altındadır. Ön kameranın eski
+sonuçları model dizinindeki `evaluation-front.json` dosyasında korunur.
+
+## Ön kamera ile görsel model sonucu
+
+Önceki ön kamera ölçümlerinde kullanılan kayıt:
 `models/lab_runs/local-so101-vision-seed44/`. Checkpoint SHA-256:
 `8e0a777881a9e88847875cc44b6dd7f510001ead55e21e6c900673873f18bbb2`.
 
@@ -62,7 +85,7 @@ düzeltici gösterimle ve yalnızca aşama okumasıyla eğitilen iki aday, geli�
 testlerinde iyileşme sağlamadı; canlı model olarak seçilmedi.
 
 Ham ölçümler `artifacts/so101/vision-final-*.json`, aday özeti
-`artifacts/so101/vision-summary.json` ve modelin `evaluation.json` dosyasındadır.
+`artifacts/so101/vision-summary.json` ve modelin `evaluation-front.json` dosyasındadır.
 Test sonuçları bu simülasyonun nesne, kamera ve çalışma alanı dağılımına aittir.
 
 ## Önceki modelin doğrulanmış sonucu
@@ -204,13 +227,23 @@ seçiminde kullanılan tohumlardan ayrı olmalıdır.
 
 ## Kamera gözlemi
 
-SO-101 canlı görünümü artık **Göz · RGB-D kamera** modunda açılır. Sol simülasyon
-alanındaki **Robotun gördüğü** penceresi, karar için gerçekten kullanılan ön
-kamera karesini gösterir. Ana HD görüntü bağımsız seyirci kamerasıdır.
+SO-101 canlı görünümü **Göz · Bilek RGB-D** modunda açılır. Sol simülasyon
+alanındaki **Robotun gözü · Bilek kamerası** penceresi, karar için gerçekten
+kullanılan bilek karesini gösterir. Ana HD görüntü bağımsız seyirci kamerasıdır.
+
+Kamera `gripper` gövdesine rijit bağlıdır; kolun ve bileğin hareketiyle birlikte
+yer değiştirir ve döner. `targetbody` ile küpü otomatik takip etmez. Kamera
+kalibrasyonu her karede bileğin dünya dönüşümüyle uygulanır. Seyirci kamerasını
+mouse ile çevirmek robotun gözünü değiştirmez. Robot üstündeki küçük kamera
+gövdesi ve braketi bu montajı görünür kılar; görsel parçalardır, temas fiziğine
+kütle veya kavrama desteği eklemezler.
+
+Bu montajın ofseti `[7,1; −55; −20]` mm ve dikey görüş açısı 90° simülasyon
+ayarlarıdır; gerçek bilek kameranızın ölçülmüş kalibrasyonu değildir.
 
 - **Algılama:** renk görüntüsü ve tespit edilen kırmızı küpün işareti.
 - **Renk:** aynı karara giren ham RGB görüntüsü.
-- **Derinlik:** aynı karenin sabit 200–1000 mm ölçekli derinlik görünümü.
+- **Derinlik:** aynı karenin sabit 20–450 mm ölçekli derinlik görünümü.
 - **⤢:** göz penceresini simülasyon alanı içinde büyütür; beyin paneli yerinde kalır.
 - Kare numarası ve simülasyon zamanı, aynı paketteki sinir ağı kararına bağlıdır.
   Duraklatmada yeni algı karesi üretilmez. Önizleme ek bir render çağrısı yapmaz.
@@ -240,9 +273,11 @@ yeniden başlatır. Kolun ve küpün konumu sıfırlanmaz; bütün hareket hedef
 yine sinir ağı üretir. Yeniden deneme zamanlaması mühendislik kuralıdır,
 ağın bağımsız olarak öğrendiği bir davranış diye sunulmaz.
 
-Başarıda, girişim sınırında, görüş kaybında veya fizik sınırı ihlalinde görev
-durur. **Yeni görev** yeni bir sahne oluşturur; bu, aynı sahnedeki girişim
-sayacından ayrıdır. Durmuş görevin **Devam et** düğmesi yeni görevi başlatır.
+**Tekrarla** açıksa başarı, girişim sınırı veya süre sonunda 2 saniye beklenir
+ve yeni sahneyle döngü sürer. Tekrarla kapalıysa görev sonunda durur.
+Görüş kaybı ve fizik sınırı ihlali döngüyü de durdurur. **Yeni görev** yeni
+bir sahne oluşturur; bu, aynı sahnedeki üç girişim sayacından ayrıdır.
+Durmuş görevin **Devam et** düğmesi yeni görevi başlatır.
 
 ### Görsel eğitim
 
@@ -259,12 +294,13 @@ ayrılır; son fizik testlerinin tohumları ayrıca ayrıdır.
 
 ```bash
 .venv/bin/python -m so101.vision_training \
-  --output artifacts/so101/visual-demonstrations.npz --episodes 24 --start-seed 3200
+  --output artifacts/so101/wrist-demonstrations.npz --episodes 24 --start-seed 3400 \
+  --camera wrist
 
 .venv/bin/python -m so101.train_job \
-  --output models/lab_runs/my-so101-vision --steps 10000 --seed 44 \
-  --resume models/lab_runs/local-so101-validated-seed42/trained.npz \
-  --sensor camera --dataset artifacts/so101/visual-demonstrations.npz
+  --output models/lab_runs/my-so101-wrist --steps 10000 --seed 46 \
+  --resume models/lab_runs/local-so101-vision-seed44/trained.npz \
+  --sensor camera --camera wrist --dataset artifacts/so101/wrist-demonstrations.npz
 ```
 
 Adaylar kamera ve zorla bırakma testleriyle önceki modelle karşılaştırılır.
@@ -278,16 +314,20 @@ bitmesi kabul eşiğinin geçildiği anlamına gelmez.
 
 ```bash
 .venv/bin/python -m so101.vision_training \
-  --output artifacts/so101/visual-training.npz --episodes 24 --start-seed 3260 \
-  --learner models/lab_runs/my-so101-vision/trained.npz \
-  --append-source artifacts/so101/visual-demonstrations.npz
+  --output artifacts/so101/wrist-training.npz --episodes 24 --start-seed 3460 \
+  --learner models/lab_runs/my-so101-wrist/trained.npz --camera wrist \
+  --append-source artifacts/so101/wrist-demonstrations.npz
 ```
 
 Bu toplamada ilk bölümü ağ sürer; öğretici daha sonra kontrolü devralıp etiketli
 gösterimi tamamlar. Yalnızca başarılı bölümler eğitim dosyasına girer; bütün
 başarısız sonuçlar JSON raporunda saklanır. Eğitim sırasında kullanılan önceki
-aşama geri bildirimi de kaydedilir. UI varsa `visual-training.npz` dosyasını,
-yoksa ilk görsel gösterimleri kullanır. Her eğitim işi en fazla bir saat sürer;
+aşama geri bildirimi ve kamera montajı da kaydedilir. UI varsa `wrist-training.npz`
+dosyasını, yoksa `wrist-demonstrations.npz` dosyasını kullanır; veri yoksa bilek
+gösterimlerini toplar. Ön kamera verileri bilek verisine sessizce karıştırılmaz.
+Eski ön kamera deneylerini yeniden üretmek için toplama, eğitim ve
+`so101.evaluate` komutlarında `--camera front` seçin.
+Her eğitim işi en fazla bir saat sürer;
 iptal veya zaman aşımı mevcut canlı modeli değiştirmez.
 
 ## Yerel hazırlık

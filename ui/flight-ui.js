@@ -45,9 +45,10 @@ export function behaviorUI(task='odor'){
   $('eye-preview').classList.toggle('robot-eye',task==='so101');
   $('eye-preview').classList.remove('expanded');
   $('eye-expand').setAttribute('aria-expanded','false');
-  $('eye-title').textContent=task==='so101'?'ROBOTUN GÖRDÜĞÜ · SİM KAMERA':'GÖZ GİRDİSİ · SOL / SAĞ';
+  $('eye-title').textContent=task==='so101'?'ROBOTUN GÖZÜ · BİLEK KAMERASI':'GÖZ GİRDİSİ · SOL / SAĞ';
   for(const id of ['eye-tabs','eye-expand','eye-status','eye-detail','eye-sync','eye-task'])$(id).classList.toggle('hidden',task!=='so101');
   $('robot-sensor').classList.toggle('hidden',task!=='so101');
+  $('robot-loop-label').classList.toggle('hidden',task!=='so101');
   $('reward-label').textContent=task==='so101'?'BÖLÜM ÖDÜLÜ':'ANLIK ÖDÜL';
   $('signal-title').closest('.signal-panel').classList.toggle('robot-telemetry',task==='so101');
   $('train').innerHTML=flight?'<span>▶</span> Yönelme ağını eğit':'<span>▶</span> Eğitimi başlat';
