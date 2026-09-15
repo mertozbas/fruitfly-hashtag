@@ -41,6 +41,8 @@ class CameraCalibrationCommand(BaseModel):
     session:str=Field(pattern=r'^[0-9a-f]{32}$')
     role:Literal['wrist','top']
     op:Literal['enable','capture','solve','save','reset','workspace']
+    target_medium:Literal['printed','screen']|None=None
+    target_square_mm:float|None=Field(default=None,ge=1,le=100,allow_inf_nan=False)
     device_label:str=Field(default='',max_length=64)
     confirmed:bool=False
     base_pose:list[float]|None=Field(default=None,min_length=6,max_length=6)

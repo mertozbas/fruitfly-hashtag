@@ -1,5 +1,6 @@
 """Known-projection camera fixtures; no camera is opened."""
 from pathlib import Path
+import json
 import tempfile
 import time
 import unittest
@@ -20,6 +21,49 @@ def camera_samples():
 
 
 class CameraCalibrationTests(unittest.TestCase):
+    def test_unknown_screen_scale_preserves_lens_but_never_claims_metric_pose(self):
+        samples,k,_=camera_samples()
+        scaled=[dict(s,objects=s['objects']*.43) for s in samples]
+        result=solve_lens(scaled,(1280,720))
+        np.testing.assert_allclose(np.array(result['camera_matrix'])[[0,1],[0,1]],k[[0,1],[0,1]],rtol=.02)
+        with tempfile.TemporaryDirectory() as temp:
+            c=CameraCalibration(temp,'top',0)
+            c.command(dict(op='enable',command_id='1',device_label='screen test',confirmed=True,target_medium='screen'))
+            self.assertIsNone(c.square_mm);self.assertFalse(c.state()['metric_board'])
+            c.samples=samples;c.size=(1280,720);c.command(dict(op='solve',command_id='2'))
+            self.assertIsNone(c.candidate['board']['square_m'])
+            c.command(dict(op='save',command_id='3',confirmed=True))
+            loaded=CameraCalibration(temp,'top',0,Path(temp)/'calibration.json')
+            loaded.command(dict(op='enable',command_id='4',device_label='screen test',confirmed=True))
+            self.assertIsNone(loaded.square_mm)
+            raster=board().generateImage((450,600));frame=np.full((720,1280,3),255,np.uint8)
+            frame[60:660,415:865]=cv2.cvtColor(raster,cv2.COLOR_GRAY2BGR)
+            loaded.observe(frame,1);self.assertEqual(loaded.state()['detected_corners'],35)
+            self.assertIsNone(loaded.live_pose)
+            with self.assertRaisesRegex(ValueError,'ölçülmedi'):
+                loaded.command(dict(op='workspace',command_id='5',confirmed=True))
+            loaded.command(dict(op='enable',command_id='6',device_label='screen test',confirmed=True,target_medium='screen',target_square_mm=8.6))
+            loaded.observe(frame,2);self.assertIsNotNone(loaded.live_pose)
+            self.assertEqual(loaded.saved['camera_matrix'],c.saved['camera_matrix'])
+            loaded.command(dict(op='workspace',command_id='7',confirmed=True))
+            self.assertAlmostEqual(loaded.workspace['board']['square_m'],.0086)
+            self.assertFalse(loaded.workspace['physical_alignment_verified'])
+
+    def test_screen_scale_cannot_change_halfway_through_lens_samples(self):
+        samples,_,_=camera_samples()
+        with tempfile.TemporaryDirectory() as temp:
+            c=CameraCalibration(temp,'top',0)
+            enable=dict(op='enable',command_id='1',device_label='screen test',confirmed=True,target_medium='screen',target_square_mm=9.)
+            c.command(enable);c.size=(1280,720);c.frame_time=time.monotonic();c.frame_id=1
+            c.corners=samples[0]['pixels'];c.ids=samples[0]['ids'][:,None];c.area=.1;c.sharpness=100
+            c.command(dict(op='capture',command_id='2'))
+            record=json.loads((Path(temp)/'observations.json').read_text())
+            self.assertAlmostEqual(record['board']['square_m'],.009)
+            with self.assertRaisesRegex(ValueError,'sıfırla'):c.command(dict(enable,target_square_mm=10.))
+            self.assertEqual(c.square_mm,9.)
+            for value in (True,'9',float('nan'),0,101):
+                with self.assertRaises(ValueError):c.command(dict(enable,target_square_mm=value))
+
     def test_lens_solution_matches_known_camera_and_heldout_views(self):
         samples,k,_=camera_samples();result=solve_lens(samples,(1280,720));actual=np.array(result['camera_matrix'])
         self.assertLess(result['rms_px'],.15);self.assertLess(max(result['holdout_rms_px']),.2)

@@ -33,6 +33,16 @@ class HardwareAPITests(unittest.TestCase):
             self.assertEqual(self.client.post('/api/hardware/connect',json=dict(port='x',calibration_id='y',torque=True)).status_code,422)
             popen.assert_not_called()
 
+    def test_screen_calibration_requires_finite_measured_scale_or_explicit_unknown(self):
+        body=dict(session='a'*32,role='top',op='enable',device_label='top',confirmed=True,target_medium='screen')
+        with patch.object(self.hardware.commissioning,'camera_command',return_value={}) as command:
+            for value in (True,'9',0,101):
+                self.assertEqual(self.client.post('/api/hardware/camera/calibration',json=dict(body,target_square_mm=value)).status_code,422)
+            command.assert_not_called()
+            for value in (None,9.5):
+                self.assertEqual(self.client.post('/api/hardware/camera/calibration',json=dict(body,target_square_mm=value)).status_code,200)
+                self.assertEqual(command.call_args.args[2]['target_square_mm'],value)
+
     def test_calibration_absence_paths_and_schemas_fail_closed(self):
         with patch('subprocess.Popen') as popen:
             self.assertEqual(self.client.post('/api/hardware/calibration/start',json=dict(port='/dev/random',robot_id='follower')).status_code,409)

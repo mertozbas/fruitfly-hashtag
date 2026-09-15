@@ -40,7 +40,7 @@ def check(base,output):
             elif path=='camera/stop':fixture['cameras'][body['role']]={}
             elif path=='camera/calibration':
                 s=fixture['cameras'][body['role']]['calibration'];op=body['op']
-                if op=='enable':s.update(enabled=True,device_label=body['device_label'])
+                if op=='enable':s.update(enabled=True,device_label=body['device_label'],target_medium=body.get('target_medium','printed'),target_square_mm=body.get('target_square_mm'),metric_board=body.get('target_square_mm') is not None)
                 elif op=='capture':s['sample_count']+=1
                 elif op=='solve':s['candidate']=dict(session=cid,camera_matrix=[[900,0,640],[0,900,360],[0,0,1]],rms_px=.19,holdout_rms_px=[.25,.30,.2],training_samples=15,holdout_samples=3)
                 elif op=='save':
@@ -85,6 +85,18 @@ def check(base,output):
         checks['heldout_metrics_visible']='0.19 / 0.30 px' in page.locator('#cc-error').inner_text()
         page.locator('#cc-save-ack').check();page.locator('#cc-save').click();page.wait_for_timeout(350)
         checks['lens_saved']='Profil kaydedildi' in page.locator('#cc-result').inner_text()
+        page.locator('#cc-medium').select_option('screen')
+        checks['screen_never_assumes_printed_scale']=page.locator('#cc-square-mm').input_value()==''
+        page.wait_for_timeout(1100)
+        checks['poll_preserves_target_edit']=page.locator('#cc-medium').input_value()=='screen'
+        page.locator('#cc-enable').click();page.wait_for_timeout(350)
+        checks['unknown_scale_sent']=requests[-1][1].get('target_square_mm') is None
+        page.locator('#cc-workspace-tab').click();page.locator('#cc-plane-ack').check()
+        checks['unknown_scale_locks_workspace']=page.locator('#cc-workspace-save').is_disabled()
+        page.locator('#cc-lens-tab').click();page.locator('#cc-square-mm').fill('9.5');page.locator('#cc-enable').click();page.wait_for_timeout(350)
+        checks['measured_scale_sent']=requests[-1][1].get('target_square_mm')==9.5
+        page.locator('#cc-role').select_option('top');page.locator('#cc-role').select_option('wrist');page.wait_for_timeout(100)
+        checks['screen_scale_rehydrated']=page.locator('#cc-medium').input_value()=='screen' and page.locator('#cc-square-mm').input_value()=='9.5'
         page.locator('#cc-workspace-tab').click();page.locator('#cc-base').check();page.locator('#cc-plane-ack').check()
         fits('workspace_fits','#hw-camera-calibration');before=len(requests);page.locator('#cc-workspace-save').click()
         checks['blank_base_pose_rejected']=len(requests)==before and 'Altı poz alanını' in page.locator('#hw-message').inner_text()

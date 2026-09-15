@@ -9,8 +9,8 @@ from .calibration_contract import atomic_json,digest
 BOARD=dict(squares=[6,8],square_m=.020,marker_m=.014,dictionary='DICT_4X4_50')
 
 
-def board():
-    return cv2.aruco.CharucoBoard((6,8),.020,.014,cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50))
+def board(square_mm=20.):
+    return cv2.aruco.CharucoBoard((6,8),square_mm/1000,square_mm*.7/1000,cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50))
 
 
 def transform(rvec,tvec):
@@ -61,8 +61,12 @@ class CameraCalibration:
         self.enabled=False;self.corners=None;self.ids=None;self.frame_time=0.;self.frame_id=None
         self.sharpness=0.;self.area=0.;self.warning=None;self.candidate=None;self.saved=None;self.workspace=None
         self.last_command_id=None;self.live_pose=None;self.revision=0;self.label=None
+        self.target_medium='printed';self.square_mm=20.
         if profile:
             self.saved=json.loads(Path(profile).read_text());self.label=self.saved['device_label']
+            self.target_medium=self.saved.get('target_medium','printed')
+            self.square_mm=self.saved.get('target_square_mm',20.)
+            self.board=board(self.square_mm or 20.);self.detector=cv2.aruco.CharucoDetector(self.board)
 
     def observe(self,frame,sequence):
         self.size=(frame.shape[1],frame.shape[0]);self.frame_id=sequence;self.frame_time=time.monotonic()
@@ -76,7 +80,7 @@ class CameraCalibration:
         if self.ids is not None and len(self.ids)>=12:
             points=self.corners.reshape(-1,2);self.area=float(cv2.contourArea(cv2.convexHull(points)))/(self.size[0]*self.size[1])
             output=frame.copy();cv2.aruco.drawDetectedCornersCharuco(output,self.corners,self.ids,(70,220,200))
-            if self.saved:
+            if self.saved and self.square_mm is not None:
                 try:
                     objects=self.board.getChessboardCorners()[self.ids.flatten()]
                     k=np.array(self.saved['camera_matrix']);d=np.array(self.saved['distortion'])
@@ -92,7 +96,15 @@ class CameraCalibration:
         return dict(enabled=self.enabled,role=self.role,session=self.directory.name,revision=self.revision,device_label=self.label,
             detected_corners=0 if self.ids is None else len(self.ids),sample_count=len(self.samples),required_samples=18,max_samples=30,
             coverage=self.area,sharpness=self.sharpness,warning=self.warning,candidate=self.candidate,saved=self.saved,
-            workspace=self.workspace,live_pose=self.live_pose,last_command_id=self.last_command_id)
+            workspace=self.workspace,live_pose=self.live_pose,last_command_id=self.last_command_id,
+            target_medium=self.target_medium,target_square_mm=self.square_mm,metric_board=self.square_mm is not None)
+
+    def target_metadata(self):
+        metric=self.square_mm is not None
+        return dict(target_medium=self.target_medium,target_square_mm=self.square_mm,metric_board=metric,
+            board=dict(BOARD,square_m=self.square_mm/1000 if metric else None,
+                marker_m=self.square_mm*.7/1000 if metric else None),
+            solver_square_unit=(self.square_mm or 20.)/1000)
 
     def command(self,command):
         self.last_command_id=command['command_id'];self.warning=None;self.revision+=1
@@ -100,9 +112,21 @@ class CameraCalibration:
         if op=='enable':
             if command.get('confirmed') is not True or not command.get('device_label','').strip():raise ValueError('Fiziksel kamera kimliği doğrulanmalı')
             if self.saved and command['device_label']!=self.saved['device_label']:raise ValueError('Ad kayıtlı kamera profiliyle eşleşmiyor; aynı kamerayı doğrula veya yeni lens ölçümü başlat')
+            medium=command.get('target_medium') or self.target_medium
+            square=command.get('target_square_mm')
+            if command.get('target_medium') is None and square is None:square=self.square_mm
+            elif medium=='printed' and square is None:square=20.
+            if medium not in ('printed','screen') or (square is not None and (type(square) not in (int,float) or not np.isfinite(square) or not 1<=square<=100)):raise ValueError('Pano türü veya ölçülmüş kare boyutu geçersiz')
+            changed=(medium,square)!=(self.target_medium,self.square_mm)
+            if changed and self.samples and not self.saved:raise ValueError('Pano ölçeği değişti; önce ölçümü sıfırla')
+            if changed:
+                self.board=board(square or 20.);self.detector=cv2.aruco.CharucoDetector(self.board)
+                self.corners=self.ids=self.live_pose=self.workspace=None;self.frame_time=0.
+                if self.saved:self.samples=[];self.candidate=None # Keep lens intrinsics; remeasure reference pose.
+            self.target_medium,self.square_mm=medium,square
             self.enabled=True;self.label=command['device_label'];return
         if op=='reset':
-            self.samples=[];self.candidate=None;self.saved=None;self.workspace=None;self.warning='Yeni lens ölçümü başlatıldı; önceki kayıt korunuyor.';return
+            self.samples=[];self.candidate=None;self.saved=None;self.workspace=self.live_pose=None;self.warning='Yeni lens ölçümü başlatıldı; önceki kayıt korunuyor.';return
         if not self.enabled:raise ValueError('Önce kamera kimliğini doğrulayıp pano algılamasını aç')
         if op=='capture':
             if self.candidate:raise ValueError('Yeni kareler için önce ölçümü sıfırla')
@@ -116,19 +140,22 @@ class CameraCalibration:
                 if len(common)>=10 and np.mean(np.linalg.norm(pixels.reshape(-1,2)[a]-s['pixels'].reshape(-1,2)[b],axis=1))<.025*np.hypot(*self.size):
                     raise ValueError('Bu açı önceki kareye çok benziyor; panoyu taşı veya eğ')
             self.samples.append(dict(objects=self.board.getChessboardCorners()[ids].copy(),pixels=pixels,ids=ids,size=self.size))
-            atomic_json(self.directory/'observations.json',dict(board=BOARD,frames=[{k:v.tolist() if isinstance(v,np.ndarray) else v for k,v in s.items()} for s in self.samples]))
+            atomic_json(self.directory/'observations.json',dict(**self.target_metadata(),frames=[{k:v.tolist() if isinstance(v,np.ndarray) else v for k,v in s.items()} for s in self.samples]))
         elif op=='solve':
             self.candidate=solve_lens(self.samples,self.size)
-            self.candidate.update(device_label=self.label,role=self.role,index_at_capture=self.index,created=time.time(),session=self.directory.name)
+            self.candidate.update(device_label=self.label,role=self.role,index_at_capture=self.index,created=time.time(),session=self.directory.name,
+                **self.target_metadata())
         elif op=='save':
             if not self.candidate or command.get('confirmed') is not True:raise ValueError('Önce geçerli sonucu hesaplayıp onayla')
             if (self.directory/'calibration.json').exists():raise ValueError('Bu oturumun kaydı zaten mevcut; yeni kalibrasyon için yeni kamera oturumu aç')
             atomic_json(self.directory/'calibration.json',self.candidate);self.saved=self.candidate
         elif op=='workspace':
+            if self.square_mm is None:raise ValueError('Ekrandaki gerçek kare boyutu ölçülmedi; yalnızca lens kalibrasyonu kullanılabilir')
             if not self.saved or not self.live_pose or time.monotonic()-self.frame_time>1:raise ValueError('Kaydedilmiş lens profili ve güncel pano pozu gerekli')
             if command.get('confirmed') is not True:raise ValueError('Pano ölçüsü ve masaya sabitliği doğrulanmalı')
             camera_from_board=np.array(self.live_pose['camera_from_board']);anchor=command.get('base_pose')
-            self.workspace=dict(schema=1,board=BOARD,role=self.role,camera_profile_session=self.saved['session'],
+            self.workspace=dict(schema=1,board=dict(BOARD,square_m=self.square_mm/1000,marker_m=self.square_mm*.7/1000),
+                target_medium=self.target_medium,target_square_mm=self.square_mm,role=self.role,camera_profile_session=self.saved['session'],
                 frame_id=self.frame_id,camera_from_board=camera_from_board.tolist(),reprojection_px=self.live_pose['reprojection_px'],
                 base_from_board=None if anchor is None else base_board(anchor).tolist(),
                 base_from_camera=None if anchor is None else (base_board(anchor)@np.linalg.inv(camera_from_board)).tolist(),

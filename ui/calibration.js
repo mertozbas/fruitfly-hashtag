@@ -20,7 +20,7 @@ export function setupCalibration({dialog,action,message,options,getState}){
     <div id="cc-identity-controls"><label class="cal-ack"><input id="cc-identity" type="checkbox"><span>Önizlemeden doğru kamerayı doğruladım; lens / odak ayarını sabit tutacağım.</span></label>
     <div class="cal-profile"><select id="cc-profile" aria-label="Kaydedilmiş kamera profili"></select><button id="cc-load">Profille aç</button><button id="cc-enable">Panoyu algıla</button></div></div>
     <nav class="cal-subtabs"><button id="cc-lens-tab" class="active">Lens ölçümü</button><button id="cc-workspace-tab">Masa / robot referansı</button></nav>
-    <div id="cc-lens"><p class="hw-small">6×8 ChArUco · 20 mm kare. Panoyu %100 boyutta bas ve 50 mm çizgiyi cetvelle kontrol et. En az 18 net kare: görüntünün farklı bölgeleri ve iki eksende farklı eğimler.</p><div class="cal-camera-metrics"><div><span>KÖŞE</span><b id="cc-corners">—</b></div><div><span>KARE</span><b id="cc-count">0 / 18</b></div><div><span>RMS / AYRI KARE</span><b id="cc-error">—</b></div></div><div id="cc-samples" class="cal-samples" aria-label="Toplanan kalibrasyon kareleri"></div><div class="cal-buttons"><button id="cc-capture">Kareyi al</button><button id="cc-solve">Hesapla</button><button id="cc-reset">Ölçümü sıfırla</button></div><div id="cc-result" class="hw-small"></div><label class="cal-ack"><input id="cc-save-ack" type="checkbox"><span>Pano ölçeğini ve sonuçları kontrol ettim.</span></label><button id="cc-save" class="primary wide">Lens profilini kaydet</button></div>
+    <div id="cc-lens"><p class="hw-small">6×8 ChArUco · 18 net kare; farklı bölgeler ve iki eksende eğimler. Ekran boyutu sabit kalmalı. <a href="/assets/calibration-target.html" target="_blank" rel="noopener">Ekran panosunu aç ↗</a></p><div class="cal-two"><div><label for="cc-medium">Pano</label><select id="cc-medium"><option value="printed">Basılı · 20 mm kare</option><option value="screen">Telefon / tablet ekranı</option></select></div><div><label for="cc-square-mm">Ölçülmüş kare kenarı · mm</label><input id="cc-square-mm" type="number" min="1" max="100" step="any" placeholder="Ekranda ölçülmediyse boş bırak"></div></div><div class="cal-camera-metrics"><div><span>KÖŞE</span><b id="cc-corners">—</b></div><div><span>KARE</span><b id="cc-count">0 / 18</b></div><div><span>RMS / AYRI KARE</span><b id="cc-error">—</b></div></div><div id="cc-samples" class="cal-samples" aria-label="Toplanan kalibrasyon kareleri"></div><div class="cal-buttons"><button id="cc-capture">Kareyi al</button><button id="cc-solve">Hesapla</button><button id="cc-reset">Ölçümü sıfırla</button></div><div id="cc-result" class="hw-small"></div><label class="cal-ack"><input id="cc-save-ack" type="checkbox"><span>Sonuçları ve pano ölçüsünün kayıt durumunu kontrol ettim.</span></label><button id="cc-save" class="primary wide">Lens profilini kaydet</button></div>
     <div id="cc-workspace" class="hidden"><p class="hw-small">Kaydedilmiş lens profiliyle pano masada sabitken pozu ölç. O: panonun sol üst dış köşesi; X sağa, Y aşağı. Önizlemede eksenler görünür. Bu kayıt nesne yüksekliği / derinlik sensörü değildir.</p><label class="cal-ack"><input id="cc-base" type="checkbox"><span>Panonun robot tabanına göre ölçülmüş pozunu gireceğim.</span></label><div id="cc-base-inputs" class="cal-pose hidden">${['X mm','Y mm','Z mm','Roll °','Pitch °','Yaw °'].map((label,i)=>`<label>${label}<input id="cc-pose-${i}" type="number" step="any" placeholder="Ölçüm"></label>`).join('')}</div><p class="hw-small">Dönüş sırası: Rz(yaw) · Ry(pitch) · Rx(roll). Taban ölçümü girilmezse yalnız pano–kamera dönüşümü kaydedilir.</p><label class="cal-ack"><input id="cc-plane-ack" type="checkbox"><span>Pano ölçüsü doğru, pano masaya sabit ve bu karedeki yerleşimi doğruladım.</span></label><button id="cc-workspace-save" class="primary wide">Güncel pano pozunu kaydet</button><div id="cc-workspace-result" class="hw-small"></div><p class="cal-warning">Bilek hareket edince kamera pozu değişir. Bu kayıt el–göz montaj kalibrasyonu değildir; güncel pano görünmeden bilek pozu kullanılamaz.</p></div>
     <p id="cc-warning" class="cal-warning" role="status">Önce sağdaki önizlemede kamerayı aç.</p><a id="cc-report" class="cal-report hidden" target="_blank" rel="noopener">Kamera / masa kaydını aç ↗</a>
   </div>`);
@@ -73,8 +73,11 @@ export function setupCalibration({dialog,action,message,options,getState}){
   $('mc-cancel').onclick=()=>{const s=getState()?.calibration_session;if(s)action('calibration/command',{session:s.session,revision:s.revision,op:'cancel'},'İptal ve geri yükleme sonucu bekleniyor…');};
   function cameraState(){return getState()?.cameras[$('cc-role').value]||{};}
   function cameraAction(op,extra={}){const camera=cameraState();if(!camera.session){message('Önce seçili kameranın önizlemesini aç.',true);return;}action('camera/calibration',{session:camera.session,role:$('cc-role').value,op,...extra},'Kamera ölçüm işlemi gönderildi.');}
+  let targetKey=null;
   function updateCamera(state){
     const role=$('cc-role').value,c=state.cameras[role]||{},s=c.calibration||{},identity=$('cc-identity').checked;
+    const key=JSON.stringify([role,c.session,s.target_medium,s.target_square_mm]);
+    if(key!==targetKey){targetKey=key;$('cc-medium').value=s.target_medium||'printed';$('cc-square-mm').value=s.target_square_mm??(s.target_medium==='screen'?'':20);}
     options('cc-profile',(state.camera_profiles||[]).filter(p=>p.role===role).map(p=>({id:p.id,label:`${p.device_label} · ${p.size.join('×')} · ${p.rms_px.toFixed(2)} px`})),'Kaydedilmiş lens profili yok');
     $('cc-enable').disabled=!c.fresh||!identity||!$('cc-label').value.trim();$('cc-load').disabled=!identity||!$('cc-profile').value;
     $('cc-corners').textContent=s.detected_corners||'—';$('cc-count').textContent=`${s.sample_count||0} / 18`;
@@ -84,16 +87,21 @@ export function setupCalibration({dialog,action,message,options,getState}){
     $('cc-solve').disabled=!c.fresh||s.sample_count<18||Boolean(s.candidate);
     $('cc-reset').disabled=!c.fresh||!s.enabled;
     $('cc-save').disabled=!c.fresh||!s.candidate||!$('cc-save-ack').checked;
-    $('cc-workspace-save').disabled=!c.fresh||!s.saved||!s.live_pose||!$('cc-plane-ack').checked;
+    $('cc-workspace-save').disabled=!c.fresh||!s.saved||!s.live_pose||s.metric_board===false||!$('cc-plane-ack').checked;
     $('cc-result').textContent=result?`fx ${result.camera_matrix[0][0].toFixed(1)} · fy ${result.camera_matrix[1][1].toFixed(1)} · ${result.training_samples} hesap / ${result.holdout_samples} ayrı doğrulama karesi. ${s.saved?'Profil kaydedildi.':'Sonuç kaydedilmeyi bekliyor.'}`:'';
-    $('cc-warning').textContent=s.warning||(c.fresh?(s.enabled?'Pano algılaması açık. Lens / çözünürlük değişirse kalibrasyonu yenile.':'Kamera kimliğini doğrula ve pano algılamasını aç.'):'Önce sağdaki önizlemede bu kamerayı aç.');
+    $('cc-warning').textContent=s.warning||(s.enabled&&s.metric_board===false?'Ekran ölçeği ölçülmedi: lens hesaplanabilir; masa / robot pozu kapalı.':null)||(c.fresh?(s.enabled?'Pano algılaması açık. Lens / çözünürlük değişirse kalibrasyonu yenile.':'Kamera kimliğini doğrula ve pano algılamasını aç.'):'Önce sağdaki önizlemede bu kamerayı aç.');
     $('cc-workspace-result').textContent=s.workspace?`Pano pozu kaydedildi · ${s.workspace.reprojection_px.toFixed(2)} px. ${s.workspace.base_from_camera?'Taban dönüşümü girilen ölçümlerden hesaplandı; fiziksel doğrulama bekliyor.':'Robot tabanı ölçüsü girilmedi.'}`:'';
     $('cc-report').classList.toggle('hidden',!s.saved);$('cc-report').href=`/api/hardware/calibration/report?kind=camera&record_id=${encodeURIComponent(role+'/'+(s.workspace?s.session:s.saved?.session||''))}`;
   }
   $('cc-role').onchange=()=>{$('cc-identity').checked=false;$('cc-save-ack').checked=false;$('cc-plane-ack').checked=false;$('cc-label').value=$('cc-role').value==='wrist'?'UVC bilek':'Üst kamera';if(getState())updateCamera(getState());};
   for(const id of ['cc-identity','cc-save-ack','cc-plane-ack'])$(id).onchange=()=>{if(getState())updateCamera(getState());};
   $('cc-label').oninput=()=>{if(getState())updateCamera(getState());};
-  $('cc-enable').onclick=()=>cameraAction('enable',{device_label:$('cc-label').value,confirmed:$('cc-identity').checked});
+  $('cc-medium').onchange=()=>{$('cc-square-mm').value=$('cc-medium').value==='screen'?'':20;};
+  $('cc-enable').onclick=()=>{
+    const raw=$('cc-square-mm').value,target_square_mm=raw.trim()?Number(raw):null;
+    if(target_square_mm!==null&&(!Number.isFinite(target_square_mm)||target_square_mm<1||target_square_mm>100)){message('Kare kenarı 1–100 mm aralığında ölçülmüş bir değer olmalı.',true);return;}
+    cameraAction('enable',{device_label:$('cc-label').value,confirmed:$('cc-identity').checked,target_medium:$('cc-medium').value,target_square_mm});
+  };
   for(const op of ['capture','solve','reset'])$(`cc-${op}`).onclick=()=>cameraAction(op);
   $('cc-save').onclick=()=>cameraAction('save',{confirmed:$('cc-save-ack').checked});
   $('cc-load').onclick=async()=>{

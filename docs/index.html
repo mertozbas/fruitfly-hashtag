@@ -2336,6 +2336,36 @@ oturum açılır. Geçmiş kayıtlar Git / dağıtım paketine dahil edilmez.</p
 bağlıdır. Lens / odak / görüntü çözünürlüğü değişirse ölçümü yenileyin.
 Önceki profili <strong>Profille aç</strong> ile yüklemek, fiziksel kamera kimliği onayı ister;
 çözünürlük uyuşmazsa geometri kullanılmaz. Kamera indeksi kalıcı cihaz kimliği değildir.</p>
+<h3 id="docs-so101-hardware--yazıcı-olmadan-telefon-tablet-panosu">Yazıcı olmadan telefon / tablet panosu</h3>
+<p><strong>Ekran panosunu aç</strong> bağlantısı aynı ChArUco desenini telefona uygun gösterir.
+Telefon başka cihaz olduğu için bilgisayardaki <code>127.0.0.1</code> adresine erişemez.
+Repo kökünde yalnız pano dosyalarını sunan geçici sunucuyu açabilirsiniz:</p>
+<pre><code class="language-bash">python3 tools/serve_calibration_target.py --host BILGISAYARIN_YEREL_IP_ADRESI --port 8767 --seconds 1800
+</code></pre>
+<p>Telefonu aynı Wi-Fi ağına bağlayıp <code>http://BILGISAYARIN_YEREL_IP_ADRESI:8767/</code>
+adresini açın. macOS'ta Wi-Fi adresini <code>ipconfig getifaddr en0</code> ile görebilirsiniz.
+Bu sunucu sadece pano HTML / SVG dosyalarını verir; robot API'sini ağa açmaz.
+Belirtilen sürede veya terminalde Ctrl+C ile kapanır.</p>
+<ol>
+<li>Ekran döndürmeyi kilitleyin, otomatik kapanmayı geçici olarak kapatın; parlaklığı
+   sabitleyin. <strong>Panoyu göster</strong> düğmesinden sonra ölçeği değiştirmeyin.</li>
+<li>Kenardaki beyaz payı katmadan desenin <strong>6 karelik toplam genişliğini</strong> cetvelle
+   mm olarak ölçün. Örneğin 60 mm genişlik, 10 mm kare kenarı demektir.</li>
+<li>Bilgisayardaki kamera panelinde <strong>Telefon / tablet ekranı</strong> seçin; ölçtüğünüz
+   toplam genişliğin <strong>6'ya bölümünü</strong> kare kenarı alanına girin ve <strong>Panoyu algıla</strong>
+   düğmesine basın. Her kamera için ayrı örnekler toplayın.</li>
+<li>Ekran ölçeği değişirse sayfa panoyu gizler. Yeniden açınca tekrar ölçün ve
+   <strong>Ölçümü sıfırla</strong> ile yeni örnekler toplayın. Ekranı eğmek ölçek değiştirmez.</li>
+</ol>
+<p>Kare kenarı boş bırakılırsa lens matrisi hesaplanabilir; fiziksel metre ölçeği
+bilinmediğinden pano / robot pozu üretilmez. Ölçülmemiş ekran hiçbir zaman 20 mm
+kare kabul edilmez. Kaydedilmiş lens profiline sonradan ölçülmüş kare kenarı
+girilebilir; eski pano pozu silinir ve güncel görüntüden tekrar ölçülür.
+Bu ayrım <a href="https://docs.opencv.org/4.13.0/d9/d0c/group__calib3d.html">OpenCV'nin kamera projeksiyonu modeline</a>
+dayanır: lens parametreleri ile fiziksel pano ölçeği ayrı bilgilerdir.</p>
+<p>Yansıma, ekran çizgileri, düşük çözünürlük veya yanlış odak örnekleri bozabilir;
+geçersiz örnekler kabul edilmez. Telefonun ekran düzlemi masa yüzeyinden yüksektir:
+taban referansında telefon / kılıf yüksekliğini ölçmeden Z=0 varsaymayın.</p>
 <h3 id="docs-so101-hardware--masa-robot-referansı">Masa / robot referansı</h3>
 <p>Kaydedilmiş lens profili varken panoyu masaya sabitleyin. Önizlemede güncel pano
 köşeleri ve koordinat eksenleri görünmelidir. <strong>Masa / robot referansı</strong> sekmesinde

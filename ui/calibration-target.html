@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neural Lab · Ekran kalibrasyon panosu</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#09141c;color:#d5e6eb;font:16px/1.55 system-ui,sans-serif}main{max-width:560px;margin:auto;padding:30px 24px}h1{font-size:26px;line-height:1.2}p,li{color:#aec4cd}ol{padding-left:22px}li{margin:12px 0}button{font:inherit;background:#9de5d2;color:#08231f;border:0;border-radius:8px;padding:12px 18px;cursor:pointer}button:disabled{opacity:.4}small{display:block;margin-top:18px;color:#93b3c1}#stage[hidden],#invalid[hidden]{display:none}#stage{position:fixed;inset:0;display:grid;place-items:center;background:#555;overflow:hidden;touch-action:none}#target{background:white;flex-shrink:0}#target svg{display:block;width:100%;height:100%}#exit{position:fixed;bottom:5px;right:8px;font-size:12px;padding:5px 12px;background:#142c36;color:white}#invalid{position:fixed;inset:0;z-index:2;background:#09141c;display:grid;place-content:center;padding:28px;text-align:center}#invalid p{max-width:420px}
+</style>
+<main id="intro">
+<small>NEURAL LAB / KAMERA ÖLÇÜMÜ</small>
+<h1>Telefon, kalibrasyon panon olsun.</h1>
+<ol>
+<li>Ekran döndürmeyi kilitle, otomatik ekran kapanmasını geçici olarak kapat. Parlaklığı sabitle; yansıma ve beyaz alanlarda aşırı parlama olmasın.</li>
+<li><b>Panoyu göster</b> düğmesine bas. Bundan sonra yakınlaştırma, ekran yönünü veya pano boyutunu değiştirme.</li>
+<li>Cetvelle desenin <b>6 karelik toplam genişliğini</b> ölç. Kenardaki beyaz boşluğu katma. Bu ölçüyü mm olarak bildir; tek kare kenarı bu değerin 6'ya bölümüdür.</li>
+<li>Önce kameraya yaklaşık düz göster; sonra farklı konumlarda ve iki yönde eğerek sabit tut. Telefonu kolun hareket alanına sokma.</li>
+</ol>
+<button id="start" disabled>Panoyu göster</button>
+<p id="status" role="status">Pano yükleniyor…</p>
+<small>6×8 ChArUco · DICT_4X4_50 · Ekrandaki kareler otomatik olarak 20 mm değildir. Bu sayfa kamera açmaz ve robota komut göndermez.</small>
+</main>
+<div id="stage" hidden><div id="target" role="img" aria-label="6 sütun 8 satır ChArUco kalibrasyon panosu"></div><button id="exit">Çık</button></div>
+<div id="invalid" hidden><p>Ekranın kullanılabilir boyutu veya yakınlaştırması değişti. Pano gizlendi; örnek toplamayı durdur. Yeniden açtığında boyutu tekrar ölç ve önceki lens örneklerini sıfırla.</p><button id="reload">Yeniden aç</button></div>
+<script>
+const $=id=>document.getElementById(id);let locked=null;
+fetch('calibration-board.svg').then(r=>{if(!r.ok)throw Error('Pano yüklenemedi');return r.text();}).then(text=>{
+ const source=new DOMParser().parseFromString(text,'image/svg+xml'),pattern=source.querySelector('g[transform="translate(45 55)"]');
+ if(!pattern)throw Error('Pano biçimi uyuşmuyor');
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),background=document.createElementNS(ns,'rect');
+ svg.setAttribute('viewBox','-5 -5 130 170');background.setAttribute('x','-5');background.setAttribute('y','-5');background.setAttribute('width','130');background.setAttribute('height','170');background.setAttribute('fill','white');
+ pattern.removeAttribute('transform');svg.append(background,document.importNode(pattern,true));$('target').append(svg);
+ $('start').disabled=false;$('status').textContent='Hazır. Pano açıldığında boyutu sabitlenir.';
+}).catch(e=>{$('status').textContent=e.message;});
+$('start').onclick=()=>{
+ const w=window.visualViewport?.width||innerWidth,h=window.visualViewport?.height||innerHeight;
+ if(Math.abs((window.visualViewport?.scale||1)-1)>.01){$('status').textContent='Önce tarayıcı yakınlaştırmasını sıfırla.';return;}
+ const width=Math.floor(Math.min(w-16,(h-54)*130/170)),height=width*170/130;
+ $('target').style.width=width+'px';$('target').style.height=height+'px';locked={width,height,viewportWidth:w};
+ $('stage').hidden=false;$('intro').hidden=true;document.body.style.overflow='hidden';
+};
+function checkSize(){
+ if(!locked)return;const w=window.visualViewport?.width||innerWidth,h=window.visualViewport?.height||innerHeight;
+ if(Math.abs(w-locked.viewportWidth)>2||h<locked.height+44||Math.abs((window.visualViewport?.scale||1)-1)>.01){$('target').hidden=true;$('invalid').hidden=false;}
+}
+window.addEventListener('resize',checkSize);window.visualViewport?.addEventListener('resize',checkSize);
+$('exit').onclick=$('reload').onclick=()=>location.reload();
+</script>
+</html>

@@ -258,6 +258,42 @@ bağlıdır. Lens / odak / görüntü çözünürlüğü değişirse ölçümü 
 Önceki profili **Profille aç** ile yüklemek, fiziksel kamera kimliği onayı ister;
 çözünürlük uyuşmazsa geometri kullanılmaz. Kamera indeksi kalıcı cihaz kimliği değildir.
 
+### Yazıcı olmadan telefon / tablet panosu
+
+**Ekran panosunu aç** bağlantısı aynı ChArUco desenini telefona uygun gösterir.
+Telefon başka cihaz olduğu için bilgisayardaki `127.0.0.1` adresine erişemez.
+Repo kökünde yalnız pano dosyalarını sunan geçici sunucuyu açabilirsiniz:
+
+```bash
+python3 tools/serve_calibration_target.py --host BILGISAYARIN_YEREL_IP_ADRESI --port 8767 --seconds 1800
+```
+
+Telefonu aynı Wi-Fi ağına bağlayıp `http://BILGISAYARIN_YEREL_IP_ADRESI:8767/`
+adresini açın. macOS'ta Wi-Fi adresini `ipconfig getifaddr en0` ile görebilirsiniz.
+Bu sunucu sadece pano HTML / SVG dosyalarını verir; robot API'sini ağa açmaz.
+Belirtilen sürede veya terminalde Ctrl+C ile kapanır.
+
+1. Ekran döndürmeyi kilitleyin, otomatik kapanmayı geçici olarak kapatın; parlaklığı
+   sabitleyin. **Panoyu göster** düğmesinden sonra ölçeği değiştirmeyin.
+2. Kenardaki beyaz payı katmadan desenin **6 karelik toplam genişliğini** cetvelle
+   mm olarak ölçün. Örneğin 60 mm genişlik, 10 mm kare kenarı demektir.
+3. Bilgisayardaki kamera panelinde **Telefon / tablet ekranı** seçin; ölçtüğünüz
+   toplam genişliğin **6'ya bölümünü** kare kenarı alanına girin ve **Panoyu algıla**
+   düğmesine basın. Her kamera için ayrı örnekler toplayın.
+4. Ekran ölçeği değişirse sayfa panoyu gizler. Yeniden açınca tekrar ölçün ve
+   **Ölçümü sıfırla** ile yeni örnekler toplayın. Ekranı eğmek ölçek değiştirmez.
+
+Kare kenarı boş bırakılırsa lens matrisi hesaplanabilir; fiziksel metre ölçeği
+bilinmediğinden pano / robot pozu üretilmez. Ölçülmemiş ekran hiçbir zaman 20 mm
+kare kabul edilmez. Kaydedilmiş lens profiline sonradan ölçülmüş kare kenarı
+girilebilir; eski pano pozu silinir ve güncel görüntüden tekrar ölçülür.
+Bu ayrım [OpenCV'nin kamera projeksiyonu modeline](https://docs.opencv.org/4.13.0/d9/d0c/group__calib3d.html)
+dayanır: lens parametreleri ile fiziksel pano ölçeği ayrı bilgilerdir.
+
+Yansıma, ekran çizgileri, düşük çözünürlük veya yanlış odak örnekleri bozabilir;
+geçersiz örnekler kabul edilmez. Telefonun ekran düzlemi masa yüzeyinden yüksektir:
+taban referansında telefon / kılıf yüksekliğini ölçmeden Z=0 varsaymayın.
+
 ### Masa / robot referansı
 
 Kaydedilmiş lens profili varken panoyu masaya sabitleyin. Önizlemede güncel pano
