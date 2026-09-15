@@ -84,6 +84,50 @@ ağı kaynaklı gidiş komutu donanıma yazıldıysa konur; denemenin bütün ka
 koşullarını geçtiği anlamına gelmez. Sonuç `return_outside_tolerance` ise dönüş
 başarısızdır ve ölçülen konum tutulur.
 
+### Açıkça istenen yaklaşık 15° eklem deneyi
+
+`so101.range_probe` ayrı bir devreye alma aracıdır. `explicit_neural_range_v1`
+planı, kullanıcı görünür bir eklem testi istediğinde, çevresi kameradan incelenmiş
+**tek gövde motorunda (1–5)** en fazla 170 sayım / 14,94° hedef aralığı kullanır.
+Bu, önceki mikro testin sınırını otomatik büyüten bir tekrar değildir; önceki
+başarısız sonuçlar başarısız olarak kalır. Kıskaç bu araçtan çalıştırılamaz.
+
+Yerel görsel devrenin bias içermeyen çıkış büyüklüğü `round(span * abs(drive))`
+ile seçilen motorun genliğine çevrilir. Yön ve motor seçimi incelenmiş plandan
+gelir; altı eklemi koordine eden öğrenilmiş bir kavrama politikası değildir.
+Anatomik devrenin etkinlikleri, girdi karesinin kimliği ve komut/enkoder örnekleri
+ayrı kaydedilir. Ana UI simülasyonu gerçek kol deneyiyle değiştirilmez.
+
+Paket sınırı yalnız seçilen motorun hedef konumuna yazılmasına izin verir:
+adım en fazla 2 sayım, anlık hedef–enkoder farkı en fazla 8 sayımdır. İki sayımlık
+adım bu farkı aşacaksa yalnız **aynı 8 sayımlık sınır içinde** kalan bir sayımlık
+ara adım denenebilir. Motor izlemezse hedef uzaklaştırılmaz. Önceden ayarlanmış
+hız 20 ve sınırlı tutma torku korunur; tork/hız/EEPROM yazılmaz. Deney en fazla
+45 saniyedir; her kamera en fazla 400 ms yaşında olmalıdır.
+
+Gidişten sonra motorun **deney öncesindeki yerel hedef kaydına** dönülür; yük
+altındaki enkoder farkını sıfırlamak için tutma hedefi yeniden tanımlanmaz.
+Kaba hareket testi için dönüş toleransı 8 sayım / 0,70°'dir; bu bir hassasiyet
+veya kalibrasyon başarı ölçümü değildir. Hata durumunda ölçülen konum tutulur.
+`recorded_range_return_v1`, ayrı bir güncel planla yalnız daha önce incelenmiş
+aralığın içinden kayıtlı başlangıç hedefine dönüş yapabilir; sinir ağı eylemi
+olarak raporlanmaz. Otomatik yeniden deneme veya motorları sırayla tarama yoktur.
+
+Sıcaklık 50°C veya üstündeyse, voltaj 6–13,2 V dışında kalırsa ya da başka bir
+eklem 8 sayımdan fazla kayarsa deney durur. Yeni kayıtlar hatalı okumanın motor
+kimliğini, sıcaklığını ve voltajını da içerir. Geçici bir alarm filtrelenerek
+hareket sürdürülmez. Servo kayıt adresleri ve 4096 sayım/devir çözünürlüğü
+[LeRobot'un STS3215 tablosuyla](https://github.com/huggingface/lerobot/blob/main/src/lerobot/motors/feetech/tables.py)
+karşılaştırılmıştır.
+
+**Yerel fiziksel sonuç:** Bilek dönüşünde 170 sayım hedefe karşılık 165 sayım
+(14,50°) gerçek hareket ölçüldü. Dönüş tamamlanmadı; takip denetimi ve sonraki
+sınırlı dönüşte elektriksel/sıcaklık denetimi işlemi durdurdu. Kol sabitken yapılan
+ayrı ham paket incelemesinde kıskaç sıcaklığının 39°C civarından tek okumada
+57°C'ye çıkıp geri döndüğü de görüldü. Bu bulgu tek başına gerçek aşırı ısınma,
+besleme veya sensör arızası teşhisi değildir. Tutarsızlık çözülmediği için diğer
+motorların 15° testleri ve küpü alma denemesi yapılmadı.
+
 ## 1. Kol bağlı değilken hazırlık
 
 Kurulu Neural Lab çalışma dizininde:
@@ -104,7 +148,8 @@ dizininde**, bilimsel ortam kurulduktan sonra çalıştırın.
 | pyserial | 3.5 | USB seri haberleşmesi |
 | feetech-servo-sdk | 1.0.0 | STS3215 tanılaması ve sınırlı kalibrasyon yazımı |
 | opencv-python-headless | 4.13.0.92 | USB görüntüsü, ChArUco lens / pano ölçümü |
-| numpy | 2.2.6 | Kamera görüntü dizileri |
+| numpy | 2.5.3 | Kamera dizileri ve bilimsel ortamla aynı sinir ağı hesabı |
+| scipy | 1.18.1 | Anatomik görsel devrenin seyrek matrisleri |
 
 UI'da sağ üstten **Gerçek kol** panelini açın. **Sürücü ortamı hazır** ve varsa
 yerel kalibrasyon dosyası görünür. **Envanteri yenile** yalnızca işletim sisteminin
