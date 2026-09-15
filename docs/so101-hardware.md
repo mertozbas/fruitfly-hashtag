@@ -330,6 +330,35 @@ algısı ayrıca doğrulanır. Lens kayıtları `.runtime/hardware/cameras/<rol>
 altında `calibration.json`, köşe gözlemleri `observations.json`, masa kaydı
 `workspace.json` olarak tutulur. Tam kamera kareleri bu ölçüm akışında diske kaydedilmez.
 
+### Sabit taban noktalarından ölçüm adayı
+
+`so101.base_registration`, üst kamera görüntüsündeki dört işaretli montaj deliği
+merkezini, aynı taban parçasının 3B modelindeki merkezlerle eşler. A/B öndeki,
+C/D arkadaki deliklerdir. İşaretler deliğin üst yüzeyine düz oturmalı; kelepçe
+sökülmemelidir. Fiziksel taban parçası bu çizimle eşleşmiyorsa bu noktalar kullanılmaz.
+
+![SO-101 tabanında A, B, C ve D ölçüm noktaları](media/so101-base-landmarks.png)
+
+Bu mühendislik aracı dosyalardan bir **ölçüm adayı** üretir; motor veya kamera açmaz.
+Gözlem JSON'u `landmarks_path`, `profile_path`, A/B/C/D anahtarlı `pixels` ve
+kaynak görüntüyü tanımlayan `source_frame` içerir. Nokta manifestinde metre cinsinden
+`points_m`, kaynak `model_path`, `model_sha256` ve `mesh_sha256` bulunur.
+
+```bash
+.runtime/hardware-venv/bin/python -m so101.base_registration \
+  --observations /tam/yol/taban-gozlemleri.json \
+  --output /tam/yol/yeni-taban-adayi.json
+```
+
+Araç lens geometrisini, model özetlerini, nokta sırasını ve görüntü hatasını denetler;
+birbirine yakın iki düzlemsel çözümü `ambiguous` olarak bildirir. Çıktıdaki
+`base_from_camera` **MuJoCo modelinin taban çerçevesindedir**; masa yüzeyi veya
+ilk motorun eksen merkezi olarak yorumlanmaz. Düşük görüntü hatası, baskı ölçüsünü
+ve işaretlerin fiziksel merkezlenmesini doğrulamaz. Bağımsız fiziksel kontrol,
+eklem eşlemesi ve masa ölçümü tamamlanana kadar `physical_alignment_verified`,
+`table_plane_verified` ve `execution_allowed` false kalır. Bu dosya tek başına
+UI hareket kilidini açmaz.
+
 ## 7. Simülasyondan gerçek harekete kalan işler
 
 Bağlantı tanılamasından sonra gerçek koldan ölçüm alarak şu aşamalar tamamlanır:

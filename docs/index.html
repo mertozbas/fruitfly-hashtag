@@ -2394,6 +2394,28 @@ yerinden oynarsa onun pozu da yeniden ölçülmelidir.</p>
 algısı ayrıca doğrulanır. Lens kayıtları <code>.runtime/hardware/cameras/&lt;rol&gt;/&lt;oturum&gt;/</code>
 altında <code>calibration.json</code>, köşe gözlemleri <code>observations.json</code>, masa kaydı
 <code>workspace.json</code> olarak tutulur. Tam kamera kareleri bu ölçüm akışında diske kaydedilmez.</p>
+<h3 id="docs-so101-hardware--sabit-taban-noktalarından-ölçüm-adayı">Sabit taban noktalarından ölçüm adayı</h3>
+<p><code>so101.base_registration</code>, üst kamera görüntüsündeki dört işaretli montaj deliği
+merkezini, aynı taban parçasının 3B modelindeki merkezlerle eşler. A/B öndeki,
+C/D arkadaki deliklerdir. İşaretler deliğin üst yüzeyine düz oturmalı; kelepçe
+sökülmemelidir. Fiziksel taban parçası bu çizimle eşleşmiyorsa bu noktalar kullanılmaz.</p>
+<p><img alt="SO-101 tabanında A, B, C ve D ölçüm noktaları" src="media/so101-base-landmarks.png"></p>
+<p>Bu mühendislik aracı dosyalardan bir <strong>ölçüm adayı</strong> üretir; motor veya kamera açmaz.
+Gözlem JSON'u <code>landmarks_path</code>, <code>profile_path</code>, A/B/C/D anahtarlı <code>pixels</code> ve
+kaynak görüntüyü tanımlayan <code>source_frame</code> içerir. Nokta manifestinde metre cinsinden
+<code>points_m</code>, kaynak <code>model_path</code>, <code>model_sha256</code> ve <code>mesh_sha256</code> bulunur.</p>
+<pre><code class="language-bash">.runtime/hardware-venv/bin/python -m so101.base_registration \
+  --observations /tam/yol/taban-gozlemleri.json \
+  --output /tam/yol/yeni-taban-adayi.json
+</code></pre>
+<p>Araç lens geometrisini, model özetlerini, nokta sırasını ve görüntü hatasını denetler;
+birbirine yakın iki düzlemsel çözümü <code>ambiguous</code> olarak bildirir. Çıktıdaki
+<code>base_from_camera</code> <strong>MuJoCo modelinin taban çerçevesindedir</strong>; masa yüzeyi veya
+ilk motorun eksen merkezi olarak yorumlanmaz. Düşük görüntü hatası, baskı ölçüsünü
+ve işaretlerin fiziksel merkezlenmesini doğrulamaz. Bağımsız fiziksel kontrol,
+eklem eşlemesi ve masa ölçümü tamamlanana kadar <code>physical_alignment_verified</code>,
+<code>table_plane_verified</code> ve <code>execution_allowed</code> false kalır. Bu dosya tek başına
+UI hareket kilidini açmaz.</p>
 <h2 id="docs-so101-hardware--7-simülasyondan-gerçek-harekete-kalan-işler">7. Simülasyondan gerçek harekete kalan işler</h2>
 <p>Bağlantı tanılamasından sonra gerçek koldan ölçüm alarak şu aşamalar tamamlanır:</p>
 <table>
