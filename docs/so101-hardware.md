@@ -27,12 +27,25 @@ yerel hız ayarı 20 olur. Bunlar servo kayıt değerleridir; ölçülmüş kuvv
 EEPROM ve LeRobot kalibrasyonu değiştirilmez. Geçici hız ve tork ayarları tutma
 süresince uygulanır; önceki değerler yerel ölçüm kaydında saklanır.
 
-Bilek denemesi yalnızca motor 5 üzerinde +8 enkoder sayımı (yaklaşık 0,70° komut)
+Varsayılan bilek denemesi yalnızca motor 5 üzerinde +8 enkoder sayımı (yaklaşık 0,70° komut)
 ve geri dönüş içerir. Enkoderin gerçekten izlediği mesafe ayrıca raporlanır.
 Diğer motorlar tutmadaysa test bunların torkunu kapatmaz. **Sabit tutma sırasında
 paneli / seri bağlantıyı kapatmak veya bir yazılım hatası motorları otomatik
 serbest bırakmaz:** destek kesilince kol düşebilir. Torku ya da gücü kapatmadan
 önce kol fiziksel olarak desteklenmelidir. Bu araç bir donanım acil durdurması değildir.
+
+Kol zaten sınırlı torkla tutmadaysa `held_joint_probe_v1` planı, açıkça seçilen
+**tek bir gövde motorunda (1–4)** aynı +8 sayım sınırını kullanabilir. Kıskaç bu
+yoldan seçilemez; başka motorun hedefi, hız/tork ayarı veya EEPROM yazılamaz.
+Seçilen motorun mevcut hedefle farkı en fazla 3 sayım olmalıdır. Her motor için
+ayrı, güncel ve tek kullanımlık plan gerekir; bütün kolu tarayan otomatik döngü yoktur.
+Komut adresleri [LeRobot 0.6 motor tablosuyla](https://github.com/huggingface/lerobot/blob/v0.6.0/src/lerobot/motors/feetech/tables.py) uyumludur.
+
+Ölçülen hareket 5 sayımdan azsa `no_confirmed_motion`, hareket var ama başlangıca
+dönüş hatası 3 sayımı aşıyorsa `return_outside_tolerance` kaydedilir. İkisi de
+başarısız denemedir: aralık otomatik büyütülmez ve sonraki ekleme geçilmez.
+Sonlandırmada ölçülen son konum tutulur; tork kapatılarak kol düşürülmez.
+Toleransı aşmak tek başına yanlış kalibrasyon veya motor arızası teşhisi değildir.
 
 Başarılı bir bilek denemesi bütün eklem yönlerini, sıfırları, kamera–robot
 dönüşümünü veya kavrama başarısını doğrulamaz. Ölçümler `.runtime/hardware/holds`

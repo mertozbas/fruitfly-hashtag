@@ -3,7 +3,7 @@ import copy
 import unittest
 from unittest.mock import patch
 from test_alignment_probe import Wire,Clock
-from so101.pose_hold import HoldBus,HeldWristProbeBus,hold_current
+from so101.pose_hold import HoldBus,HeldWristProbeBus,HeldJointProbeBus,hold_current
 from so101.alignment_probe import run_probe
 from so101.hardware_contract import JOINTS
 
@@ -77,6 +77,65 @@ class HoldTests(unittest.TestCase):
         bus=HeldWristProbeBus('OFFLINE_TEST')
         result=run_probe(bus,self.saved,[2000]*6,lambda:None,lambda r:None,self.clock,self.clock.sleep)
         self.assertEqual(result['status'],'failed');self.assertEqual(self.wire.writes,[])
+
+    def test_each_body_joint_isolated_and_returns_without_other_writes(self):
+        for motor_id in range(1,5):
+            with self.subTest(motor_id=motor_id):
+                self.wire.writes.clear()
+                for i in range(1,6):self.wire.registers[i].update({40:1,42:2000,56:2000,44:0,46:20,48:500})
+                before=copy.deepcopy(self.wire.registers)
+                bus=HeldJointProbeBus('OFFLINE_TEST',motor_id)
+                result=run_probe(bus,self.saved,[2000]*6,lambda:None,lambda r:None,self.clock,self.clock.sleep)
+                self.assertEqual(result['status'],'passed');self.assertEqual(result['commanded_joint'],JOINTS[motor_id-1])
+                self.assertEqual(result['measured_peak_counts'],8);self.assertEqual(self.wire.registers,before)
+                self.assertFalse(result['joint_mapping_verified']);self.assertFalse(result['brain_connected'])
+                self.assertTrue(all((i,a)==(motor_id,42) for i,a,_ in self.wire.writes))
+                self.assertTrue(all(2000<=v<=2008 for _,_,v in self.wire.writes))
+
+    def test_held_joint_packet_rejects_other_motor_gripper_torque_and_eeprom(self):
+        bus=HeldJointProbeBus('OFFLINE_TEST',4);bus.open();self.addCleanup(bus.close)
+        bus.phase='move';bus.initial=bus.last_goal=2000
+        for i,a,v in ((5,42,2002),(6,42,2002),(4,40,0),(4,31,0),(4,42,2010),(4,42,1999),(4,42,2004)):
+            data=v.to_bytes(2,'little');b=[i,5,3,a,*data];bus.permit=(a,data)
+            with self.assertRaises(PermissionError):bus.guard(bytes([255,255,*b,(~sum(b))&255]))
+        self.assertEqual(self.wire.writes,[])
+
+    def test_held_joint_camera_loss_holds_current_and_never_releases_body(self):
+        for i in range(1,6):self.wire.registers[i].update({40:1,42:2000,44:0,46:20,48:500})
+        bus=HeldJointProbeBus('OFFLINE_TEST',4)
+        def lost():
+            if bus.last_goal==2004:raise ValueError('Lost camera')
+        result=run_probe(bus,self.saved,[2000]*6,lost,lambda r:None,self.clock,self.clock.sleep)
+        self.assertEqual(result['status'],'failed');self.assertEqual(self.wire.registers[4][42],2004)
+        self.assertTrue(all((i,a)==(4,42) for i,a,_ in self.wire.writes))
+        self.assertTrue(all(self.wire.registers[i][40] for i in range(1,6)));self.assertFalse(self.wire.registers[6][40])
+
+    def test_unsettled_target_and_stall_are_not_retried_or_enlarged(self):
+        for i in range(1,6):self.wire.registers[i].update({40:1,42:2000,44:0,46:20,48:500})
+        self.wire.registers[4][42]=1995
+        bus=HeldJointProbeBus('OFFLINE_TEST',4)
+        result=run_probe(bus,self.saved,[2000]*6,lambda:None,lambda r:None,self.clock,self.clock.sleep)
+        self.assertEqual(result['status'],'failed');self.assertEqual(self.wire.writes,[])
+        self.wire.registers[4][42]=2000;self.wire.stall=True
+        bus=HeldJointProbeBus('OFFLINE_TEST',4)
+        result=run_probe(bus,self.saved,[2000]*6,lambda:None,lambda r:None,self.clock,self.clock.sleep)
+        self.assertEqual(result['status'],'no_confirmed_motion');self.assertEqual(result['measured_peak_counts'],0)
+        self.assertLessEqual(max(v for _,_,v in self.wire.writes),2008)
+
+    def test_motion_with_return_error_is_reported_separately_from_no_motion(self):
+        for i in range(1,6):self.wire.registers[i].update({40:1,42:2000,44:0,46:20,48:500})
+        bus=HeldJointProbeBus('OFFLINE_TEST',4)
+        def stick_on_return():
+            if self.wire.registers[4][56]>=2008:self.wire.stall=True
+        result=run_probe(bus,self.saved,[2000]*6,stick_on_return,lambda r:None,self.clock,self.clock.sleep)
+        self.assertEqual(result['status'],'return_outside_tolerance')
+        self.assertTrue(result['motion_observed']);self.assertEqual(result['return_error_counts'],8)
+        self.assertEqual(self.wire.registers[4][42],2008)
+        self.assertTrue(all((i,a)==(4,42) for i,a,_ in self.wire.writes))
+
+    def test_joint_selection_excludes_gripper_and_invalid_ids(self):
+        for i in (0,6,True,4.0,'4'):
+            with self.assertRaises(ValueError):HeldJointProbeBus('OFFLINE_TEST',i)
 
 
 if __name__=='__main__':unittest.main()

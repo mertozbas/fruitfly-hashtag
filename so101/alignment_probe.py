@@ -1,7 +1,7 @@
-"""One-use, bounded wrist-roll commissioning probe; not a policy controller.
+"""One-use, bounded single-joint commissioning; not a policy controller.
 
-Only motor 5 is ever written. The range is the measured initial position .. +8
-encoder counts, returning to the initial position. Other joints remain unpowered.
+A probe writes one reviewed motor within its initial position .. +8 counts and
+returns. Held probes preserve body support. The unpowered variant is wrist-only.
 No EEPROM writes. Failed probes are not automatically retried or enlarged.
 """
 import argparse
@@ -21,6 +21,7 @@ SPAN=8
 
 class ProbeBus:
     body_holding=False
+    motor_id=5
     def __init__(self,port):
         from scservo_sdk import PortHandler,PacketHandler
         owner=self
@@ -65,10 +66,10 @@ class ProbeBus:
     def write(self,address,value,size=2):
         self.permit=(address,int(value).to_bytes(size,'little'))
         try:
-            comm,error=(self.packet.write1ByteTxRx if size==1 else self.packet.write2ByteTxRx)(self.port,5,address,value)
-            if comm or error:raise OSError(f'Wrist write {address}: {comm}/{error}')
+            comm,error=(self.packet.write1ByteTxRx if size==1 else self.packet.write2ByteTxRx)(self.port,self.motor_id,address,value)
+            if comm or error:raise OSError(f'Motor {self.motor_id} write {address}: {comm}/{error}')
         finally:self.permit=None
-        if self.read(5,address,size)!=value:raise OSError(f'Wrist readback mismatch at {address}')
+        if self.read(self.motor_id,address,size)!=value:raise OSError(f'Motor {self.motor_id} readback mismatch at {address}')
 
     def positions(self):return [signed_magnitude(self.read(i,56),15) for i in range(1,7)]
 
@@ -101,8 +102,8 @@ class ProbeBus:
         self.phase='enable';self.may_be_on=True;self.write(40,1,1);self.phase='move'
 
     def goal(self,value):
-        if self.phase!='move' or self.read(5,40,1)!=1:raise ValueError('Wrist torque lost')
-        if abs(value-signed_magnitude(self.read(5,56),15))>8:raise ValueError('Wrist did not track the goal')
+        if self.phase!='move' or self.read(self.motor_id,40,1)!=1:raise ValueError('Probe motor torque lost')
+        if abs(value-signed_magnitude(self.read(self.motor_id,56),15))>8:raise ValueError('Probe motor did not track the goal')
         self.write(42,value);self.last_goal=value
 
     def finish(self):
@@ -121,7 +122,8 @@ class ProbeBus:
 
 
 def run_probe(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time.sleep):
-    report=dict(status='preflight',brain_connected=False,joint_mapping_verified=False,commanded_joint='wrist_roll',samples=[],started_wall_time=time.time())
+    j=bus.motor_id-1
+    report=dict(status='preflight',brain_connected=False,joint_mapping_verified=False,commanded_joint=JOINTS[j],motor_id=bus.motor_id,samples=[],started_wall_time=time.time())
     started=clock();q0=None
     def sample():
         begin=clock();check_live();q=bus.positions()
@@ -132,10 +134,10 @@ def run_probe(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time
             if not c['range_min']+margin<=q[i]<=c['range_max']-margin:raise ValueError(f'{n}: outside calibrated margin')
             if bus.read(i+1,33,1)!=0:raise ValueError('Operating mode changed')
             if bus.read(i+1,63,1)>=50 or not 6<=bus.read(i+1,62,1)/10<=13.2:raise ValueError('Temperature or voltage outside preflight limits')
-            if i!=4 and bool(bus.read(i+1,40,1))!=(bus.body_holding and i<5):raise ValueError('Another motor torque changed')
+            if i!=j and bool(bus.read(i+1,40,1))!=(bus.body_holding and i<5):raise ValueError('Another motor torque changed')
         if q0 is not None:
-            if any(abs(a-b)>3 for i,(a,b) in enumerate(zip(q,q0)) if i!=4):raise ValueError('Another joint moved; stop probe')
-            if not q0[4]-3<=q[4]<=q0[4]+SPAN+3:raise ValueError('Wrist exceeded probe envelope')
+            if any(abs(a-b)>3 for i,(a,b) in enumerate(zip(q,q0)) if i!=j):raise ValueError('Another joint moved; stop probe')
+            if not q0[j]-3<=q[j]<=q0[j]+SPAN+3:raise ValueError('Joint exceeded probe envelope')
         if clock()-started>5:raise ValueError('Probe time limit exceeded')
         if clock()-begin>.15:raise ValueError('Probe telemetry deadline exceeded')
         report['samples'].append(dict(t=round(clock()-started,4),q=q,goal=bus.last_goal))
@@ -146,10 +148,13 @@ def run_probe(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time
         report.update(bus.prepare(q0));report['status']='prepared';save(report) # durable before ANY write
         sample();bus.enable();sample()
         for delta in [2,4,6,8,8,8,8,8,6,4,2,0,0,0,0,0]:
-            sample();bus.goal(q0[4]+delta);sleep(.075);sample()
-        maximum=max(p['q'][4]-q0[4] for p in report['samples'])
+            sample();bus.goal(q0[j]+delta);sleep(.075);sample()
+        maximum=max(p['q'][j]-q0[j] for p in report['samples'])
         final=report['samples'][-1]['q'];report.update(measured_peak_counts=maximum,final_position=final)
-        report['status']='passed' if maximum>=5 and abs(final[4]-q0[4])<=3 else 'no_confirmed_motion'
+        return_error=final[j]-q0[j]
+        report.update(motion_observed=maximum>=5,return_error_counts=return_error)
+        report['status']=('no_confirmed_motion' if maximum<5 else
+                          'passed' if abs(return_error)<=3 else 'return_outside_tolerance')
     except Exception as exc:report.update(status='failed',error=str(exc))
     finally:
         errors=bus.finish()
@@ -166,9 +171,10 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--plan',type=Path,required=True);args=parser.parse_args()
     plan=json.loads(args.plan.read_text())
     kind=plan.get('kind')
-    if kind not in ('wrist_probe_v1','held_wrist_probe_v1','hold_current_v1') or plan.get('base_mounted') is not True:raise ValueError('Reviewed fixed commissioning plan required')
-    if kind in ('wrist_probe_v1','held_wrist_probe_v1') and plan.get('workspace_clear') is not True:raise ValueError('Clear wrist workspace required')
+    if kind not in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1','hold_current_v1') or plan.get('base_mounted') is not True:raise ValueError('Reviewed fixed commissioning plan required')
+    if kind in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1') and plan.get('workspace_clear') is not True:raise ValueError('Clear reviewed joint workspace required')
     if kind=='hold_current_v1' and plan.get('operator_supporting') is not True:raise ValueError('Operator must support the arm during initial hold')
+    if kind=='held_joint_probe_v1' and (type(plan.get('motor_id')) is not int or plan['motor_id'] not in range(1,5)):raise ValueError('One reviewed body joint 1..4 required')
     if not 0<=time.time()-plan['created']<=20:raise ValueError('Plan expired')
     if not isinstance(plan.get('q'),list) or len(plan['q'])!=6 or any(type(v) is not int for v in plan['q']):raise ValueError('Invalid plan joints')
     cal=calibration(plan['calibration_path'])
@@ -189,6 +195,9 @@ def main():
     if kind=='hold_current_v1':
         from .pose_hold import HoldBus,hold_current
         runner,bus=hold_current,HoldBus(plan['port'])
+    elif kind=='held_joint_probe_v1':
+        from .pose_hold import HeldJointProbeBus
+        runner,bus=run_probe,HeldJointProbeBus(plan['port'],plan['motor_id'])
     elif kind=='held_wrist_probe_v1':
         from .pose_hold import HeldWristProbeBus
         runner,bus=run_probe,HeldWristProbeBus(plan['port'])

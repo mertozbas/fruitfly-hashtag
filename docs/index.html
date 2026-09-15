@@ -2116,12 +2116,23 @@ Tork sınırı mevcut sınır / motor üst sınırı / 500 değerlerinin en kü�
 yerel hız ayarı 20 olur. Bunlar servo kayıt değerleridir; ölçülmüş kuvvet değildir.
 EEPROM ve LeRobot kalibrasyonu değiştirilmez. Geçici hız ve tork ayarları tutma
 süresince uygulanır; önceki değerler yerel ölçüm kaydında saklanır.</p>
-<p>Bilek denemesi yalnızca motor 5 üzerinde +8 enkoder sayımı (yaklaşık 0,70° komut)
+<p>Varsayılan bilek denemesi yalnızca motor 5 üzerinde +8 enkoder sayımı (yaklaşık 0,70° komut)
 ve geri dönüş içerir. Enkoderin gerçekten izlediği mesafe ayrıca raporlanır.
 Diğer motorlar tutmadaysa test bunların torkunu kapatmaz. <strong>Sabit tutma sırasında
 paneli / seri bağlantıyı kapatmak veya bir yazılım hatası motorları otomatik
 serbest bırakmaz:</strong> destek kesilince kol düşebilir. Torku ya da gücü kapatmadan
 önce kol fiziksel olarak desteklenmelidir. Bu araç bir donanım acil durdurması değildir.</p>
+<p>Kol zaten sınırlı torkla tutmadaysa <code>held_joint_probe_v1</code> planı, açıkça seçilen
+<strong>tek bir gövde motorunda (1–4)</strong> aynı +8 sayım sınırını kullanabilir. Kıskaç bu
+yoldan seçilemez; başka motorun hedefi, hız/tork ayarı veya EEPROM yazılamaz.
+Seçilen motorun mevcut hedefle farkı en fazla 3 sayım olmalıdır. Her motor için
+ayrı, güncel ve tek kullanımlık plan gerekir; bütün kolu tarayan otomatik döngü yoktur.
+Komut adresleri <a href="https://github.com/huggingface/lerobot/blob/v0.6.0/src/lerobot/motors/feetech/tables.py">LeRobot 0.6 motor tablosuyla</a> uyumludur.</p>
+<p>Ölçülen hareket 5 sayımdan azsa <code>no_confirmed_motion</code>, hareket var ama başlangıca
+dönüş hatası 3 sayımı aşıyorsa <code>return_outside_tolerance</code> kaydedilir. İkisi de
+başarısız denemedir: aralık otomatik büyütülmez ve sonraki ekleme geçilmez.
+Sonlandırmada ölçülen son konum tutulur; tork kapatılarak kol düşürülmez.
+Toleransı aşmak tek başına yanlış kalibrasyon veya motor arızası teşhisi değildir.</p>
 <p>Başarılı bir bilek denemesi bütün eklem yönlerini, sıfırları, kamera–robot
 dönüşümünü veya kavrama başarısını doğrulamaz. Ölçümler <code>.runtime/hardware/holds</code>
 ve <code>.runtime/hardware/probes</code> altında saklanır; model ağırlıkları değiştirilmez.</p>

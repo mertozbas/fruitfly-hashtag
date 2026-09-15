@@ -32,26 +32,27 @@ class HoldBus(ProbeBus):
         if self.read(i,a,size)!=v:raise OSError(f'Hold motor {i}: readback mismatch at {a}')
 
 
-class HeldWristProbeBus(ProbeBus):
-    """Probe an already supported wrist without turning any supporting motor off."""
+class HeldJointProbeBus(ProbeBus):
+    """Probe one already supported body joint; never release supporting torque."""
     body_holding=True
 
-    def __init__(self,port):
-        super().__init__(port);self.may_be_on=True
+    def __init__(self,port,motor_id):
+        if type(motor_id) is not int or motor_id not in range(1,6):raise ValueError('One body motor 1..5 required')
+        super().__init__(port);self.motor_id=motor_id;self.may_be_on=True
 
     def guard(self,packet):
         p=bytes(packet)
         if len(p)>4 and p[4] in (1,2):return assert_read_packet(p)
-        if len(p)!=9 or p[:2]!=b'\xff\xff' or p[2]!=5 or p[3]!=5 or p[4]!=3 or p[5]!=42 or sum(p[2:])&255!=255:
-            raise PermissionError('Held probe may write only wrist Goal_Position')
+        if len(p)!=9 or p[:2]!=b'\xff\xff' or p[2]!=self.motor_id or p[3]!=5 or p[4]!=3 or p[5]!=42 or sum(p[2:])&255!=255:
+            raise PermissionError('Held probe may write only the selected joint Goal_Position')
         data=p[6:-1];v=int.from_bytes(data,'little')
-        if self.permit!=(42,data):raise PermissionError('Missing wrist goal permit')
+        if self.permit!=(42,data):raise PermissionError('Missing joint goal permit')
         self.permit=None
         if self.phase=='setup':valid=v==self.initial
         elif self.phase=='move':valid=self.initial<=v<=self.initial+8 and abs(v-self.last_goal)<=2
         elif self.phase=='hold':valid=v==self.stop_position and self.initial-3<=v<=self.initial+11 and abs(v-self.last_goal)<=8
         else:valid=False
-        if not valid:raise PermissionError('Held wrist goal outside reviewed range')
+        if not valid:raise PermissionError('Held joint goal outside reviewed range')
         return p
 
     def prepare(self,q):
@@ -59,9 +60,9 @@ class HeldWristProbeBus(ProbeBus):
         for i in range(1,6):
             if self.read(i,40,1)!=1 or self.read(i,46)!=20 or self.read(i,44)!=0 or not 1<=self.read(i,48)<=500:
                 raise ValueError('Expected verified limited pose hold')
-            if abs(self.read(i,42)-q[i-1])>(3 if i==5 else 8):raise ValueError('Arm has not settled at its holding target')
+            if abs(self.read(i,42)-q[i-1])>(3 if i==self.motor_id else 8):raise ValueError('Arm has not settled at its holding target')
         if self.read(6,40,1):raise ValueError('Gripper must remain off')
-        self.initial=self.last_goal=q[4]
+        self.initial=self.last_goal=q[self.motor_id-1]
         return dict(initial=q.copy(),span_counts=8,other_body_motors_holding=True)
 
     def enable(self):
@@ -71,9 +72,12 @@ class HeldWristProbeBus(ProbeBus):
         if self.phase=='read':return []
         self.phase='hold'
         try:
-            self.stop_position=self.positions()[4];self.write(42,self.stop_position);self.phase='done';return []
+            self.stop_position=self.positions()[self.motor_id-1];self.write(42,self.stop_position);self.phase='done';return []
         except Exception as exc:return [str(exc)]
 
+
+class HeldWristProbeBus(HeldJointProbeBus):
+    def __init__(self,port):super().__init__(port,5)
 
 def hold_current(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time.sleep):
     report=dict(status='preflight',brain_connected=False,joint_mapping_verified=False,gripper_commanded=False,
