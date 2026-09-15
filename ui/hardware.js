@@ -86,7 +86,10 @@ function render(state){
     const observation=camera.perception;
     const current=camera.fresh&&observation?.frame_sequence===camera.sequence&&camera.sequence!==undefined;
     const detail=$(`hw-${role}-vision`);
-    detail.textContent=current?`Küp 200: ${observation.cube_visible?'görülüyor':'yok'} · Kutu 211: ${observation.bin_visible?'görülüyor':'yok'} · 3B konum doğrulanmadı`:'Canlı nesne ölçümü yok';
+    const container=observation?.container;
+    const containerLabel=container?`${container.id===206?'Tepsi':'Kutu'} ${container.id}`:observation?.bin_visible&&observation?.container_visible===undefined?'Kutu 211':'yok / belirsiz';
+    const unknown=observation?.unknown_ids?.length?` · Tanımsız işaret: ${observation.unknown_ids.slice(0,4).join(', ')}`:'';
+    detail.textContent=current?`Küp 200: ${observation.cube_visible?'görülüyor':'yok'} · Kap: ${containerLabel}${unknown} · 3B konum doğrulanmadı`:'Canlı nesne ölçümü yok';
     detail.title=current?`Kare ${camera.sequence} · Yalnızca piksel konumu; beyin girdisi henüz hazır değil.`:'';
   }
   commissioningUI.update(state);

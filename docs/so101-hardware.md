@@ -133,9 +133,14 @@ gerçek indeksini gösterir; bilek / üst rolünü görüntüden doğrulayın. B
 başka role taşırken önce mevcut önizlemesini durdurun.
 
 Yerel v2/v3 aksesuar setinin `tag36h11` işaretleri canlı RGB karelerinde aranır:
-**200 kırmızı küp**, **211 sıralama kutusu**. Okunan işaret çerçevelenir; alt satırda
+**200 kırmızı küp**, **206 çekmece tepsisi**, **211 sıralama kutusu**. 206 ve 211
+ayrı aksesuarlardır; boyutları veya işaret konumları birbirinin yerine kullanılamaz.
+Okunan işaret çerçevelenir; alt satırda
 görülüp görülmediği belirtilir. İşaret kaybolduğunda eski tespit kullanılmaz.
-Aynı ID iki kez görülürse o nesne belirsiz sayılır. Kutu görüntüde görünse de işareti
+Aynı ID iki kez görülürse o nesne belirsiz sayılır. Aynı karede iki hedef kap
+(206 ve 211) görünürse sistem kendiliğinden birini seçmez. Tanımlanmamış işaretler
+ID numarasıyla gösterilir; küp veya hedef kap olarak değerlendirilmez.
+Kutu görüntüde görünse de işareti
 okunamıyorsa ölçüm hazır sayılmaz. Bu aşama yalnızca **piksel konumu** verir;
 işaretin merkezi kavrama veya bırakma hedefi değildir. Bilinen küp boyutu tek başına
 kamera / masa / robot dönüşümünü sağlamaz. Kamera parametreleri ve işaret ölçüsünün

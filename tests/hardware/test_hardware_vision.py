@@ -38,7 +38,27 @@ class VisionTests(unittest.TestCase):
 
     def test_unknown_tag_not_misidentified_as_bin(self):
         result=AccessoryVision().observe(scene([201]),1)
-        self.assertEqual(result['detections'],[]);self.assertFalse(result['bin_visible'])
+        self.assertEqual(result['detections'][0]['id'],201);self.assertIsNone(result['detections'][0]['object'])
+        self.assertEqual(result['unknown_ids'],[201]);self.assertFalse(result['container_visible'])
+        self.assertFalse(result['bin_visible']);self.assertIsNone(result['container'])
+        AccessoryVision.annotate(scene([201]),result)
+
+    def test_drawer_tray_is_distinct_from_sort_bin_and_not_a_metric_goal(self):
+        result=AccessoryVision().observe(scene([200,206]),1)
+        self.assertTrue(result['tray_visible']);self.assertFalse(result['bin_visible'])
+        self.assertTrue(result['container_visible']);self.assertEqual(result['container'],{'id':206,'object':'drawer_tray'})
+        self.assertFalse(result['metric_pose_valid']);self.assertIsNone(result['robot_pose'])
+        self.assertFalse(result['brain_connected']);self.assertFalse(result['policy_input_ready'])
+
+    def test_multiple_or_duplicate_containers_never_select_a_goal(self):
+        for ids in ([206,211],[206,206],[211,211]):
+            result=AccessoryVision().observe(scene(ids),1)
+            self.assertFalse(result['container_visible']);self.assertIsNone(result['container'])
+
+    def test_lost_container_does_not_reuse_previous_identity(self):
+        detector=AccessoryVision();self.assertTrue(detector.observe(scene([206]),1)['container_visible'])
+        result=detector.observe(scene([]),2)
+        self.assertFalse(result['container_visible']);self.assertIsNone(result['container'])
 
     def test_invalid_or_tiny_corners_do_not_pass(self):
         detector=AccessoryVision();detector.detector=Mock()

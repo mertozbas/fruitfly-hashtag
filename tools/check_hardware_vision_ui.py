@@ -37,7 +37,7 @@ def check(base,output):
         page.goto(base);page.locator('#hardware-open').click()
         page.wait_for_function("document.querySelector('#hw-wrist-index').value==='1'")
         checks['live_camera_indices']=page.locator('#hw-top-index').input_value()=='0'
-        checks['cube_visible_bin_unreadable']='Küp 200: görülüyor · Kutu 211: yok' in page.locator('#hw-top-vision').inner_text()
+        checks['cube_visible_bin_unreadable']='Küp 200: görülüyor · Kap: yok / belirsiz' in page.locator('#hw-top-vision').inner_text()
         checks['no_metric_pose_claim']='3B konum doğrulanmadı' in page.locator('#hw-top-vision').inner_text()
         checks['joint_limit_warning']='Dirsek (3100 ham)' in page.locator('#hw-arm-detail').inner_text()
         fixture['arm']['motors'][1]['torque_enabled']=True
@@ -48,6 +48,13 @@ def check(base,output):
         for width,height in [(1280,800),(1440,900),(1728,1050)]:
             page.set_viewport_size(dict(width=width,height=height));page.wait_for_timeout(150)
             checks[f'fits_{width}']=page.locator('#hw-readiness').evaluate('(e)=>e.scrollHeight<=e.clientHeight') and page.evaluate('document.documentElement.scrollHeight<=innerHeight')
+        fixture['cameras']['top']['perception'].update(container_visible=True,container=dict(id=206,object='drawer_tray'),tray_visible=True)
+        page.wait_for_function("document.querySelector('#hw-top-vision').textContent.includes('Kap: Tepsi 206')")
+        checks['tray_identity_not_sort_bin']='Kutu 211' not in page.locator('#hw-top-vision').inner_text()
+        fixture['cameras']['top']['perception'].update(container_visible=False,container=None,bin_visible=True,unknown_ids=[201])
+        page.wait_for_function("document.querySelector('#hw-top-vision').textContent.includes('yok / belirsiz')")
+        checks['ambiguous_goal_not_selected']='Kutu 211' not in page.locator('#hw-top-vision').inner_text()
+        checks['unsupported_id_visible']='Tanımsız işaret: 201' in page.locator('#hw-top-vision').inner_text()
         fixture['cameras']['top']['sequence']=8
         page.wait_for_function("document.querySelector('#hw-top-vision').textContent==='Canlı nesne ölçümü yok'")
         checks['mismatched_frame_hidden']=True

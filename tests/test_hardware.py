@@ -68,6 +68,15 @@ class ContractTests(unittest.TestCase):
         cameras['wrist']['fresh']=False
         self.assertFalse(checks()['cube_marker']);self.assertFalse(checks()['vision_geometry'])
 
+    def test_tray_and_ambiguous_container_readiness(self):
+        camera=dict(fresh=True,sequence=8,perception=dict(frame_sequence=8,container_visible=True,bin_visible=False))
+        def ready():return {c['id']:c['passed'] for c in readiness(None,{},dict(top=camera,wrist={}))}
+        self.assertTrue(ready()['bin_marker']);self.assertFalse(ready()['vision_geometry'])
+        camera['perception'].update(container_visible=False,bin_visible=True)
+        self.assertFalse(ready()['bin_marker']) # Two containers must not fall back to the old bin flag.
+        camera['perception']['container_visible']=True;camera['fresh']=False
+        self.assertFalse(ready()['bin_marker'])
+
 
 class ManagerTests(unittest.TestCase):
     def setUp(self):
