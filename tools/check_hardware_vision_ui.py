@@ -40,6 +40,9 @@ def check(base,output):
         checks['cube_visible_bin_unreadable']='Küp 200: görülüyor · Kutu 211: yok' in page.locator('#hw-top-vision').inner_text()
         checks['no_metric_pose_claim']='3B konum doğrulanmadı' in page.locator('#hw-top-vision').inner_text()
         checks['joint_limit_warning']='Dirsek (3100 ham)' in page.locator('#hw-arm-detail').inner_text()
+        fixture['arm']['motors'][1]['torque_enabled']=True
+        page.wait_for_function("document.querySelector('#hw-arm-detail').textContent.includes('paneli kapatmak torku kapatmaz')")
+        checks['live_torque_warning']=True
         page.locator('#hw-readiness-tab').click()
         checks['twelve_checks']=page.locator('#hw-checks li').count()==12
         for width,height in [(1280,800),(1440,900),(1728,1050)]:

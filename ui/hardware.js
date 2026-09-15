@@ -69,6 +69,7 @@ function render(state){
   $('hw-arm-detail').textContent=arm.error|| (arm.fresh?(arm.calibration_match?'Dosya ve motor kalibrasyonu eşleşti. Tork yalnızca okunuyor.':`Kalibrasyon uyuşmazlığı (${arm.calibration_mismatches.length} ayar). Konum ölçeği doğrulanmadı; Kol kalibrasyonu sekmesini kullan.`):'Bu tanılama yalnızca okur. Ayar değişiklikleri Kol kalibrasyonu sekmesinde onaylanır.');
   const outside=arm.fresh?arm.motors?.filter(m=>m.in_calibrated_range===false)||[]:[];
   if(outside.length)$('hw-arm-detail').textContent=`Aralık dışında: ${outside.map(m=>`${displayNames[jointNames.indexOf(m.name)]} (${m.position_raw} ham)`).join(', ')}. Kalibrasyon eşleşse de hareket doğrulanmış değildir.`;
+  if(arm.fresh&&arm.motors?.some(m=>m.torque_enabled))$('hw-arm-detail').textContent+=' Motor torku açık; paneli kapatmak torku kapatmaz.';
   $('hw-arm-detail').title=arm.calibration_mismatches?.join(', ')||'';
   $('hw-check-count').textContent=`${state.checks.filter(c=>c.passed).length}/${state.checks.length}`;
   $('hw-checks').replaceChildren(...state.checks.map(check=>{const item=document.createElement('li');item.className=check.passed?'passed':'pending';const mark=document.createElement('span');mark.textContent=check.passed?'✓':'○';item.append(mark,document.createTextNode(check.label));return item;}));

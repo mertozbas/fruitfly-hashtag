@@ -12,6 +12,32 @@ Simülasyondaki al ve yerleştir / tic-tac-toe modelleri henüz fiziksel kolda
 devreye alınmadı. Donanım panelini açmak, ana ekrandaki beyni gerçek kola bağlamaz;
 ana ekran simülasyonun sinir ağı hesabını göstermeye devam eder.
 
+### Yerel fiziksel devreye alma araçları
+
+`so101.alignment_probe` ve `so101.pose_hold`, denetimli mühendislik ölçümleri için
+eklenmiştir; genel hareket API'si veya otonom görev yürütücüsü değildir. Plan,
+güncel eklem konumları, USB kimliği, kalibrasyon SHA-256 özeti ve iki kamera
+oturumuna bağlanır. 20 saniyede sona erer ve yalnızca bir kez kullanılabilir.
+Kamera kaybı, konum değişimi ve telemetri hatalarında işlem başarısız sayılır.
+
+Sabit tutma, operatör kolu desteklerken ilk beş motorun **okunan mevcut konumlarını**
+hedefe yazar; eski hedefleri kullanarak tork açmaz. Kıskaç motoruna yazmaz.
+Tork sınırı mevcut sınır / motor üst sınırı / 500 değerlerinin en küçüğü,
+yerel hız ayarı 20 olur. Bunlar servo kayıt değerleridir; ölçülmüş kuvvet değildir.
+EEPROM ve LeRobot kalibrasyonu değiştirilmez. Geçici hız ve tork ayarları tutma
+süresince uygulanır; önceki değerler yerel ölçüm kaydında saklanır.
+
+Bilek denemesi yalnızca motor 5 üzerinde +8 enkoder sayımı (yaklaşık 0,70° komut)
+ve geri dönüş içerir. Enkoderin gerçekten izlediği mesafe ayrıca raporlanır.
+Diğer motorlar tutmadaysa test bunların torkunu kapatmaz. **Sabit tutma sırasında
+paneli / seri bağlantıyı kapatmak veya bir yazılım hatası motorları otomatik
+serbest bırakmaz:** destek kesilince kol düşebilir. Torku ya da gücü kapatmadan
+önce kol fiziksel olarak desteklenmelidir. Bu araç bir donanım acil durdurması değildir.
+
+Başarılı bir bilek denemesi bütün eklem yönlerini, sıfırları, kamera–robot
+dönüşümünü veya kavrama başarısını doğrulamaz. Ölçümler `.runtime/hardware/holds`
+ve `.runtime/hardware/probes` altında saklanır; model ağırlıkları değiştirilmez.
+
 ## 1. Kol bağlı değilken hazırlık
 
 Kurulu Neural Lab çalışma dizininde:
