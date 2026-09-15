@@ -37,21 +37,58 @@ def pose_fit(objects,pixels,k,d):
     return r,t,error
 
 
+def lens_geometry(k,d,size):
+    """Reject a radial mapping that folds or cannot invert over the image sensor."""
+    k=np.asarray(k,dtype=float);d=np.asarray(d,dtype=float).reshape(-1)
+    if k.shape!=(3,3) or d.shape!=(5,) or not np.isfinite(k).all() or not np.isfinite(d).all():raise ValueError('Geçersiz lens matrisi / katsayıları')
+    if k[0,0]<=0 or k[1,1]<=0:raise ValueError('Geçersiz odak uzaklığı')
+    w,h=size
+    pixels=np.array([[[x,y]] for x in np.linspace(0,w-1,33) for y in np.linspace(0,h-1,21)],np.float64)
+    points=cv2.undistortPointsIter(pixels,k,d,None,None,(cv2.TERM_CRITERIA_EPS|cv2.TERM_CRITERIA_COUNT,100,1e-10)).reshape(-1,2)
+    if not np.isfinite(points).all():raise ValueError('Görüntü kenarında lens dönüşümü çözülemiyor')
+    limit=float(np.max(np.sum(points**2,axis=1)))*1.05**2
+    # The minimum of d(r * radial_scale)/dr occurs at endpoints or these roots.
+    roots=np.roots(np.trim_zeros(np.array([21*d[4],10*d[1],3*d[0]]),'f'))
+    probes=[0.,limit]+[float(r.real) for r in roots if abs(r.imag)<1e-10 and 0<r.real<limit]
+    t=np.array(probes)
+    with np.errstate(over='ignore',invalid='ignore'):
+        derivative=1+3*d[0]*t+5*d[1]*t**2+7*d[4]*t**3
+    if not np.isfinite(derivative).all() or derivative.min()<=0:raise ValueError('Görüntü kenarında radyal eşleme katlanıyor; lens modeli geçersiz')
+    x,y=points.T;r2=x*x+y*y;scale=1+d[0]*r2+d[1]*r2*r2+d[4]*r2**3;slope=d[0]+2*d[1]*r2+3*d[4]*r2*r2
+    xx=scale+2*x*x*slope+2*d[2]*y+6*d[3]*x
+    yy=scale+2*y*y*slope+6*d[2]*y+2*d[3]*x
+    xy=2*x*y*slope+2*d[2]*x+2*d[3]*y;det=xx*yy-xy*xy
+    projected=cv2.projectPoints(np.c_[points,np.ones(len(points))],np.zeros(3),np.zeros(3),k,d)[0]
+    error=float(np.linalg.norm(projected-pixels,axis=2).max())
+    if not np.isfinite(det).all() or det.min()<=0 or not np.isfinite(error) or error>.25:raise ValueError('Lens dönüşümü tüm görüntü alanında doğrulanamadı')
+    return dict(radial_mapping_monotonic=True,min_radial_derivative=float(derivative.min()),
+        min_sampled_jacobian=float(det.min()),sensor_roundtrip_max_px=error,sensor_grid=[33,21])
+
+
 def solve_lens(samples,size):
     if len(samples)<18:raise ValueError('En az 18 farklı, net pano görüntüsü gerekli')
     holdout=[s for i,s in enumerate(samples) if i%6==5];train=[s for i,s in enumerate(samples) if i%6!=5]
     centres=np.array([s['pixels'].reshape(-1,2).mean(0)/size for s in samples])
     if np.any(np.ptp(centres,axis=0)<.15):raise ValueError('Panoyu görüntünün farklı yatay ve dikey bölgelerinde göster')
-    rms,k,d,rotations,translations=cv2.calibrateCamera([s['objects'] for s in train],[s['pixels'] for s in train],tuple(size),None,None,flags=cv2.CALIB_FIX_K3)
-    normals=np.array([cv2.Rodrigues(r)[0][:,2] for r in rotations])
-    if np.any(np.std(normals[:,:2],axis=0)<.06):raise ValueError('Pano eğimi yetersiz; iki eksende farklı açılar gerekli')
-    validation=[pose_fit(s['objects'],s['pixels'],k,d)[2] for s in holdout]
-    if not np.isfinite(k).all() or not np.isfinite(d).all() or not np.isfinite(rms):raise ValueError('Sonlu kamera çözümü bulunamadı')
-    if not (.2*size[0]<k[0,0]<5*size[0] and .2*size[1]<k[1,1]<5*size[0] and 0<k[0,2]<size[0] and 0<k[1,2]<size[1]):raise ValueError('Kamera matrisi fiziksel kontrol sınırlarını geçmedi')
-    if rms>.8 or max(validation)>1.2 or np.max(abs(d))>2:raise ValueError(f'Hata yüksek: eğitim {rms:.2f} px, ayrı kare {max(validation):.2f} px; yeni kareler topla')
-    return dict(schema=1,board=BOARD,size=list(size),camera_matrix=k.tolist(),distortion=d.reshape(-1).tolist(),
-                rms_px=float(rms),holdout_rms_px=validation,samples=len(samples),training_samples=len(train),holdout_samples=len(holdout),
-                model='OpenCV pinhole + k1,k2,p1,p2; k3 fixed',quality_passed=True)
+    attempts=[]
+    for flags in (cv2.CALIB_FIX_K3,0):
+        rms,k,d,rotations,translations=cv2.calibrateCamera([s['objects'] for s in train],[s['pixels'] for s in train],tuple(size),None,None,flags=flags)
+        normals=np.array([cv2.Rodrigues(r)[0][:,2] for r in rotations])
+        if np.any(np.std(normals[:,:2],axis=0)<.06):raise ValueError('Pano eğimi yetersiz; iki eksende farklı açılar gerekli')
+        model='OpenCV pinhole + k1,k2,p1,p2; k3 fixed' if flags else 'OpenCV pinhole + k1,k2,k3,p1,p2'
+        try:
+            validation=[pose_fit(s['objects'],s['pixels'],k,d)[2] for s in holdout]
+            if not np.isfinite(k).all() or not np.isfinite(d).all() or not np.isfinite(rms):raise ValueError('Sonlu kamera çözümü bulunamadı')
+            if not (.2*size[0]<k[0,0]<5*size[0] and .2*size[1]<k[1,1]<5*size[0] and 0<k[0,2]<size[0] and 0<k[1,2]<size[1]):raise ValueError('Kamera matrisi fiziksel kontrol sınırlarını geçmedi')
+            if rms>.8 or max(validation)>1.2 or np.max(abs(d))>2:raise ValueError(f'Hata yüksek: eğitim {rms:.2f} px, ayrı kare {max(validation):.2f} px; yeni kareler topla')
+            geometry=lens_geometry(k,d,size)
+        except ValueError as exc:
+            attempts.append(dict(model=model,error=str(exc)))
+            if flags:continue
+            raise
+        return dict(schema=1,board=BOARD,size=list(size),camera_matrix=k.tolist(),distortion=d.reshape(-1).tolist(),
+                    rms_px=float(rms),holdout_rms_px=validation,samples=len(samples),training_samples=len(train),holdout_samples=len(holdout),
+                    model=model,quality_passed=True,geometry=geometry,rejected_models=attempts)
 
 
 class CameraCalibration:
@@ -64,6 +101,7 @@ class CameraCalibration:
         self.target_medium='printed';self.square_mm=20.
         if profile:
             self.saved=json.loads(Path(profile).read_text());self.label=self.saved['device_label']
+            lens_geometry(self.saved['camera_matrix'],self.saved['distortion'],self.saved['size'])
             self.target_medium=self.saved.get('target_medium','printed')
             self.square_mm=self.saved.get('target_square_mm',20.)
             self.board=board(self.square_mm or 20.);self.detector=cv2.aruco.CharucoDetector(self.board)

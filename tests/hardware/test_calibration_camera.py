@@ -6,7 +6,7 @@ import time
 import unittest
 import cv2
 import numpy as np
-from so101.calibration_camera import CameraCalibration,base_board,board,pose_fit,solve_lens,transform
+from so101.calibration_camera import CameraCalibration,base_board,board,lens_geometry,pose_fit,solve_lens,transform
 
 
 def camera_samples():
@@ -21,6 +21,32 @@ def camera_samples():
 
 
 class CameraCalibrationTests(unittest.TestCase):
+    def test_low_residual_model_that_folds_at_sensor_edges_is_not_usable(self):
+        k=[[520.,0,710.],[0,517.,383.],[0,0,1.]];d=[.034,-.042,-.0004,.0008,0.]
+        with self.assertRaisesRegex(ValueError,'kenarında'):lens_geometry(k,d,(1280,720))
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'calibration.json'
+            path.write_text(json.dumps(dict(device_label='OFFLINE',size=[1280,720],camera_matrix=k,distortion=d,quality_passed=True)))
+            with self.assertRaisesRegex(ValueError,'kenarında'):CameraCalibration(temp,'top',0,path)
+
+    def test_full_radial_model_is_used_when_fixed_k3_folds(self):
+        samples,k,d=camera_samples();wide=np.array([[520.,0,700],[0,520.,380],[0,0,1]])
+        distortion=np.array([.063,-.098,-.0001,.0007,.027])
+        for s in samples:
+            r,t,_=pose_fit(s['objects'],s['pixels'],k,d)
+            s['pixels']=cv2.projectPoints(s['objects'],r,t,wide,distortion)[0]
+        result=solve_lens(samples,(1280,720))
+        self.assertTrue(result['rejected_models']);self.assertNotIn('fixed',result['model'])
+        self.assertLess(result['rms_px'],.001);self.assertLess(max(result['holdout_rms_px']),.001)
+        self.assertGreater(result['geometry']['min_radial_derivative'],.5)
+        self.assertGreater(result['geometry']['min_sampled_jacobian'],.5)
+        np.testing.assert_allclose(np.array(result['camera_matrix'])[[0,1],[0,1]],wide[[0,1],[0,1]],rtol=.01)
+
+    def test_identity_distortion_inverts_across_entire_sensor(self):
+        result=lens_geometry([[900.,0,640],[0,900.,360],[0,0,1]],np.zeros(5),(1280,720))
+        self.assertAlmostEqual(result['min_radial_derivative'],1.)
+        self.assertLess(result['sensor_roundtrip_max_px'],1e-8)
+
     def test_unknown_screen_scale_preserves_lens_but_never_claims_metric_pose(self):
         samples,k,_=camera_samples()
         scaled=[dict(s,objects=s['objects']*.43) for s in samples]

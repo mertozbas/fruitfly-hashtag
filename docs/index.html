@@ -2332,6 +2332,12 @@ oturum açılır. Geçmiş kayıtlar Git / dağıtım paketine dahil edilmez.</p
    görüş alanı kapsamı, eğim çeşitliliği ve matris sınırları da kontrol edilir.
    Sonuçları / baskı ölçeğini doğrulayıp <strong>Lens profilini kaydet</strong> düğmesine basın.</li>
 </ol>
+<p>Lens modeli görüntünün tamamında da denetlenir: radyal koordinat eşlemesi
+katlanmamalı, görüntü ızgarasındaki dönüşüm yönünü korumalı ve ters dönüşüm hatası
+0,25 pikseli aşmamalıdır. Önce <code>k3=0</code> modeli denenir; kalite sınırlarını geçemezse
+<code>k3</code> de hesaplanır. İkinci model aynı hata ve geometri sınırlarını geçmek zorundadır.
+Profille yeniden açarken geometri tekrar kontrol edilir. Bu matematiksel denetim,
+görüntünün örneklenmemiş kenarlarındaki fiziksel ölçüm doğruluğunu kanıtlamaz.</p>
 <p>Bu eşikler geçse bile baskı ölçeği ve doğru kamera seçimi operatörün doğrulamasına
 bağlıdır. Lens / odak / görüntü çözünürlüğü değişirse ölçümü yenileyin.
 Önceki profili <strong>Profille aç</strong> ile yüklemek, fiziksel kamera kimliği onayı ister;
