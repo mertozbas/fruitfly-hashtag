@@ -9,7 +9,7 @@ dialog.innerHTML=`
 <header class="hw-heading"><div><span class="tiny">SO-101 · DONANIM LABORATUVARI</span><h2 id="hardware-title">Gerçek kol bağlantısı</h2></div><div class="hw-heading-actions"><span class="hw-badge">SALT OKUMA</span><button id="hardware-close" class="icon-button" aria-label="Donanım panelini kapat">×</button></div></header>
 <div class="hw-context">Ana ekrandaki beyin ve hareket simülasyona bağlı. Bu panel gerçek USB aygıtları ve kalibrasyon içindir; otonom hareket kapalıdır.</div>
 <div class="hw-body"><section class="hw-left">
-<nav class="hw-tabs" aria-label="Donanım paneli sekmeleri"><button id="hw-diagnostics-tab" class="active" aria-pressed="true">Bağlantı ve motorlar</button><button id="hw-readiness-tab" aria-pressed="false">Devreye alma <span id="hw-check-count">0/9</span></button></nav>
+<nav class="hw-tabs" aria-label="Donanım paneli sekmeleri"><button id="hw-diagnostics-tab" class="active" aria-pressed="true">Bağlantı ve motorlar</button><button id="hw-readiness-tab" aria-pressed="false">Devreye alma <span id="hw-check-count">—</span></button></nav>
 <div id="hw-diagnostics" class="hw-tab-content">
 <div class="hw-section-title"><h3>Follower · 6 × STS3215</h3><button id="hw-refresh" class="text-button">Envanteri yenile ↻</button></div>
 <label for="hw-port">USB motor kartı</label><select id="hw-port"><option value="">Bağlı USB kol yok</option></select>
@@ -54,6 +54,7 @@ function render(state){
   latest=state;
   options('hw-port',state.inventory.ports.map(p=>({id:p.device,label:`${p.device} · ${p.description}`})),'Bağlı USB kol yok');
   options('hw-calibration',state.calibrations.map(c=>({id:c.id,label:`${c.name} · ${c.valid?'geçerli dosya':'kontrol gerekli'}`,disabled:!c.valid})),'Kalibrasyon bulunamadı');
+  if(state.arm.running&&state.selected_calibration)$('hw-calibration').value=state.selected_calibration;
   selection();
   const arm=state.arm;
   $('hw-arm-status').textContent=arm.fresh?`CANLI · ${arm.age_ms} ms`:arm.error?'Okuma durdu':arm.running?'Okunuyor…':'Bağlantı yok';
@@ -66,6 +67,8 @@ function render(state){
     return row;
   }));
   $('hw-arm-detail').textContent=arm.error|| (arm.fresh?(arm.calibration_match?'Dosya ve motor kalibrasyonu eşleşti. Tork yalnızca okunuyor.':`Kalibrasyon uyuşmazlığı (${arm.calibration_mismatches.length} ayar). Konum ölçeği doğrulanmadı; Kol kalibrasyonu sekmesini kullan.`):'Bu tanılama yalnızca okur. Ayar değişiklikleri Kol kalibrasyonu sekmesinde onaylanır.');
+  const outside=arm.fresh?arm.motors?.filter(m=>m.in_calibrated_range===false)||[]:[];
+  if(outside.length)$('hw-arm-detail').textContent=`Aralık dışında: ${outside.map(m=>`${displayNames[jointNames.indexOf(m.name)]} (${m.position_raw} ham)`).join(', ')}. Kalibrasyon eşleşse de hareket doğrulanmış değildir.`;
   $('hw-arm-detail').title=arm.calibration_mismatches?.join(', ')||'';
   $('hw-check-count').textContent=`${state.checks.filter(c=>c.passed).length}/${state.checks.length}`;
   $('hw-checks').replaceChildren(...state.checks.map(check=>{const item=document.createElement('li');item.className=check.passed?'passed':'pending';const mark=document.createElement('span');mark.textContent=check.passed?'✓':'○';item.append(mark,document.createTextNode(check.label));return item;}));
@@ -78,6 +81,12 @@ function render(state){
     $(`hw-${role}-start`).disabled=busy||Boolean(camera.running)||!state.environment_ready;
     $(`hw-${role}-stop`).disabled=busy||!camera.running;
     $(`hw-${role}-index`).disabled=busy||Boolean(camera.running);
+    if(camera.running&&Number.isInteger(camera.index))$(`hw-${role}-index`).value=camera.index;
+    const observation=camera.perception;
+    const current=camera.fresh&&observation?.frame_sequence===camera.sequence&&camera.sequence!==undefined;
+    const detail=$(`hw-${role}-vision`);
+    detail.textContent=current?`Küp 200: ${observation.cube_visible?'görülüyor':'yok'} · Kutu 211: ${observation.bin_visible?'görülüyor':'yok'} · 3B konum doğrulanmadı`:'Canlı nesne ölçümü yok';
+    detail.title=current?`Kare ${camera.sequence} · Yalnızca piksel konumu; beyin girdisi henüz hazır değil.`:'';
   }
   commissioningUI.update(state);
   $('hw-environment').textContent=state.environment_ready?'SÜRÜCÜ ORTAMI HAZIR':'SÜRÜCÜ KURULUMU GEREKLİ';
@@ -96,6 +105,10 @@ async function poll(token){
   if(dialog.open&&token===generation)timer=setTimeout(()=>poll(token),250);
 }
 const commissioningUI=setupCalibration({dialog,action,message,options,getState:()=>latest});
+for(const role of ['wrist','top']){
+  const detail=document.createElement('div');detail.id=`hw-${role}-vision`;detail.className='hw-vision hw-small';
+  detail.textContent='Canlı nesne ölçümü yok';$(`hw-${role}-image`).closest('.hw-camera-frame').after(detail);
+}
 openButton.onclick=async()=>{
   dialog.showModal();const token=++generation;message('USB envanteri okunuyor; kamera ve motor bağlantısı açılmıyor.');
   try{const state=await request('inventory');if(dialog.open&&token===generation){render(state);message(state.inventory.error||'Hazır. Kolunu bağladıktan sonra envanteri yenileyebilirsin.',Boolean(state.inventory.error));}}

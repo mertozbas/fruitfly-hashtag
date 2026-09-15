@@ -2189,7 +2189,22 @@ Dosya / motor eşleşmiyorsa UI derece yerine ham enkoder sayımını gösterir.
 Aralık dışındaki değerler kırpılmaz. <strong>Bu değerler doğrudan MuJoCo radyanlarına
 çevrilip hareket komutu yapılamaz:</strong> sıfır noktası ve yön eşleştirmesi gerekir.</p>
 <h2 id="docs-so101-hardware--4-kameraları-gör">4. Kameraları gör</h2>
-<p>Her kamera için bir aygıt indeksi seçip <strong>Görüntüyü aç</strong> düğmesine basın.
+<p>Her kamera için bir aygıt indeksi seçip <strong>Görüntüyü aç</strong> düğmesine basın.</p>
+<p>USB aygıtları yeniden bağlandığında indeksler değişebilir. Panel, açık oturumun
+gerçek indeksini gösterir; bilek / üst rolünü görüntüden doğrulayın. Bir kamerayı
+başka role taşırken önce mevcut önizlemesini durdurun.</p>
+<p>Yerel v2/v3 aksesuar setinin <code>tag36h11</code> işaretleri canlı RGB karelerinde aranır:
+<strong>200 kırmızı küp</strong>, <strong>211 sıralama kutusu</strong>. Okunan işaret çerçevelenir; alt satırda
+görülüp görülmediği belirtilir. İşaret kaybolduğunda eski tespit kullanılmaz.
+Aynı ID iki kez görülürse o nesne belirsiz sayılır. Kutu görüntüde görünse de işareti
+okunamıyorsa ölçüm hazır sayılmaz. Bu aşama yalnızca <strong>piksel konumu</strong> verir;
+işaretin merkezi kavrama veya bırakma hedefi değildir. Bilinen küp boyutu tek başına
+kamera / masa / robot dönüşümünü sağlamaz. Kamera parametreleri ve işaret ölçüsünün
+konum hesabındaki rolü için <a href="https://docs.opencv.org/4.13.0/d5/dae/tutorial_aruco_detection.html">OpenCV algılama rehberine</a> bakın.</p>
+<p><strong>Devreye alma</strong> sekmesi canlı eklem aralıklarını da denetler. Motor belleği ve
+kalibrasyon dosyası eşleşirken bir eklem kayıtlı aralığın dışında bulunabilir;
+bu durumda sınırlar otomatik genişletilmez. Nesne tespiti, sinir ağı modelinin
+beklediği 3B gözlem, robot eklem eşlemesi ve kavrama geri bildiriminin yerini tutmaz.
 İndeksler işletim sistemine ve takılı aygıtlara göre değişir; <code>0</code> her zaman bilek
 kamerası değildir. Görüntüden doğru aygıtı kontrol edin. Aynı indeks iki rol için
 aynı anda açılamaz. macOS kamera izni isterse Python'u başlatan uygulamanın

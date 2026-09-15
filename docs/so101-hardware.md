@@ -88,6 +88,24 @@ Aralık dışındaki değerler kırpılmaz. **Bu değerler doğrudan MuJoCo rady
 ## 4. Kameraları gör
 
 Her kamera için bir aygıt indeksi seçip **Görüntüyü aç** düğmesine basın.
+
+USB aygıtları yeniden bağlandığında indeksler değişebilir. Panel, açık oturumun
+gerçek indeksini gösterir; bilek / üst rolünü görüntüden doğrulayın. Bir kamerayı
+başka role taşırken önce mevcut önizlemesini durdurun.
+
+Yerel v2/v3 aksesuar setinin `tag36h11` işaretleri canlı RGB karelerinde aranır:
+**200 kırmızı küp**, **211 sıralama kutusu**. Okunan işaret çerçevelenir; alt satırda
+görülüp görülmediği belirtilir. İşaret kaybolduğunda eski tespit kullanılmaz.
+Aynı ID iki kez görülürse o nesne belirsiz sayılır. Kutu görüntüde görünse de işareti
+okunamıyorsa ölçüm hazır sayılmaz. Bu aşama yalnızca **piksel konumu** verir;
+işaretin merkezi kavrama veya bırakma hedefi değildir. Bilinen küp boyutu tek başına
+kamera / masa / robot dönüşümünü sağlamaz. Kamera parametreleri ve işaret ölçüsünün
+konum hesabındaki rolü için [OpenCV algılama rehberine](https://docs.opencv.org/4.13.0/d5/dae/tutorial_aruco_detection.html) bakın.
+
+**Devreye alma** sekmesi canlı eklem aralıklarını da denetler. Motor belleği ve
+kalibrasyon dosyası eşleşirken bir eklem kayıtlı aralığın dışında bulunabilir;
+bu durumda sınırlar otomatik genişletilmez. Nesne tespiti, sinir ağı modelinin
+beklediği 3B gözlem, robot eklem eşlemesi ve kavrama geri bildiriminin yerini tutmaz.
 İndeksler işletim sistemine ve takılı aygıtlara göre değişir; `0` her zaman bilek
 kamerası değildir. Görüntüden doğru aygıtı kontrol edin. Aynı indeks iki rol için
 aynı anda açılamaz. macOS kamera izni isterse Python'u başlatan uygulamanın

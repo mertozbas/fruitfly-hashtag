@@ -56,6 +56,18 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(sum(c['passed'] for c in checks),5)
         self.assertTrue(all(not c['passed'] for c in checks[-4:]))
 
+    def test_fresh_marker_and_joint_ranges_are_separate_from_calibration(self):
+        arm=dict(connected=True,calibration_match=True,motors=[dict(name=n,in_calibrated_range=True) for n in JOINTS])
+        cameras={r:dict(fresh=True,sequence=10,perception=dict(frame_sequence=10,cube_visible=True,bin_visible=True)) for r in ('wrist','top')}
+        def checks():return {c['id']:c['passed'] for c in readiness(dict(valid=True),arm,cameras)}
+        self.assertTrue(checks()['joint_ranges']);self.assertTrue(checks()['cube_marker']);self.assertTrue(checks()['bin_marker'])
+        arm['motors'][2]['in_calibrated_range']=False
+        self.assertFalse(checks()['joint_ranges']);self.assertTrue(checks()['live_calibration'])
+        cameras['top']['sequence']=11
+        self.assertFalse(checks()['bin_marker']);self.assertTrue(checks()['cube_marker'])
+        cameras['wrist']['fresh']=False
+        self.assertFalse(checks()['cube_marker']);self.assertFalse(checks()['vision_geometry'])
+
 
 class ManagerTests(unittest.TestCase):
     def setUp(self):
@@ -105,13 +117,14 @@ class ManagerTests(unittest.TestCase):
 
     def test_finished_or_stale_camera_never_displays_as_live(self):
         process=DiagnosticProcess([sys.executable,'-u','-c',
-            'import json,time;print(json.dumps(dict(kind="camera",image="fixture")),flush=True);time.sleep(5)'],self.root,'camera')
+            'import json,time;print(json.dumps(dict(kind="camera",image="fixture",perception={"cube_visible":True})),flush=True);time.sleep(5)'],self.root,'camera')
         self.addCleanup(process.stop)
         deadline=time.monotonic()+3
         while not process.snapshot()['fresh'] and time.monotonic()<deadline:time.sleep(.02)
         self.assertTrue(process.snapshot()['fresh'])
         with process.lock:process.received=time.monotonic()-3
         self.assertNotIn('image',process.snapshot());self.assertFalse(process.snapshot()['fresh'])
+        self.assertNotIn('perception',process.snapshot())
         process.stop();self.assertFalse(process.snapshot()['running'])
 
 

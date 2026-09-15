@@ -64,11 +64,22 @@ def compare_calibration(saved,hardware):
 
 def readiness(saved,arm,cameras):
     """Observed preparation checks only; autonomous motion is not commissioned."""
+    motors=arm.get('motors',[]) if arm.get('connected') else []
+    outside=[m.get('name','?') for m in motors if m.get('in_calibrated_range') is False]
+    def sees(role,key):
+        camera=cameras.get(role,{})
+        p=camera.get('perception',{})
+        return bool(camera.get('fresh') and p.get('frame_sequence')==camera.get('sequence')
+                    and camera.get('sequence') is not None and p.get(key))
     return [
         dict(id='calibration_file',label='Yerel kalibrasyon dosyası',passed=bool(saved and saved['valid'])),
         dict(id='motor_bus',label='Altı STS3215 motorun okunması',passed=bool(arm and arm.get('connected') and len(arm.get('motors',[]))==6)),
         dict(id='live_calibration',label='Dosya ve motor kalibrasyonunun eşleşmesi',passed=bool(arm and arm.get('connected') and arm.get('calibration_match'))),
+        dict(id='joint_ranges',label='Canlı eklemlerin kayıtlı aralıkta olması'+(' · '+', '.join(outside) if outside else ''),
+             passed=bool(len(motors)==6 and all(m.get('in_calibrated_range') is True for m in motors))),
         *[dict(id=f'{role}_camera',label=label,passed=bool(cameras.get(role,{}).get('fresh'))) for role,label in [('wrist','Bilek kamera görüntüsü'),('top','Üst / karşı kamera görüntüsü')]],
+        dict(id='cube_marker',label='Küp işaretinin canlı görüntüde okunması · 200',passed=any(sees(r,'cube_visible') for r in ('wrist','top'))),
+        dict(id='bin_marker',label='Kutu işaretinin üst kamerada okunması · 211',passed=sees('top','bin_visible')),
         dict(id='joint_alignment',label='Gerçek eklem yönleri ve simülasyon sıfırlarının ölçülmesi',passed=False),
         dict(id='vision_geometry',label='Kamera / masa / robot koordinat kalibrasyonu',passed=False),
         dict(id='grasp_feedback',label='Gerçek kavrama ve düşme algısının doğrulanması',passed=False),

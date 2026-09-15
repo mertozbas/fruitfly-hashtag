@@ -44,6 +44,7 @@ packages = ["src/fruitfly_lab"]
 "so101/hardware_api.py" = "fruitfly_lab/bundle/so101/hardware_api.py"
 "so101/hardware_contract.py" = "fruitfly_lab/bundle/so101/hardware_contract.py"
 "so101/hardware_worker.py" = "fruitfly_lab/bundle/so101/hardware_worker.py"
+"so101/hardware_vision.py" = "fruitfly_lab/bundle/so101/hardware_vision.py"
 "so101/hardware-requirements.txt" = "fruitfly_lab/bundle/so101/hardware-requirements.txt"
 "tools/setup_so101_hardware.py" = "fruitfly_lab/bundle/tools/setup_so101_hardware.py"
 "ui/hardware.js" = "fruitfly_lab/bundle/ui/hardware.js"

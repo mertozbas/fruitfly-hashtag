@@ -76,6 +76,8 @@ def preview(index,role,duration,session=None,profile=None):
     import json,queue,threading,uuid
     from pathlib import Path
     from .calibration_camera import CameraCalibration
+    from .hardware_vision import AccessoryVision
+    vision=AccessoryVision()
     session=session or uuid.uuid4().hex
     lens=CameraCalibration(Path(__file__).resolve().parents[1]/'.runtime/hardware/cameras'/role/session,role,index,profile)
     commands=queue.Queue(16)
@@ -97,15 +99,18 @@ def preview(index,role,duration,session=None,profile=None):
             start=time.monotonic();ok,frame=camera.read()
             if not ok or frame is None:raise OSError('Kameradan güncel kare alınamadı')
             sequence+=1
+            # Detect on the unannotated frame, never on calibration overlays.
+            observation=vision.observe(frame,sequence)
             frame=lens.observe(frame,sequence)
             while not commands.empty():
                 try:lens.command(commands.get_nowait())
                 except (ValueError,cv2.error) as exc:lens.warning=str(exc)
+            frame=vision.annotate(frame,observation)
             ok,encoded=cv2.imencode('.jpg',frame,[cv2.IMWRITE_JPEG_QUALITY,85])
             if not ok:raise OSError('Kamera karesi kodlanamadı')
             emit(kind='camera',role=role,index=index,sequence=sequence,width=frame.shape[1],height=frame.shape[0],
                  image=base64.b64encode(encoded).decode(),source='physical_usb_rgb',depth_available=False,
-                 session=session,calibration=lens.state(),
+                 session=session,calibration=lens.state(),perception=observation,
                  note='Kamera adayı; rol ve lens/robot kalibrasyonu henüz doğrulanmadı.')
             time.sleep(max(0,.125-(time.monotonic()-start)))
     finally:camera.release()

@@ -44,7 +44,9 @@ class DiagnosticProcess:
             if self.kind=='arm':result['connected']=fresh
             if self.kind=='calibration' and self.latest.get('stage') in {'saved','restored','cancelled','failed'}:result['error']=self.error
             # A frozen frame must not look like live perception.
-            if not fresh:result.pop('image',None)
+            if not fresh:
+                result.pop('image',None)
+                result.pop('perception',None)
             return result
 
     def stop(self):
