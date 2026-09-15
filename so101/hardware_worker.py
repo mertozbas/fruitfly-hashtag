@@ -71,6 +71,31 @@ def inspect_arm(port_name,path,expected_sha,duration):
         if port.is_open:port.closePort()
 
 
+def read_camera_frame(camera,deadline,size=(1280,720)):
+    """Bound transient read failures; never reuse or resize an old frame.
+
+    The process owner still enforces the worker lifetime if a backend blocks.
+    Missing frames emit no heartbeat, so the existing freshness gates expire.
+    """
+    end=min(deadline,time.monotonic()+3)
+    failures=mismatches=0
+    observed_size=None
+    for _ in range(30):
+        if time.monotonic()>=end:break
+        ok,frame=camera.read()
+        if time.monotonic()>=end:break
+        if ok and frame is not None and frame.size:
+            observed_size=(frame.shape[1],frame.shape[0])
+            if observed_size==size:
+                return frame,dict(read_failures=failures,resolution_mismatches=mismatches)
+            mismatches+=1
+        else:failures+=1
+        time.sleep(.02)
+    if mismatches:
+        raise OSError(f'Kamera çözünürlüğü beklenen {size} ile uyuşmuyor: {observed_size}')
+    raise OSError('Kameradan süre sınırı içinde güncel kare alınamadı')
+
+
 def preview(index,role,duration,session=None,profile=None):
     import cv2
     import json,queue,threading,uuid
@@ -96,8 +121,7 @@ def preview(index,role,duration,session=None,profile=None):
         camera.set(cv2.CAP_PROP_FPS,15)
         deadline=time.monotonic()+duration;sequence=0
         while time.monotonic()<deadline:
-            start=time.monotonic();ok,frame=camera.read()
-            if not ok or frame is None:raise OSError('Kameradan güncel kare alınamadı')
+            start=time.monotonic();frame,capture=read_camera_frame(camera,deadline)
             sequence+=1
             # Detect on the unannotated frame, never on calibration overlays.
             observation=vision.observe(frame,sequence)
@@ -110,7 +134,7 @@ def preview(index,role,duration,session=None,profile=None):
             if not ok:raise OSError('Kamera karesi kodlanamadı')
             emit(kind='camera',role=role,index=index,sequence=sequence,width=frame.shape[1],height=frame.shape[0],
                  image=base64.b64encode(encoded).decode(),source='physical_usb_rgb',depth_available=False,
-                 session=session,calibration=lens.state(),perception=observation,
+                 session=session,calibration=lens.state(),perception=observation,capture=capture,
                  note='Kamera adayı; rol ve lens/robot kalibrasyonu henüz doğrulanmadı.')
             time.sleep(max(0,.125-(time.monotonic()-start)))
     finally:camera.release()

@@ -155,8 +155,12 @@ kamerası değildir. Görüntüden doğru aygıtı kontrol edin. Aynı indeks ik
 aynı anda açılamaz. macOS kamera izni isterse Python'u başlatan uygulamanın
 kamera erişimini sistem ayarlarından açın.
 
-1280×720 istenir; kamera farklı çözünürlük verirse **gerçekte alınan çözünürlük**
-panelde yazılır. İşçi en fazla 8 kare/saniye üretir, panel yaklaşık 4 kez/saniye
+Ölçüm akışı 1280×720 kare gerektirir. Farklı boyuttaki kareler yeniden boyutlandırılıp
+kalibrasyona uygulanmaz; kısa başlatma / kare kaybı için en fazla 30 okuma ve
+3 saniyelik yeniden deneme sınırı vardır. Kalıcı kayıp veya çözünürlük uyuşmazlığında
+önizleme hata verir. FaceTime gibi aynı kamerayı kullanan diğer önizlemeleri kapatın;
+başka bir uygulama kamera ayarlarını kilitleyebilir.
+İşçi en fazla 8 kare/saniye üretir, panel yaklaşık 4 kez/saniye
 yenilenir; cihaz ve işlem süresi bunu düşürebilir. Son kare 2 saniyeden eskiyse
 canlı kabul edilmez. UVC'den derinlik görüntüsü uydurulmaz.
 Paneldeki `ms` değeri son mesajın sunucuya gelişinden itibaren yaşıdır;
