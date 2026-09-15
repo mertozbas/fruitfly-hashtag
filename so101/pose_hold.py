@@ -121,3 +121,92 @@ def hold_current(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=t
         except Exception as exc:report['torque_read_error']=str(exc)
         bus.close();save(report)
     return report
+
+
+class RecordedReturnBus(HeldJointProbeBus):
+    """Return inside an earlier measured excursion; no new search or wider range."""
+    def __init__(self,port,motor_id,target):
+        super().__init__(port,motor_id)
+        if type(target) is not int:raise ValueError('Recorded integer target required')
+        self.target=target
+
+    def prepare(self,q):
+        if not 1<=q[self.motor_id-1]-self.target<=8:raise ValueError('Return must stay within eight counts of the measured pose')
+        report=super().prepare(q)
+        return dict(report,return_target=self.target,span_counts=self.initial-self.target)
+
+    def guard(self,packet):
+        p=bytes(packet)
+        if len(p)>4 and p[4] in (1,2):return assert_read_packet(p)
+        if len(p)!=9 or p[:2]!=b'\xff\xff' or p[2]!=self.motor_id or p[3]!=5 or p[4]!=3 or p[5]!=42 or sum(p[2:])&255!=255:
+            raise PermissionError('Return may only write the reviewed joint goal')
+        data=p[6:-1];v=int.from_bytes(data,'little')
+        if self.permit!=(42,data):raise PermissionError('Missing return goal permit')
+        self.permit=None
+        if self.phase=='setup':valid=v==self.initial
+        elif self.phase=='move':valid=self.target<=v<=self.initial and 0<=self.last_goal-v<=2
+        elif self.phase=='hold':valid=v==self.stop_position and self.target-3<=v<=self.initial+3 and abs(v-self.last_goal)<=8
+        else:valid=False
+        if not valid:raise PermissionError('Return outside the recorded excursion')
+        return p
+
+
+def recorded_return_target(plan):
+    import hashlib,json
+    from pathlib import Path
+    source=Path(plan['reference_plan']).resolve()
+    root=Path('.runtime/hardware/probes').resolve()
+    if not source.is_relative_to(root) or source.name!='plan.json':raise ValueError('Local commissioning reference required')
+    original=source.read_bytes();result=source.with_name('result.json').read_bytes()
+    if hashlib.sha256(original+result).hexdigest()!=plan['reference_sha256']:raise ValueError('Reference record changed')
+    prior=json.loads(original);report=json.loads(result)
+    if prior.get('kind')!='held_joint_probe_v1' or report.get('status') not in ('no_confirmed_motion','return_outside_tolerance'):raise ValueError('An unresolved held probe is required')
+    for key in ('motor_id','port','serial_number','calibration_sha256'):
+        if prior.get(key)!=plan.get(key):raise ValueError('Reference belongs to another joint or robot')
+    if report.get('motor_id')!=plan['motor_id'] or report.get('calibration_preserved') is not True:raise ValueError('Invalid measured reference')
+    j=plan['motor_id']-1;initial=report['initial']
+    if len(initial)!=6 or any(type(v) is not int for v in initial):raise ValueError('Invalid measured reference pose')
+    if any(abs(plan['q'][i]-initial[i])>3 for i in range(6) if i!=j):raise ValueError('Other joints moved since the reference')
+    if not 1<=plan['q'][j]-initial[j]<=8:raise ValueError('Reference return exceeds eight counts')
+    return initial[j]
+
+
+def return_recorded_pose(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time.sleep):
+    report=dict(status='preflight',brain_connected=False,joint_mapping_verified=False,
+                commanded_joint=JOINTS[bus.motor_id-1],motor_id=bus.motor_id,samples=[],started_wall_time=time.time())
+    start=clock();q0=None;j=bus.motor_id-1
+    def sample():
+        begin=clock();check_live();q=bus.positions()
+        for i,n in enumerate(JOINTS):
+            c=saved[n];margin=0 if i==5 else 20
+            if not c['range_min']+margin<=q[i]<=c['range_max']-margin:raise ValueError('Outside calibrated range')
+            if bool(bus.read(i+1,40,1))!=(i<5) or bus.read(i+1,33,1)!=0:raise ValueError('Holding state changed')
+            if bus.read(i+1,63,1)>=50 or not 8<=bus.read(i+1,62,1)/10<=13.2:raise ValueError('Invalid temperature or voltage')
+        if q0 is not None:
+            if any(abs(q[i]-q0[i])>3 for i in range(6) if i!=j):raise ValueError('Another joint moved')
+            if not bus.target-3<=q[j]<=q0[j]+3:raise ValueError('Return envelope exceeded')
+        if clock()-begin>.15 or clock()-start>5:raise ValueError('Return observation deadline exceeded')
+        report['samples'].append(dict(t=round(clock()-start,4),q=q,goal=bus.last_goal));return q
+    try:
+        bus.open();bus.verify(saved);q0=sample()
+        if any(abs(a-b)>2 for a,b in zip(q0,expected)):raise ValueError('Reviewed pose changed')
+        report.update(bus.prepare(q0));report['status']='prepared';save(report)
+        sample();bus.enable()
+        while bus.last_goal>bus.target:
+            sample();bus.goal(max(bus.target,bus.last_goal-2))
+            for _ in range(2):sleep(.1);sample()
+        # Observe a full two seconds at the final goal; no repeated goal writes.
+        for _ in range(20):sleep(.1);sample()
+        tail=report['samples'][-5:];error=tail[-1]['q'][j]-bus.target
+        report.update(return_error_counts=error,final_position=tail[-1]['q'],motion_observed=any(s['q'][j]!=q0[j] for s in report['samples']))
+        report['status']='returned_to_reference' if all(abs(s['q'][j]-bus.target)<=3 for s in tail) else 'return_outside_tolerance'
+    except Exception as exc:report.update(status='failed',error=str(exc))
+    finally:
+        errors=bus.finish()
+        if errors:report.update(status='failed',cleanup_errors=errors)
+        report['torque_may_be_on']=bus.may_be_on
+        try:
+            if q0 is not None:bus.verify(saved);report['calibration_preserved']=True
+        except Exception as exc:report.update(status='failed',verification_error=str(exc))
+        bus.close();save(report)
+    return report

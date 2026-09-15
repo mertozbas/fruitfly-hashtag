@@ -171,10 +171,10 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--plan',type=Path,required=True);args=parser.parse_args()
     plan=json.loads(args.plan.read_text())
     kind=plan.get('kind')
-    if kind not in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1','hold_current_v1') or plan.get('base_mounted') is not True:raise ValueError('Reviewed fixed commissioning plan required')
-    if kind in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1') and plan.get('workspace_clear') is not True:raise ValueError('Clear reviewed joint workspace required')
+    if kind not in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1','held_return_v1','hold_current_v1') or plan.get('base_mounted') is not True:raise ValueError('Reviewed fixed commissioning plan required')
+    if kind in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1','held_return_v1') and plan.get('workspace_clear') is not True:raise ValueError('Clear reviewed joint workspace required')
     if kind=='hold_current_v1' and plan.get('operator_supporting') is not True:raise ValueError('Operator must support the arm during initial hold')
-    if kind=='held_joint_probe_v1' and (type(plan.get('motor_id')) is not int or plan['motor_id'] not in range(1,5)):raise ValueError('One reviewed body joint 1..4 required')
+    if kind in ('held_joint_probe_v1','held_return_v1') and (type(plan.get('motor_id')) is not int or plan['motor_id'] not in range(1,5)):raise ValueError('One reviewed body joint 1..4 required')
     if not 0<=time.time()-plan['created']<=20:raise ValueError('Plan expired')
     if not isinstance(plan.get('q'),list) or len(plan['q'])!=6 or any(type(v) is not int for v in plan['q']):raise ValueError('Invalid plan joints')
     cal=calibration(plan['calibration_path'])
@@ -195,6 +195,9 @@ def main():
     if kind=='hold_current_v1':
         from .pose_hold import HoldBus,hold_current
         runner,bus=hold_current,HoldBus(plan['port'])
+    elif kind=='held_return_v1':
+        from .pose_hold import RecordedReturnBus,recorded_return_target,return_recorded_pose
+        runner,bus=return_recorded_pose,RecordedReturnBus(plan['port'],plan['motor_id'],recorded_return_target(plan))
     elif kind=='held_joint_probe_v1':
         from .pose_hold import HeldJointProbeBus
         runner,bus=run_probe,HeldJointProbeBus(plan['port'],plan['motor_id'])
@@ -203,7 +206,7 @@ def main():
         runner,bus=run_probe,HeldWristProbeBus(plan['port'])
     else:runner,bus=run_probe,ProbeBus(plan['port'])
     report=runner(bus,cal['motors'],plan['q'],check_live,lambda record:atomic_json(args.plan.with_name('result.json'),record))
-    print(json.dumps(report,ensure_ascii=False));return 0 if report['status'] in ('passed','holding_at_measured_pose') else 1
+    print(json.dumps(report,ensure_ascii=False));return 0 if report['status'] in ('passed','holding_at_measured_pose','returned_to_reference') else 1
 
 
 if __name__=='__main__':raise SystemExit(main())
