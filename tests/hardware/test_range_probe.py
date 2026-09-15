@@ -15,12 +15,13 @@ class RangeTests(unittest.TestCase):
         for target in ('serial.Serial','fcntl.ioctl'):
             p=patch(target,return_value=self.wire if target=='serial.Serial' else None);p.start();self.addCleanup(p.stop)
         for i in range(1,6):self.wire.registers[i].update({40:1,42:2000,44:0,46:20,48:500})
+        for i in range(1,7):self.wire.registers[i].update({60:0,65:0})
         self.bus=RangeBus('OFFLINE_TEST',5,170);self.addCleanup(self.bus.close)
 
-    def run_it(self,drive=1.,check=lambda:None,save=None):
+    def run_it(self,drive=1.,check=lambda:None,save=None,thermal_pause=False):
         return run_range(self.bus,self.saved,[2000]*6,check,
                          save or (lambda r:self.records.append(copy.deepcopy(r))),
-                         lambda:dict(bias_free_drive=drive,delta_counts=8),self.clock,self.clock.sleep)
+                         lambda:dict(bias_free_drive=drive,delta_counts=8),self.clock,self.clock.sleep,thermal_pause=thermal_pause)
 
     def test_170_count_roundtrip_only_writes_selected_goal_and_preserves_support(self):
         r=self.run_it();self.assertEqual(r['status'],'passed_coarse_range')
@@ -117,8 +118,82 @@ class RangeTests(unittest.TestCase):
         def sag():
             if self.bus.last_goal==2010:self.wire.registers[3][62]=0
         r=self.run_it(check=sag);self.assertEqual(r['status'],'failed')
-        self.assertEqual(r['fault_observation']['motor'],dict(id=3,temperature_c=35,voltage_v=0.))
+        self.assertEqual(r['fault_observation']['motor'],dict(id=3,temperature_c=35,voltage_v=0.,status=0,native_load=0))
         self.assertEqual(self.wire.registers[5][42],2010)
+
+    def test_explicit_16_count_lead_still_stops_stall_inside_original_stroke(self):
+        self.bus=RangeBus('OFFLINE_TEST',5,170,tracking_limit=16);self.wire.stall=True
+        r=self.run_it();self.assertEqual(r['status'],'failed')
+        self.assertEqual(r['max_tracking_error_counts'],16);self.assertEqual(r['return_tolerance_counts'],8)
+        self.assertLessEqual(max(v for _,_,v in self.wire.writes),2016)
+        self.assertEqual(self.wire.registers[5][42],2000)
+
+    def test_reviewed_lead_handles_larger_servo_deadband_without_config_writes(self):
+        self.bus=RangeBus('OFFLINE_TEST',5,170,tracking_limit=16)
+        original=self.wire.write
+        def deadband(packet):
+            p=bytes(packet);old=self.wire.registers[5][56];result=original(p)
+            if p[4]==3 and p[2]==5 and p[5]==42:
+                delta=int.from_bytes(p[6:-1],'little')-old
+                self.assertLessEqual(abs(delta),16)
+                self.wire.registers[5][56]=old+((6 if delta>0 else -6) if abs(delta)>=10 else 0)
+            return result
+        self.wire.write=deadband;r=self.run_it()
+        self.assertEqual(r['status'],'passed_coarse_range');self.assertLessEqual(abs(r['return_error_counts']),8)
+        self.assertTrue(all((i,a)==(5,42) for i,a,_ in self.wire.writes))
+
+    def test_status_or_load_fault_interrupts_even_with_reviewed_16_count_lead(self):
+        for address,value in ((65,4),(60,121),(60,1024+121)):
+            self.bus=RangeBus('OFFLINE_TEST',5,170,tracking_limit=16)
+            self.wire.registers[2][address]=value
+            r=self.run_it();self.assertEqual(r['status'],'failed');self.assertIn('status/load',r['error'])
+            self.assertEqual(self.wire.writes,[]);self.wire.registers[2][address]=0
+
+    def test_transient_warning_holds_without_advancing_until_two_cool_seconds(self):
+        triggered=False;warm_until=0.;hold_started=None;resume_at=None
+        def readings():
+            nonlocal triggered,warm_until,hold_started,resume_at
+            if not triggered and self.bus.last_goal==2010:
+                triggered=True;warm_until=self.clock()+.4
+            self.wire.registers[6][63]=54 if triggered and self.clock()<warm_until else 35
+            if self.bus.phase=='hold' and hold_started is None:hold_started=self.clock()
+            if hold_started is not None and self.bus.phase=='move' and resume_at is None:resume_at=self.clock()
+            if self.bus.phase=='hold':self.assertEqual(self.wire.registers[5][42],2010)
+        r=self.run_it(check=readings,thermal_pause=True)
+        self.assertEqual(r['status'],'passed_coarse_range');self.assertEqual(len(r['thermal_pauses']),1)
+        self.assertGreaterEqual(resume_at-warm_until,2)
+        self.assertEqual(self.wire.registers[5][42],2000)
+
+    def test_persistent_warning_hard_temperature_voltage_or_camera_loss_never_resumes(self):
+        for fault in ('persistent','hard','voltage','camera'):
+            with self.subTest(fault=fault):
+                self.bus=RangeBus('OFFLINE_TEST',5,170);self.clock=Clock();self.wire.writes=[]
+                for i in range(1,7):self.wire.registers[i].update({63:35,62:124,56:2000})
+                self.wire.registers[5][42]=2000
+                def readings():
+                    if self.bus.last_goal==2010:
+                        self.wire.registers[6][63]=60 if fault=='hard' else 54
+                        if self.bus.phase=='hold' and fault=='voltage':self.wire.registers[6][62]=0
+                        if self.bus.phase=='hold' and fault=='camera':raise ValueError('Camera lost while paused')
+                r=self.run_it(check=readings,thermal_pause=True)
+                self.assertEqual(r['status'],'failed');self.assertEqual(self.wire.registers[5][42],2010)
+                self.assertFalse(any(e.get('resume_t') for e in r.get('thermal_pauses',[])))
+                self.assertLessEqual(max(v for _,_,v in self.wire.writes),2010)
+
+    def test_third_warning_ends_test_and_never_adds_a_third_resume(self):
+        triggers=set()
+        def readings():
+            goal=self.bus.last_goal
+            if self.bus.phase=='move' and goal in (2010,2020,2030) and goal not in triggers:
+                triggers.add(goal);self.wire.registers[6][63]=54
+            else:self.wire.registers[6][63]=35
+        r=self.run_it(check=readings,thermal_pause=True)
+        self.assertEqual(r['status'],'failed');self.assertIn('more than twice',r['error'])
+        self.assertEqual(len(r['thermal_pauses']),2);self.assertEqual(self.wire.registers[5][42],2030)
+
+    def test_warm_preflight_still_forbids_start_even_with_pause_enabled(self):
+        self.wire.registers[6][63]=54
+        r=self.run_it(thermal_pause=True);self.assertEqual(r['status'],'failed');self.assertEqual(self.wire.writes,[])
 
     def test_gripper_and_larger_span_cannot_be_requested(self):
         for motor,span in ((6,170),(0,170),(True,170),(5,171),(5,0),(5,170.)):

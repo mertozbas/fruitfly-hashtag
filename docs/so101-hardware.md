@@ -98,12 +98,14 @@ gelir; altı eklemi koordine eden öğrenilmiş bir kavrama politikası değildi
 Anatomik devrenin etkinlikleri, girdi karesinin kimliği ve komut/enkoder örnekleri
 ayrı kaydedilir. Ana UI simülasyonu gerçek kol deneyiyle değiştirilmez.
 
-Paket sınırı yalnız seçilen motorun hedef konumuna yazılmasına izin verir:
-adım en fazla 2 sayım, anlık hedef–enkoder farkı en fazla 8 sayımdır. İki sayımlık
-adım bu farkı aşacaksa yalnız **aynı 8 sayımlık sınır içinde** kalan bir sayımlık
-ara adım denenebilir. Motor izlemezse hedef uzaklaştırılmaz. Önceden ayarlanmış
-hız 20 ve sınırlı tutma torku korunur; tork/hız/EEPROM yazılmaz. Deney en fazla
-45 saniyedir; her kamera en fazla 400 ms yaşında olmalıdır.
+Standart aralık testinde paket sınırı yalnız seçilen motorun hedef konumuna
+yazılmasına izin verir. Adım en fazla 2 sayım, anlık hedef–enkoder farkı varsayılan
+olarak 8 sayımdır. Ayrı bir inceleme içeren plan `tracking_limit_counts: 16`
+seçebilir; 16 sayım yaklaşık 1,41°'dir. Bu, gözlenen takip hatasının nedenini
+çözmez veya otomatik limit artırımı yapmaz. Adım mevcut sınırı aşacaksa yalnız
+aynı sınır içindeki bir sayımlık ara adım denenebilir; motor izlemezse deney durur.
+Standart test hız 20 değerini korur, tork/hız/EEPROM yazmaz. Toplam süre en fazla
+45 saniye, her kamera karesinin yaşı en fazla 400 ms'dir.
 
 Gidişten sonra motorun **deney öncesindeki yerel hedef kaydına** dönülür; yük
 altındaki enkoder farkını sıfırlamak için tutma hedefi yeniden tanımlanmaz.
@@ -113,20 +115,53 @@ veya kalibrasyon başarı ölçümü değildir. Hata durumunda ölçülen konum 
 aralığın içinden kayıtlı başlangıç hedefine dönüş yapabilir; sinir ağı eylemi
 olarak raporlanmaz. Otomatik yeniden deneme veya motorları sırayla tarama yoktur.
 
-Sıcaklık 50°C veya üstündeyse, voltaj 6–13,2 V dışında kalırsa ya da başka bir
-eklem 8 sayımdan fazla kayarsa deney durur. Yeni kayıtlar hatalı okumanın motor
-kimliğini, sıcaklığını ve voltajını da içerir. Geçici bir alarm filtrelenerek
-hareket sürdürülmez. Servo kayıt adresleri ve 4096 sayım/devir çözünürlüğü
+Her örnekte altı motorun sıcaklık, voltaj, durum kaydı ve işaretli yerel yükü
+kaydedilir. Voltaj 6–13,2 V dışında, durum kaydı sıfırdan farklı, mutlak yerel yük
+120 üzerinde veya başka eklemde kayma 8 sayımdan fazlaysa deney durur. Yerel yük
+ölçümü doğrulanmış kavrama kuvveti değildir. Servo kayıt adresleri ve 4096
+sayım/devir çözünürlüğü
 [LeRobot'un STS3215 tablosuyla](https://github.com/huggingface/lerobot/blob/main/src/lerobot/motors/feetech/tables.py)
 karşılaştırılmıştır.
 
-**Yerel fiziksel sonuç:** Bilek dönüşünde 170 sayım hedefe karşılık 165 sayım
-(14,50°) gerçek hareket ölçüldü. Dönüş tamamlanmadı; takip denetimi ve sonraki
-sınırlı dönüşte elektriksel/sıcaklık denetimi işlemi durdurdu. Kol sabitken yapılan
-ayrı ham paket incelemesinde kıskaç sıcaklığının 39°C civarından tek okumada
-57°C'ye çıkıp geri döndüğü de görüldü. Bu bulgu tek başına gerçek aşırı ısınma,
-besleme veya sensör arızası teşhisi değildir. Tutarsızlık çözülmediği için diğer
-motorların 15° testleri ve küpü alma denemesi yapılmadı.
+Sıcaklık sınırı varsayılan olarak 50°C'dir. Ayrı incelemeli `thermal_pause: true`
+planında hareket sırasında ilk 50–59°C okuması, hedef ilerlemesini keserek ölçülen
+konumu tutturur. Altı motorun tamamı kesintisiz iki saniye boyunca 45°C altında
+kalmadan hareket devam etmez. Bekleme en fazla sekiz saniye, duraklama sayısı en
+fazla ikidir; üçüncü uyarı, 60°C veya diğer denetim hataları denemeyi bitirir.
+Başlangıçta 50°C ve üstü hâlâ hareketi engeller. Alarmlar ve duraklamalar kayda
+geçer; kolun düşmemesi için gövdeyi taşıyan tork otomatik kapatılmaz.
+
+### Yalnız tabanda yaklaşık 30° deneyi
+
+Kullanıcının daha büyük ve hızlı hareket isteği için `reviewed_pan_sweep_v1`
+planı, yalnız gidiş–dönüşü önceden ölçülen **taban motoru 1** üzerinde
+`PanSweepBus` kullanır. Üst sınır 340 sayım / 29,88°, komut adımı beş sayımdır.
+Yalnız bu motorun geçici hız kaydı 20'den 60'a alınır; başarıda veya hatada tekrar
+20 yazılır ve okunarak doğrulanır. Takip sınırı 16, dönüş toleransı sekiz sayımdır.
+Diğer motorların hedefi, torku ve EEPROM ayarı değişmez. Bu plan diğer eklemlerde
+30° hareket veya bütün kolu hızlandırma yetkisi vermez.
+
+**Yerel fiziksel sonuçlar:** Bunlar tekil devreye alma denemeleridir; model
+bu denemelerde yeniden eğitilmedi.
+
+| Deneme | Ölçülen hareket | Sonuç |
+|---|---:|---|
+| Bilek dönüşü, motor 5 | 14,50° | Dönüş tamamlanmadı; takip ve sonraki dönüşte sıcaklık denetimi durdurdu. |
+| Taban, motor 1, 170 sayım planı | 13,89° | Gidiş–dönüş tamamlandı; başlangıçtan son fark −0,09°. İki sıcaklık duraklaması kaydedildi. |
+| Bilek eğimi, motor 4 | 14,85° | Gidiş gözlendi, dönüş takip sınırında durdu; ölçülen konum tutuldu. |
+| Taban, motor 1, 340 sayım planı | **29,18°** | **Gidiş–dönüş tamamlandı**, son fark −0,09°; toplam 21,03 saniye. Hareket eden gidiş bölümünün ortalama hızı yaklaşık 3,04°/s. Sıcaklık duraklaması olmadı. |
+
+Son 30° kaydı `.runtime/hardware/probes/78867548c8be48ffa30da36656e0d423/`
+altındadır. Bu denemede diğer beş enkoderin konumu değişmedi, kalibrasyon
+korundu ve geçici taban hızı geri yüklendi. Gidiş genliği anatomik görsel devrenin
+çıkışından; motor/yön seçimi ve dönüş mühendislik denetleyicisinden geldi.
+Canlı görüntüye göre sürekli karar veren altı eklemli kavrama politikası değildir.
+
+Kıskaç kapalı torktayken bile 39°C civarından 50–57°C'ye çıkıp dönen okumalar
+kaydedildi; güç yeniden başlatması bunu kalıcı olarak çözmedi. Geçerli paket
+sağlaması, bu sıçramanın gerçek ısınma, besleme veya sensör kaynaklı olduğunu
+tek başına belirlemez. **Omuz, dirsek ve kıskaç hareket testi ile gerçek küp
+alma/bırakma henüz tamamlanmadı.** Bilek eklemlerinin dönüş sorunu da açık kalıyor.
 
 ## 1. Kol bağlı değilken hazırlık
 

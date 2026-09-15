@@ -1,8 +1,10 @@
 """Explicitly requested, slow single-body-joint range characterization.
 
-Separate from the +8-count microprobe: at most 170 counts (14.94 degrees),
-2 counts per goal update, 8-count tracking/return tolerance, and 45 seconds.
-No torque/configuration/EEPROM writes; no gripper; no automatic joint sequence.
+Default: at most 170 counts (14.94 degrees), 2 counts per goal update,
+8-count tracking (explicit review may select 16), 8-count return tolerance,
+and 45 seconds. A separate pan-only subclass implements the requested 30-degree
+test and restores its temporary velocity setting. No torque/EEPROM writes,
+gripper actuation, or automatic joint sequence.
 Coarse range acceptance is not precision calibration or pick/place readiness.
 """
 import argparse
@@ -15,19 +17,21 @@ import urllib.request
 
 from .alignment_probe import ProbeBus
 from .calibration_contract import atomic_json
-from .hardware_contract import JOINTS,assert_read_packet,calibration
+from .hardware_contract import JOINTS,assert_read_packet,calibration,signed_magnitude
 
 MAX_SPAN=170
 
 
 class RangeBus(ProbeBus):
     body_holding=True
+    step_counts=2
 
-    def __init__(self,port,motor_id,span,direction=1):
+    def __init__(self,port,motor_id,span,direction=1,tracking_limit=8):
         if type(motor_id) is not int or motor_id not in range(1,6):raise ValueError('One body motor 1..5 required')
         if type(span) is not int or not 1<=span<=MAX_SPAN:raise ValueError('Requested range must be 1..170 counts')
         if type(direction) is not int or direction not in (-1,1):raise ValueError('Invalid range direction')
-        super().__init__(port);self.motor_id=motor_id;self.span=span;self.direction=direction;self.may_be_on=True
+        if type(tracking_limit) is not int or tracking_limit not in (8,16):raise ValueError('Tracking limit must be explicitly 8 or 16 counts')
+        super().__init__(port);self.motor_id=motor_id;self.span=span;self.direction=direction;self.tracking_limit=tracking_limit;self.may_be_on=True
 
     def envelope(self):return sorted((self.initial,self.initial+self.direction*self.span))
 
@@ -40,8 +44,8 @@ class RangeBus(ProbeBus):
         if self.permit!=(42,data):raise PermissionError('Missing one-packet range permit')
         self.permit=None
         low,high=self.envelope()
-        if self.phase=='move':valid=low<=v<=high and abs(v-self.last_goal)<=2
-        elif self.phase=='hold':valid=v==self.stop_position and low-8<=v<=high+8 and abs(v-self.last_goal)<=16
+        if self.phase=='move':valid=low<=v<=high and abs(v-self.last_goal)<=self.step_counts
+        elif self.phase=='hold':valid=v==self.stop_position and low-8<=v<=high+8 and abs(v-self.last_goal)<=max(16,self.tracking_limit)
         else:valid=False
         if not valid:raise PermissionError('Range goal outside explicit span/step/phase')
         return p
@@ -59,8 +63,17 @@ class RangeBus(ProbeBus):
         if not c['range_min']+20<=low or high>c['range_max']-20:
             raise ValueError('Requested stroke outside calibrated margin')
         return dict(initial_position=q.copy(),initial_native_goal=self.initial,span_counts=self.span,
-                    max_tracking_error_counts=8,return_tolerance_counts=8,native_velocity=20,
+                    max_tracking_error_counts=self.tracking_limit,return_tolerance_counts=8,native_velocity=20,
+                    max_native_load=120,
                     note='Coarse explicitly requested motor test; not a precision calibration pass')
+
+    def goal(self,value):
+        if self.phase!='move' or self.read(self.motor_id,40,1)!=1:raise ValueError('Range motor torque lost')
+        if abs(value-signed_magnitude(self.read(self.motor_id,56),15))>self.tracking_limit:
+            raise ValueError('Range motor exceeded the reviewed tracking lead')
+        self.write(42,value);self.last_goal=value
+
+    def begin_motion(self):self.phase='move'
 
     def finish(self):
         if self.phase in ('read','returned'):return []
@@ -70,23 +83,27 @@ class RangeBus(ProbeBus):
         except Exception as exc:return [str(exc)]
 
 
-def run_range(bus,saved,expected,check_live,save,decision,clock=time.monotonic,sleep=time.sleep,recovery_target=None):
+def run_range(bus,saved,expected,check_live,save,decision,clock=time.monotonic,sleep=time.sleep,recovery_target=None,thermal_pause=False):
     report=dict(status='preflight',motor_id=bus.motor_id,commanded_joint=JOINTS[bus.motor_id-1],
                 brain_connected=False,closed_loop=False,joint_mapping_verified=False,samples=[],started_wall_time=time.time(),
                 outbound_source='anatomical_vision_readout_magnitude',return_source='original_native_holding_goal')
     started=clock();q0=None;j=bus.motor_id-1
-    def sample():
+    def measure(permit_warm=False):
         begin=clock();check_live();q=bus.positions();telemetry=[]
         for i,n in enumerate(JOINTS):
             c=saved[n];margin=0 if i==5 else 20
             if not c['range_min']+margin<=q[i]<=c['range_max']-margin:raise ValueError('Joint outside calibrated margin')
             if bus.read(i+1,33,1)!=0 or bool(bus.read(i+1,40,1))!=(i<5):raise ValueError('Operating/torque state changed')
             temperature=bus.read(i+1,63,1);voltage=bus.read(i+1,62,1)/10
-            reading=dict(id=i+1,temperature_c=temperature,voltage_v=voltage)
+            status=bus.read(i+1,65,1);load=signed_magnitude(bus.read(i+1,60),10)
+            reading=dict(id=i+1,temperature_c=temperature,voltage_v=voltage,status=status,native_load=load)
             telemetry.append(reading)
-            if temperature>=50 or not 6<=voltage<=13.2:
+            if temperature>=(60 if permit_warm else 50) or not 6<=voltage<=13.2:
                 report['fault_observation']=dict(t=round(clock()-started,4),q=q,motor=reading)
                 raise ValueError(f'Motor {i+1} temperature/voltage limit: {temperature} C, {voltage} V')
+            if status or abs(load)>120:
+                report['fault_observation']=dict(t=round(clock()-started,4),q=q,motor=reading)
+                raise ValueError(f'Motor {i+1} status/load limit: status={status}, native_load={load}')
         if q0 is not None:
             if any(abs(a-b)>8 for i,(a,b) in enumerate(zip(q,q0)) if i!=j):raise ValueError('Other joint moved beyond coarse holding tolerance')
             if bus.initial is not None:
@@ -95,6 +112,30 @@ def run_range(bus,saved,expected,check_live,save,decision,clock=time.monotonic,s
         if clock()-started>45 or clock()-begin>.15:raise ValueError('Range test timing limit exceeded')
         report['samples'].append(dict(t=round(clock()-started,4),q=q,goal=bus.last_goal,telemetry=telemetry,phase=report.get('motion_phase','preflight')))
         return q
+    def sample():
+        # Optional reviewed warning behavior: stop on the first warm reading.
+        # No advancing target is issued until every motor stays below 45 C for
+        # two seconds. 60 C, voltage/status/load errors, stale cameras, excessive
+        # drift, >8 seconds waiting, or a third warning end the test.
+        can_pause=thermal_pause and bus.phase=='move'
+        q=measure(permit_warm=can_pause)
+        if not can_pause or max(m['temperature_c'] for m in report['samples'][-1]['telemetry'])<50:return q
+        events=report.setdefault('thermal_pauses',[])
+        if len(events)>=2:raise ValueError('Thermal warning repeated more than twice; test ended')
+        event=dict(start_t=round(clock()-started,4),trigger=report['samples'][-1]['telemetry'],hold_position=q[j])
+        events.append(event)
+        bus.stop_position=q[j];bus.phase='hold';bus.write(42,q[j]);bus.last_goal=q[j]
+        phase=report['motion_phase'];report['motion_phase']='thermal_hold';save(report)
+        deadline=clock()+8;stable=None
+        while clock()<deadline:
+            sleep(.1);q=measure(permit_warm=True)
+            if max(m['temperature_c'] for m in report['samples'][-1]['telemetry'])<45:
+                if stable is None:stable=clock()
+                if clock()-stable>=2:
+                    event['resume_t']=round(clock()-started,4)
+                    bus.phase='move';report['motion_phase']=phase;return q
+            else:stable=None
+        raise ValueError('Thermal warning did not clear with two seconds of stable cool readings')
     try:
         bus.open();bus.verify(saved);q0=sample()
         if any(abs(a-b)>3 for a,b in zip(q0,expected)):raise ValueError('Arm changed since reviewed snapshot')
@@ -112,6 +153,8 @@ def run_range(bus,saved,expected,check_live,save,decision,clock=time.monotonic,s
         if target==0:
             report.update(status='neural_hold',motion_observed=False);return report
         report.update(bus.prepare(q0,saved))
+        report['thermal_pause_policy']=dict(enabled=thermal_pause,warning_c=50,resume_below_c=45,stable_seconds=2,
+                                           hard_stop_c=60 if thermal_pause else 50,max_wait_seconds=8,max_pauses=2)
         if recovery_target is not None:
             if type(recovery_target) is not int or recovery_target!=bus.initial+bus.direction*bus.span:
                 raise ValueError('Recorded return target does not match bounded stroke')
@@ -120,39 +163,48 @@ def run_range(bus,saved,expected,check_live,save,decision,clock=time.monotonic,s
                           motor_adapter='Return within previously observed range to its original native holding goal',
                           neural_readout_microprobe_delta_counts=None,scope='Deterministic recovery, not a neural action')
         report['status']='prepared';save(report)
-        bus.phase='move'
+        bus.begin_motion()
         def go(goal):
             # Wait for existing goal to track; do not increase the permitted lead.
             wait_until=clock()+1
             while True:
+                pause_count=len(report.get('thermal_pauses',[]))
                 q=sample()
-                if abs(goal-q[j])<=8:break
-                # A two-count step may cross the lead limit by one count.
-                # Try its one-count intermediate ONLY within the same limit.
-                intermediate=bus.last_goal+(1 if goal>bus.last_goal else -1)
-                if abs(goal-bus.last_goal)==2 and abs(intermediate-q[j])<=8:
-                    bus.goal(intermediate)
-                    if report['motion_phase']=='outbound' and recovery_target is None:report['brain_connected']=True
-                    sleep(.05);continue
-                if clock()>=wait_until:raise ValueError('Motor did not track; stroke stopped without enlargement')
-                sleep(.05)
-            bus.goal(goal)
-            if report['motion_phase']=='outbound' and recovery_target is None:report['brain_connected']=True
-            sleep(.1);sample()
+                if len(report.get('thermal_pauses',[]))!=pause_count:wait_until=clock()+1
+                candidate=bus.last_goal+max(-bus.step_counts,min(bus.step_counts,goal-bus.last_goal))
+                if abs(candidate-q[j])>bus.tracking_limit:
+                    intermediate=bus.last_goal+(1 if goal>bus.last_goal else -1)
+                    if abs(candidate-bus.last_goal)>1 and abs(intermediate-q[j])<=bus.tracking_limit:candidate=intermediate
+                    else:
+                        if clock()>=wait_until:raise ValueError('Motor did not track; stroke stopped without enlargement')
+                        sleep(.05);continue
+                bus.goal(candidate)
+                if report['motion_phase']=='outbound' and recovery_target is None:report['brain_connected']=True
+                sleep(.1);sample()
+                if bus.last_goal==goal:return
+                wait_until=clock()+1
         report['motion_phase']='outbound'
-        for delta in list(range(2,target,2))+[target]:go(bus.initial+bus.direction*delta)
+        for delta in list(range(bus.step_counts,target,bus.step_counts))+[target]:go(bus.initial+bus.direction*delta)
         for _ in range(5):sleep(.1);sample()
-        peak=sample()[j];report['outbound_position']=peak
+        peak=sample()[j]
+        while bus.last_goal!=bus.initial+bus.direction*target:
+            go(bus.initial+bus.direction*target);peak=sample()[j]
+        report['outbound_position']=peak
+        expected_travel=bus.direction*(bus.initial+bus.direction*target-q0[j])
+        report['expected_encoder_travel_counts']=expected_travel
         if abs(peak-(bus.initial+bus.direction*target))>8:raise ValueError('Outbound target not reached within coarse tolerance')
         if recovery_target is not None:
             report.update(status='returned_recorded_range',final_position=sample(),return_error_counts=peak-recovery_target,
-                          motion_observed=bus.direction*(peak-q0[j])>=max(1,target-8))
+                          motion_observed=bus.direction*(peak-q0[j])>=max(1,expected_travel-8))
             bus.phase='returned';return report
         report['motion_phase']='safety_return'
-        for delta in list(range(target-2,0,-2))+[0]:go(bus.initial+bus.direction*delta)
+        for delta in list(range(target-bus.step_counts,0,-bus.step_counts))+[0]:go(bus.initial+bus.direction*delta)
         for _ in range(10):sleep(.1);sample()
-        final=sample();error=final[j]-q0[j]
-        report.update(final_position=final,return_error_counts=error,motion_observed=bus.direction*(peak-q0[j])>=max(1,target-8))
+        final=sample()
+        while bus.last_goal!=bus.initial:
+            go(bus.initial);final=sample()
+        error=final[j]-q0[j]
+        report.update(final_position=final,return_error_counts=error,motion_observed=bus.direction*(peak-q0[j])>=max(1,expected_travel-8))
         report['status']=('no_confirmed_motion' if not report['motion_observed'] else
                           'passed_coarse_range' if abs(error)<=8 else 'return_outside_tolerance')
         if report['status']=='passed_coarse_range':bus.phase='returned'
@@ -173,7 +225,7 @@ def run_range(bus,saved,expected,check_live,save,decision,clock=time.monotonic,s
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--plan',type=Path,required=True);args=p.parse_args();plan=json.loads(args.plan.read_text())
-    if (plan.get('kind') not in ('explicit_neural_range_v1','recorded_range_return_v1') or plan.get('explicit_range_request') is not True
+    if (plan.get('kind') not in ('explicit_neural_range_v1','recorded_range_return_v1','reviewed_pan_sweep_v1') or plan.get('explicit_range_request') is not True
             or plan.get('base_mounted') is not True or plan.get('workspace_clear') is not True):
         raise ValueError('Explicitly requested and visually reviewed range plan required')
     if not 0<=time.time()-plan['created']<=20:raise ValueError('Plan expired')
@@ -191,7 +243,16 @@ def main():
         if (type(native) is not int or abs(q-native)>3 or not recovery_target<native<=recovery_target+source['span_counts']
                 or plan['span_counts']!=native-recovery_target):
             raise ValueError('Return must stay inside the previously reviewed positive stroke')
-    bus=RangeBus(plan['port'],plan['motor_id'],plan['span_counts'],-1 if recovery_target is not None else 1)
+    lead=plan.get('tracking_limit_counts',8)
+    if lead==16 and not isinstance(plan.get('tracking_review'),str):raise ValueError('Explicit tracking review required')
+    pause=plan.get('thermal_pause',False)
+    if type(pause) is not bool or (pause and not isinstance(plan.get('thermal_review'),str)):raise ValueError('Explicit thermal pause review required')
+    if plan['kind']=='reviewed_pan_sweep_v1':
+        if plan.get('motor_id')!=1 or plan.get('larger_faster_requested') is not True or lead!=16:
+            raise ValueError('Larger/faster request is restricted to reviewed pan motor 1')
+        from .pan_sweep import PanSweepBus
+        bus=PanSweepBus(plan['port'],plan['span_counts'])
+    else:bus=RangeBus(plan['port'],plan['motor_id'],plan['span_counts'],-1 if recovery_target is not None else 1,lead)
     cal=calibration(plan['calibration_path'])
     if not cal['valid'] or cal['sha256']!=plan['calibration_sha256']:raise ValueError('Calibration changed')
     from serial.tools import list_ports
@@ -207,7 +268,7 @@ def main():
     def cancel(*_):raise RuntimeError('Range test interrupted')
     signal.signal(signal.SIGTERM,cancel);signal.signal(signal.SIGINT,cancel)
     from .neural_wrist import live_decision
-    report=run_range(bus,cal['motors'],plan['q'],check_live,lambda r:atomic_json(args.plan.with_name('result.json'),r),lambda:live_decision(plan),recovery_target=recovery_target)
+    report=run_range(bus,cal['motors'],plan['q'],check_live,lambda r:atomic_json(args.plan.with_name('result.json'),r),lambda:live_decision(plan),recovery_target=recovery_target,thermal_pause=pause)
     print(json.dumps({k:v for k,v in report.items() if k not in ('samples','neural_decision')}))
     return 0 if report['status'] in ('passed_coarse_range','neural_hold','returned_recorded_range') else 1
 
