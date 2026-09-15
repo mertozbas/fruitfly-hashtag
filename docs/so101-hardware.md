@@ -12,6 +12,10 @@ Simülasyondaki al ve yerleştir / tic-tac-toe modelleri henüz fiziksel kolda
 devreye alınmadı. Donanım panelini açmak, ana ekrandaki beyni gerçek kola bağlamaz;
 ana ekran simülasyonun sinir ağı hesabını göstermeye devam eder.
 
+**Sınırlı fiziksel beyin deneyi:** `held_neural_wrist_v1`, aşağıda açıklanan
+tek bilek darbesinde yerel görsel devrenin çıkışını gerçek motora bağlayabilir.
+Bu mühendislik deneyi ana ekrandaki simülasyon akışını değiştirmez.
+
 ### Yerel fiziksel devreye alma araçları
 
 `so101.alignment_probe` ve `so101.pose_hold`, denetimli mühendislik ölçümleri için
@@ -50,6 +54,35 @@ Toleransı aşmak tek başına yanlış kalibrasyon veya motor arızası teşhis
 Başarılı bir bilek denemesi bütün eklem yönlerini, sıfırları, kamera–robot
 dönüşümünü veya kavrama başarısını doğrulamaz. Ölçümler `.runtime/hardware/holds`
 ve `.runtime/hardware/probes` altında saklanır; model ağırlıkları değiştirilmez.
+
+### Görsel devreden tek fiziksel bilek darbesi
+
+`so101.alignment_probe` içindeki `held_neural_wrist_v1` planı, zaten destekli tutma
+durumundaki motor 5 için mevcut **+8 sayım / yaklaşık 0,70°** sınırını kullanır.
+Diğer eklemler tutulur; kıskaç, hız/tork ayarı ve EEPROM yazılamaz. Başarısız bir
+denemede otomatik tekrar veya aralığı büyütme yapılmaz.
+
+Girdi, güncel üst kamera RGB karesinin sol/sağ yarılarındaki kırmızı belirginliğidir.
+Sineğin görsel yönelme deneyindeki aynı özellik denklemi ve `odor_policy.Policy`
+ileri hesabı kullanılır. Yerel `vision` modelinin dosya ve devre hash'leri plana
+sabitlenir; hesap boyunca kare yaşı en fazla 400 ms olmalıdır. Görünür kırmızı
+bölge bulunamazsa hareket üretilmez; AprilTag veya metrik hedef pozu gerekli değildir.
+
+Çıkışın yönünü fiziksel eklem yönüyle eşleştirdiğimiz iddia edilmez. Öğrenilmiş
+descending readout'un bias içermeyen **büyüklüğü**, `round(8 * abs(drive))` ile
+tek yöndeki bilek darbesinin genliğine çevrilir. Anatomik son katman susturulursa
+komut sıfırdır. Bu bir defalık ileri hesaptır; geri dönüş deterministik güvenlik
+hareketidir. Görsel servo, alma–bırakma, bütün beynin emülasyonu veya yeni robot
+becerisi eğitimi değildir. Anatomik alt devre ve motor adaptörü birbirinden ayrıdır.
+
+Planda standart USB/kalibrasyon/kamera alanlarına ek olarak `neural_model_path`,
+`neural_model_sha256` ve `neural_circuit_sha256` bulunur. Mevcut tek kullanımlık
+20 saniyelik plan ve 5 saniyelik yürütme sınırları korunur. `result.json`, komutu
+üreten gerçek katman aktivasyonlarını, kaynak karenin zamanını/hash'ini, hedef
+ve ölçülen motor konumlarını ayrı kaydeder. `brain_connected: true`, yalnız sinir
+ağı kaynaklı gidiş komutu donanıma yazıldıysa konur; denemenin bütün kabul
+koşullarını geçtiği anlamına gelmez. Sonuç `return_outside_tolerance` ise dönüş
+başarısızdır ve ölçülen konum tutulur.
 
 ## 1. Kol bağlı değilken hazırlık
 

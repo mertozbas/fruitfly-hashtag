@@ -2104,6 +2104,9 @@ ayarlarını yazar. Hedef konumu göndermez, torku açmaz.
 Simülasyondaki al ve yerleştir / tic-tac-toe modelleri henüz fiziksel kolda
 devreye alınmadı. Donanım panelini açmak, ana ekrandaki beyni gerçek kola bağlamaz;
 ana ekran simülasyonun sinir ağı hesabını göstermeye devam eder.</p>
+<p><strong>Sınırlı fiziksel beyin deneyi:</strong> <code>held_neural_wrist_v1</code>, aşağıda açıklanan
+tek bilek darbesinde yerel görsel devrenin çıkışını gerçek motora bağlayabilir.
+Bu mühendislik deneyi ana ekrandaki simülasyon akışını değiştirmez.</p>
 <h3 id="docs-so101-hardware--yerel-fiziksel-devreye-alma-araçları">Yerel fiziksel devreye alma araçları</h3>
 <p><code>so101.alignment_probe</code> ve <code>so101.pose_hold</code>, denetimli mühendislik ölçümleri için
 eklenmiştir; genel hareket API'si veya otonom görev yürütücüsü değildir. Plan,
@@ -2136,6 +2139,30 @@ Toleransı aşmak tek başına yanlış kalibrasyon veya motor arızası teşhis
 <p>Başarılı bir bilek denemesi bütün eklem yönlerini, sıfırları, kamera–robot
 dönüşümünü veya kavrama başarısını doğrulamaz. Ölçümler <code>.runtime/hardware/holds</code>
 ve <code>.runtime/hardware/probes</code> altında saklanır; model ağırlıkları değiştirilmez.</p>
+<h3 id="docs-so101-hardware--görsel-devreden-tek-fiziksel-bilek-darbesi">Görsel devreden tek fiziksel bilek darbesi</h3>
+<p><code>so101.alignment_probe</code> içindeki <code>held_neural_wrist_v1</code> planı, zaten destekli tutma
+durumundaki motor 5 için mevcut <strong>+8 sayım / yaklaşık 0,70°</strong> sınırını kullanır.
+Diğer eklemler tutulur; kıskaç, hız/tork ayarı ve EEPROM yazılamaz. Başarısız bir
+denemede otomatik tekrar veya aralığı büyütme yapılmaz.</p>
+<p>Girdi, güncel üst kamera RGB karesinin sol/sağ yarılarındaki kırmızı belirginliğidir.
+Sineğin görsel yönelme deneyindeki aynı özellik denklemi ve <code>odor_policy.Policy</code>
+ileri hesabı kullanılır. Yerel <code>vision</code> modelinin dosya ve devre hash'leri plana
+sabitlenir; hesap boyunca kare yaşı en fazla 400 ms olmalıdır. Görünür kırmızı
+bölge bulunamazsa hareket üretilmez; AprilTag veya metrik hedef pozu gerekli değildir.</p>
+<p>Çıkışın yönünü fiziksel eklem yönüyle eşleştirdiğimiz iddia edilmez. Öğrenilmiş
+descending readout'un bias içermeyen <strong>büyüklüğü</strong>, <code>round(8 * abs(drive))</code> ile
+tek yöndeki bilek darbesinin genliğine çevrilir. Anatomik son katman susturulursa
+komut sıfırdır. Bu bir defalık ileri hesaptır; geri dönüş deterministik güvenlik
+hareketidir. Görsel servo, alma–bırakma, bütün beynin emülasyonu veya yeni robot
+becerisi eğitimi değildir. Anatomik alt devre ve motor adaptörü birbirinden ayrıdır.</p>
+<p>Planda standart USB/kalibrasyon/kamera alanlarına ek olarak <code>neural_model_path</code>,
+<code>neural_model_sha256</code> ve <code>neural_circuit_sha256</code> bulunur. Mevcut tek kullanımlık
+20 saniyelik plan ve 5 saniyelik yürütme sınırları korunur. <code>result.json</code>, komutu
+üreten gerçek katman aktivasyonlarını, kaynak karenin zamanını/hash'ini, hedef
+ve ölçülen motor konumlarını ayrı kaydeder. <code>brain_connected: true</code>, yalnız sinir
+ağı kaynaklı gidiş komutu donanıma yazıldıysa konur; denemenin bütün kabul
+koşullarını geçtiği anlamına gelmez. Sonuç <code>return_outside_tolerance</code> ise dönüş
+başarısızdır ve ölçülen konum tutulur.</p>
 <h2 id="docs-so101-hardware--1-kol-bağlı-değilken-hazırlık">1. Kol bağlı değilken hazırlık</h2>
 <p>Kurulu Neural Lab çalışma dizininde:</p>
 <pre><code class="language-bash">.venv/bin/python tools/setup_so101_hardware.py

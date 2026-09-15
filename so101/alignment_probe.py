@@ -121,7 +121,7 @@ class ProbeBus:
         self.phase='done';return errors
 
 
-def run_probe(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time.sleep):
+def run_probe(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time.sleep,decision=None):
     j=bus.motor_id-1
     report=dict(status='preflight',brain_connected=False,joint_mapping_verified=False,commanded_joint=JOINTS[j],motor_id=bus.motor_id,samples=[],started_wall_time=time.time())
     started=clock();q0=None
@@ -145,10 +145,26 @@ def run_probe(bus,saved,expected,check_live,save,clock=time.monotonic,sleep=time
     try:
         bus.open();bus.verify(saved);q0=sample()
         if any(abs(a-b)>3 for a,b in zip(q0,expected)):raise ValueError('Arm changed since reviewed snapshot')
+        target=SPAN
+        if decision is not None:
+            if bus.motor_id!=5 or not bus.body_holding:raise ValueError('Neural pulse requires the already held wrist')
+            neural=decision();target=neural['delta_counts']
+            if type(target) is not int or not 0<=target<=SPAN:raise ValueError('Neural target outside existing wrist envelope')
+            report.update(neural_decision=neural,requested_delta_counts=target,
+                          outbound_source='anatomical_vision_readout',return_source='deterministic_safety_return',closed_loop=False)
+            if target==0:
+                report.update(status='neural_hold',motion_observed=False,measured_peak_counts=0,return_error_counts=0)
+                return report
         report.update(bus.prepare(q0));report['status']='prepared';save(report) # durable before ANY write
         sample();bus.enable();sample()
-        for delta in [2,4,6,8,8,8,8,8,6,4,2,0,0,0,0,0]:
-            sample();bus.goal(q0[j]+delta);sleep(.075);sample()
+        outbound=list(range(2,target,2))+[target]*5
+        returning=list(range(target-2,0,-2))+[0]*5
+        for phase,deltas in (('outbound',outbound),('safety_return',returning)):
+            report['motion_phase']=phase
+            for delta in deltas:
+                sample();bus.goal(q0[j]+delta)
+                if decision is not None and phase=='outbound' and delta>0:report['brain_connected']=True
+                sleep(.075);sample()
         maximum=max(p['q'][j]-q0[j] for p in report['samples'])
         final=report['samples'][-1]['q'];report.update(measured_peak_counts=maximum,final_position=final)
         return_error=final[j]-q0[j]
@@ -171,8 +187,8 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--plan',type=Path,required=True);args=parser.parse_args()
     plan=json.loads(args.plan.read_text())
     kind=plan.get('kind')
-    if kind not in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1','held_return_v1','hold_current_v1') or plan.get('base_mounted') is not True:raise ValueError('Reviewed fixed commissioning plan required')
-    if kind in ('wrist_probe_v1','held_wrist_probe_v1','held_joint_probe_v1','held_return_v1') and plan.get('workspace_clear') is not True:raise ValueError('Clear reviewed joint workspace required')
+    if kind not in ('wrist_probe_v1','held_wrist_probe_v1','held_neural_wrist_v1','held_joint_probe_v1','held_return_v1','hold_current_v1') or plan.get('base_mounted') is not True:raise ValueError('Reviewed fixed commissioning plan required')
+    if kind in ('wrist_probe_v1','held_wrist_probe_v1','held_neural_wrist_v1','held_joint_probe_v1','held_return_v1') and plan.get('workspace_clear') is not True:raise ValueError('Clear reviewed joint workspace required')
     if kind=='hold_current_v1' and plan.get('operator_supporting') is not True:raise ValueError('Operator must support the arm during initial hold')
     if kind in ('held_joint_probe_v1','held_return_v1') and (type(plan.get('motor_id')) is not int or plan['motor_id'] not in range(1,5)):raise ValueError('One reviewed body joint 1..4 required')
     if not 0<=time.time()-plan['created']<=20:raise ValueError('Plan expired')
@@ -201,12 +217,17 @@ def main():
     elif kind=='held_joint_probe_v1':
         from .pose_hold import HeldJointProbeBus
         runner,bus=run_probe,HeldJointProbeBus(plan['port'],plan['motor_id'])
-    elif kind=='held_wrist_probe_v1':
+    elif kind in ('held_wrist_probe_v1','held_neural_wrist_v1'):
         from .pose_hold import HeldWristProbeBus
         runner,bus=run_probe,HeldWristProbeBus(plan['port'])
     else:runner,bus=run_probe,ProbeBus(plan['port'])
-    report=runner(bus,cal['motors'],plan['q'],check_live,lambda record:atomic_json(args.plan.with_name('result.json'),record))
-    print(json.dumps(report,ensure_ascii=False));return 0 if report['status'] in ('passed','holding_at_measured_pose','returned_to_reference') else 1
+    options={}
+    if kind=='held_neural_wrist_v1':
+        from .neural_wrist import live_decision
+        options['decision']=lambda:live_decision(plan)
+    report=runner(bus,cal['motors'],plan['q'],check_live,lambda record:atomic_json(args.plan.with_name('result.json'),record),**options)
+    printed={k:v for k,v in report.items() if k not in ('neural_decision','samples')} if options else report
+    print(json.dumps(printed,ensure_ascii=False));return 0 if report['status'] in ('passed','holding_at_measured_pose','returned_to_reference','neural_hold') else 1
 
 
 if __name__=='__main__':raise SystemExit(main())
