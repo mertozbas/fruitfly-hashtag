@@ -17,6 +17,7 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 
 | Amaç | Başlangıç |
 | --- | --- |
+| Bilimsel yöntem, SO-101 / XOX metrikleri ve araştırma yol haritası | [Research note (English)](research/research-note.md) · [Doğrulanabilir kanıtlar](research/README.md) |
 | Projenin hikâyesi ve canlı görüntüler | [Ana README](../README.md) |
 | Tek ekranın çalışma mantığı | [Laboratuvar turu](../LAB.md) |
 | Eğitim öncesi/sonrası yürüyüş | [Simülasyon rehberi](../SIMULATION.md) |

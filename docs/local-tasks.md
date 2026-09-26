@@ -1,6 +1,6 @@
 # Yerel duyusal görevler ve taşınabilir modeller
 
-Bu ekleme şu anda yerel çalışma kopyasındadır; GitHub veya PyPI'ye yayımlanmadı.
+Bu deneyler GitHub kaynak sürümünde paylaşılır. Mevcut PyPI yayını bu araştırma güncellemesinden ayrıdır.
 Yayımlanmış 0.2.1'in ekran görüntüleri önceki koku/uçuş sürümünü gösterir.
 
 ## Gerçek bir beyin mi çalışıyor?

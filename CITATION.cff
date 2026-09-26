@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "Please cite this research software and the upstream datasets separately."
+type: software
+title: "Hashtag Neural Lab: connectome-derived task circuits, SO-101 control and tic-tac-toe"
+authors:
+  - family-names: Özbaş
+    given-names: Mert
+    affiliation: Hashtag World Company
+repository-code: "https://github.com/mertozbas/fruitfly-hashtag"
+url: "https://labs.hashtagworldcompany.com"
+license: MIT
+abstract: >-
+  An open research prototype reusing MaleCNS anatomical subgraphs for learned
+  navigation, simulated robot manipulation and tic-tac-toe strategy, with a
+  separate bounded physical SO-101 motion case study. Not a whole-brain
+  emulation or a language model. The research note is not peer reviewed.
+keywords:
+  - connectomics
+  - robotics
+  - SO-101
+  - tic-tac-toe
+  - MuJoCo

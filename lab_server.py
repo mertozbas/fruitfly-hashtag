@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from lab_tasks import TASKS, compatible
 from so101.hardware import HardwareLab
 from so101.hardware_api import router as hardware_router
+from so101.neural_api import router as neural_router
 
 ROOT = Path(__file__).resolve().parent
 BASE = ROOT / "models/odor_navigation"
@@ -178,6 +179,7 @@ async def lifespan(app):
 
 app = FastAPI(title="Hashtag Neural Lab", lifespan=lifespan)
 app.include_router(hardware_router(hardware))
+app.include_router(neural_router())
 
 @app.middleware("http")
 async def local_only(request: Request, call_next):

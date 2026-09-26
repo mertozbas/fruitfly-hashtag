@@ -1,8 +1,10 @@
 # SO-101 yerel sinir ağı deneyi
 
-Bu çalışma yalnızca yerel simülasyon içindir. Fiziksel robot sürücüsü çağrılmaz;
-GitHub veya PyPI yayını yapılmaz. Mevcut sinek görevleri ve checkpoint'leri korunur.
-Gerçek follower ve USB kameralar için ayrı [bağlantı hazırlığı ve tanılama rehberi](so101-hardware.md) vardır; fiziksel motor yürütmesi henüz devreye alınmadı.
+Bu belge yerel simülasyon deneyini anlatır; buradaki komutlar fiziksel robot sürücüsünü çağırmaz.
+Kod bu GitHub kaynak sürümünde paylaşılır; mevcut PyPI sürümü ayrıdır.
+Mevcut sinek görevleri ve checkpoint'leri korunur. Gerçek kolda elde edilen sınırlı
+taban hareketi, ayrı görsel model ve ayrı deneydir: [araştırma notu](research/research-note.md),
+[donanım rehberi](so101-hardware.md). Simülasyon başarısı fiziksel kavrama sonucu değildir.
 
 ![SO-101 ve aynı kararı üreten canlı anatomik ağ](media/so101-lab.jpg)
 

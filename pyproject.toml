@@ -30,6 +30,38 @@ dev = ["build==1.3.0", "twine==6.2.0", "Markdown==3.8.2"]
 packages = ["src/fruitfly_lab"]
 
 [tool.hatch.build.targets.wheel.force-include]
+"docs/research/validation-2026-09-26.json" = "fruitfly_lab/bundle/docs/research/validation-2026-09-26.json"
+"docs/research/research-note.md" = "fruitfly_lab/bundle/docs/research/research-note.md"
+"docs/research/results.json" = "fruitfly_lab/bundle/docs/research/results.json"
+"docs/research/provenance.json" = "fruitfly_lab/bundle/docs/research/provenance.json"
+"docs/research/so101-episodes.csv" = "fruitfly_lab/bundle/docs/research/so101-episodes.csv"
+"docs/research/tictactoe-motor.csv" = "fruitfly_lab/bundle/docs/research/tictactoe-motor.csv"
+"docs/research/physical-motion.csv" = "fruitfly_lab/bundle/docs/research/physical-motion.csv"
+"docs/research/physical-runs.csv" = "fruitfly_lab/bundle/docs/research/physical-runs.csv"
+"docs/research/verify_evidence.py" = "fruitfly_lab/bundle/docs/research/verify_evidence.py"
+"docs/research/export_evidence.py" = "fruitfly_lab/bundle/docs/research/export_evidence.py"
+"docs/research/README.md" = "fruitfly_lab/bundle/docs/research/README.md"
+"docs/media/research/provenance.json" = "fruitfly_lab/bundle/docs/media/research/provenance.json"
+"docs/media/research/xox-brain-analysis.jpg" = "fruitfly_lab/bundle/docs/media/research/xox-brain-analysis.jpg"
+"docs/media/research/xox-live-metrics.jpg" = "fruitfly_lab/bundle/docs/media/research/xox-live-metrics.jpg"
+"docs/media/research/xox-evaluation.jpg" = "fruitfly_lab/bundle/docs/media/research/xox-evaluation.jpg"
+"docs/media/research/physical-base-motion.png" = "fruitfly_lab/bundle/docs/media/research/physical-base-motion.png"
+"docs/media/research/physical-scene.png" = "fruitfly_lab/bundle/docs/media/research/physical-scene.png"
+"so101/neural_api.py" = "fruitfly_lab/bundle/so101/neural_api.py"
+"so101/neural_control.py" = "fruitfly_lab/bundle/so101/neural_control.py"
+"so101/neural_live.py" = "fruitfly_lab/bundle/so101/neural_live.py"
+"so101/teaching.py" = "fruitfly_lab/bundle/so101/teaching.py"
+"so101/body_control.py" = "fruitfly_lab/bundle/so101/body_control.py"
+"so101/gripper_control.py" = "fruitfly_lab/bundle/so101/gripper_control.py"
+"so101/physical_driver.py" = "fruitfly_lab/bundle/so101/physical_driver.py"
+"so101/physical_contract.py" = "fruitfly_lab/bundle/so101/physical_contract.py"
+"so101/neural_wrist.py" = "fruitfly_lab/bundle/so101/neural_wrist.py"
+"so101/range_probe.py" = "fruitfly_lab/bundle/so101/range_probe.py"
+"so101/pan_sweep.py" = "fruitfly_lab/bundle/so101/pan_sweep.py"
+"ui/physical-ui.js" = "fruitfly_lab/bundle/ui/physical-ui.js"
+"ui/physical.css" = "fruitfly_lab/bundle/ui/physical.css"
+"tools/run_neural_lab.py" = "fruitfly_lab/bundle/tools/run_neural_lab.py"
+"neural.sh" = "fruitfly_lab/bundle/neural.sh"
 "so101/calibration_contract.py" = "fruitfly_lab/bundle/so101/calibration_contract.py"
 "so101/calibration_host.py" = "fruitfly_lab/bundle/so101/calibration_host.py"
 "so101/calibration_motor.py" = "fruitfly_lab/bundle/so101/calibration_motor.py"
@@ -187,5 +219,5 @@ packages = ["src/fruitfly_lab"]
 "docs/media/manifest.json" = "fruitfly_lab/bundle/docs/media/manifest.json"
 
 [tool.hatch.build.targets.sdist]
-only-include = ["ui/calibration-target.html", "tools/serve_calibration_target.py", "ui/calibration.js", "ui/calibration.css", "ui/calibration-board.svg", "ui/calibration-reference.json", "tools/check_calibration_ui.py", "tools/check_hardware_ui.py", "tools/setup_so101_hardware.py", "ui/hardware.js", "ui/hardware.css", "docs/so101-hardware.md", "docs/media/tictactoe-lab.png", "tools/check_tictactoe_ui.py", "tools/probe_tictactoe_motor.py", "tools/evaluate_tictactoe_motor.py", "tools/audit_tictactoe_live.py", "tictactoe", "ui/tictactoe.js", "ui/tictactoe.css", "docs/tictactoe-local.md", "so101", "docs/media/so101-lab.jpg", "docs/media/so101-wrist.png", "docs/so101-local.md", "task_circuit.py", "lab_tasks.py", "brain_export.py", "docs/local-tasks.md", "docs/PYPI.md", "tools/record_media.py", "LAB.md", "SIMULATION.md", "docs/README.md", "docs/experiments.md", "docs/guide.css", "docs/media/README.md", "docs/media/anatomy-atlas.jpg", "docs/media/experiments.json", "docs/media/flight-lab.jpg", "docs/media/flight.gif", "docs/media/flight.mp4", "docs/media/hero.svg", "docs/media/learning-delta.jpg", "docs/media/neural-lab.jpg", "docs/media/neuron-inspector.jpg", "docs/media/pipeline.svg", "docs/media/walking-comparison.gif", "docs/media/walking-comparison.mp4", "docs/media/manifest.json", "src/fruitfly_lab", "tests", "tools/build_docs.py", "tools/check_dist.py", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "brain.py", "prepare.py", "odor_policy.py", "odor_brain.py", "fly_sim.py", "evaluate_odor.py", "lab_server.py", "lab_worker.py", "lab_render.py", "lab_graph.py", "lab_details.py", "lab_train.py", "lab_flight.py", "bootstrap_runtime.py", "flight/engine.py", "flight/navigation.py", "flight/worker.py", "flight/download_assets.py", "flight/evaluate_navigation.py", "flight/validate.py", "flight/bootstrap_check.py", "flight/pyproject.toml", "flight/uv.lock", "flight/README.md", "ui/brain.css", "ui/index.html", "ui/inspector.js", "ui/inspection.css", "ui/brain-analyses.js", "ui/brain-view.js", "ui/style.css", "ui/neural-math.js", "ui/flight-ui.js", "ui/app.js", "ui/vendor/three.module.js", "ui/vendor/THREE-LICENSE.txt", "ui/vendor/three.core.js", "ui/vendor/manifest.json", "ui/vendor/OrbitControls.js", "docs/troubleshooting.md", "docs/training.md", "docs/usage.md", "docs/data.md", "docs/development.md", "docs/installation.md", "docs/index.html", "environments/walking/pyproject.toml", "environments/walking/uv.lock"]
-exclude = ["**/__pycache__/**", "**/*.pyc", "so101/physical_contract.py", "so101/physical_driver.py", "so101/physical_worker.py"]
+only-include = ["docs/research/validation-2026-09-26.json", "docs/research/research-note.md", "docs/research/results.json", "docs/research/provenance.json", "docs/research/so101-episodes.csv", "docs/research/tictactoe-motor.csv", "docs/research/physical-motion.csv", "docs/research/physical-runs.csv", "docs/research/verify_evidence.py", "docs/research/export_evidence.py", "docs/research/README.md", "docs/media/research/provenance.json", "CITATION.cff", "docs/media/research/xox-brain-analysis.jpg", "docs/media/research/xox-live-metrics.jpg", "docs/media/research/xox-evaluation.jpg", "docs/media/research/physical-base-motion.png", "docs/media/research/physical-scene.png", "ui/physical-ui.js", "ui/physical.css", "tools/run_neural_lab.py", "neural.sh", "ui/calibration-target.html", "tools/serve_calibration_target.py", "ui/calibration.js", "ui/calibration.css", "ui/calibration-board.svg", "ui/calibration-reference.json", "tools/check_calibration_ui.py", "tools/check_hardware_ui.py", "tools/setup_so101_hardware.py", "ui/hardware.js", "ui/hardware.css", "docs/so101-hardware.md", "docs/media/tictactoe-lab.png", "tools/check_tictactoe_ui.py", "tools/probe_tictactoe_motor.py", "tools/evaluate_tictactoe_motor.py", "tools/audit_tictactoe_live.py", "tictactoe", "ui/tictactoe.js", "ui/tictactoe.css", "docs/tictactoe-local.md", "so101", "docs/media/so101-lab.jpg", "docs/media/so101-wrist.png", "docs/so101-local.md", "task_circuit.py", "lab_tasks.py", "brain_export.py", "docs/local-tasks.md", "docs/PYPI.md", "tools/record_media.py", "LAB.md", "SIMULATION.md", "docs/README.md", "docs/experiments.md", "docs/guide.css", "docs/media/README.md", "docs/media/anatomy-atlas.jpg", "docs/media/experiments.json", "docs/media/flight-lab.jpg", "docs/media/flight.gif", "docs/media/flight.mp4", "docs/media/hero.svg", "docs/media/learning-delta.jpg", "docs/media/neural-lab.jpg", "docs/media/neuron-inspector.jpg", "docs/media/pipeline.svg", "docs/media/walking-comparison.gif", "docs/media/walking-comparison.mp4", "docs/media/manifest.json", "src/fruitfly_lab", "tests", "tools/build_docs.py", "tools/check_dist.py", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "brain.py", "prepare.py", "odor_policy.py", "odor_brain.py", "fly_sim.py", "evaluate_odor.py", "lab_server.py", "lab_worker.py", "lab_render.py", "lab_graph.py", "lab_details.py", "lab_train.py", "lab_flight.py", "bootstrap_runtime.py", "flight/engine.py", "flight/navigation.py", "flight/worker.py", "flight/download_assets.py", "flight/evaluate_navigation.py", "flight/validate.py", "flight/bootstrap_check.py", "flight/pyproject.toml", "flight/uv.lock", "flight/README.md", "ui/brain.css", "ui/index.html", "ui/inspector.js", "ui/inspection.css", "ui/brain-analyses.js", "ui/brain-view.js", "ui/style.css", "ui/neural-math.js", "ui/flight-ui.js", "ui/app.js", "ui/vendor/three.module.js", "ui/vendor/THREE-LICENSE.txt", "ui/vendor/three.core.js", "ui/vendor/manifest.json", "ui/vendor/OrbitControls.js", "docs/troubleshooting.md", "docs/training.md", "docs/usage.md", "docs/data.md", "docs/development.md", "docs/installation.md", "docs/index.html", "environments/walking/pyproject.toml", "environments/walking/uv.lock"]
+exclude = ["**/__pycache__/**", "**/*.pyc", "so101/physical_worker.py"]

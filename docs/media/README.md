@@ -1,7 +1,8 @@
 # Görseller, videolar ve kökenleri
 
 **Buradaki UI ve sinek görüntüleri gerçek uygulama / fizik çıktılarıdır.**
-Ekranlar 14 Eylül 2026'da Chrome sekmelerinden alındı. Görüntülere sonradan
+İlk ekranlar 14 Eylül 2026'da, aşağıda belirtilen araştırma ekranları 26 Eylül
+2026'da Chrome sekmelerinden alındı. Görüntülere sonradan
 sonuç, nöron, sayı veya model aktivitesi eklenmedi. Hero ve akış çizimi açıklayıcı
 SVG şemalarıdır; anatomik ölçüm gibi sunulmaz.
 
@@ -73,3 +74,31 @@ gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.
 SO-101 X işaretli 30 mm eğitim küpünü taşıyor. Bilek penceresi motor girdisinin
 kamera karesi, sağdaki aktivite aynı checkpoint'in motor ileri hesabıdır.
 Orijinal 240 mm tahta korunur; O sanal rakiptir. Kayıt gerçek donanım videosu değildir.
+
+## SO-101 / XOX araştırma yayını · 26 Eylül 2026
+
+Yeni ekranlar gerçek `http://127.0.0.1:8766/` arayüzünden, `local-tictactoe-robot-seed53`
+modeliyle alındı. Checkpoint SHA256:
+`cd704b86be32b9090222ffc9c5f2b57fd2982540b226633d002cfb2eeed11395`.
+Mevcut model yeni bir yerel **simülasyon gösteriminde** açıldı; yeniden eğitim yapılmadı.
+Simülasyon 10,55 saniyede, ilk küpün kavrama aşamasında duraklatıldı.
+Değerlendirme penceresindeki sayılar modelin kayıtlı deney raporundandır.
+Aynı strateji sonuçları 26 Eylül'de ayrıca çevrimdışı yeniden değerlendirildi.
+
+| Dosya | Kaynak ve kapsam |
+| --- | --- |
+| [XOX ve metrikler](research/xox-live-metrics.jpg) | MuJoCo sahnesi, motor hesabı, telemetri ve kayıtlı öğrenme eğrisi |
+| [Beyin analizleri](research/xox-brain-analysis.jpg) | Aynı duraklatılmış sahnede anatomik konum, aktivite haritası ve kesit |
+| [XOX değerlendirmesi](research/xox-evaluation.jpg) | Tahta durumları, rakipler ve nöron susturma sonuçlarını gösteren UI penceresi |
+| [Fiziksel sahne](research/physical-scene.png) | 16 Eylül gerçek üst/bilek kamera karelerinin rapordaki yan yana düzeni; algılanan etiketler işaretlidir |
+| [Fiziksel hareket](research/physical-base-motion.png) | 16 Eylül logundan hedef ve ölçülen taban açısı; sonlu tek hareket segmenti |
+
+Üç yeni UI ekranı kırpılmamış ve değiştirilmemiş tarayıcı görüntüleridir. Son iki
+şekil 16 Eylül teknik raporundan aynen alınmıştır; 26 Eylül'de donanım çalıştırılmadı.
+Kamera şekli gerçek kurulumu, zaman serisi ise hareketi belgeler; ikisi de fiziksel
+XOX oyunu veya otonom kavrama sonucu değildir. Sıfır/sabit hareketli denemeler ve
+başarısızlıklar [kanıt paketinde](../research/README.md) korunur.
+
+Yeni varlıkların tarih, boyut, SHA256 ve kaynak bilgileri
+[araştırma medya manifestinde](research/provenance.json), bütün medya hash'leri
+[genel manifestte](manifest.json) bulunur.

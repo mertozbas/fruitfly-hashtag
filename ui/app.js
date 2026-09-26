@@ -4,6 +4,7 @@ import { createInspector } from './inspector.js';
 import { edgeSignal, modelMatches } from './neural-math.js';
 import { behaviorUI as baseBehaviorUI } from './flight-ui.js';
 import { bindGame, gameUI, updateGame, gameEyes } from './tictactoe.js';
+import { createPhysicalUI } from './physical-ui.js';
 function behaviorUI(task){baseBehaviorUI(task);gameUI(task==='tictactoe');}
 
 const $ = id => document.getElementById(id);
@@ -17,6 +18,8 @@ let analyses=null, modelRequest=0;
 let inspector=null, selection=null, selectedEdge=-1, pickMode='node';
 let behavior=null;
 let eyeMode='detection';
+const physicalMode=new URLSearchParams(location.search).get('physical')==='1';
+let physical=null;
 const isFlight=()=>simulation.behavior==='flight';
 const isRobot=()=>simulation.behavior==='so101';
 const isGame=()=>simulation.behavior==='tictactoe';
@@ -68,7 +71,7 @@ async function api(path, body) {
   if (!response.ok) throw Error(typeof result.detail === 'string' ? result.detail : 'Giriş değerlerini kontrol et.');
   return result;
 }
-async function control(body) { return api('control', body); }
+async function control(body) { return physical?physical.control(body):api('control', body); }
 function bind(id, action) { $(id).addEventListener('click', async () => {try {await action();} catch(e) {toast(e.message);}}); }
 function integer(id,min,max) {
   const value=Number($(id).value);
@@ -92,6 +95,7 @@ async function refreshCatalog() {
   $('model').replaceChildren(...catalog.models.map(m=>{const option=document.createElement('option');option.value=m.id;option.textContent=m.name;option.dataset.task=m.task||'odor';return option;}));
   if (catalog.models.some(m=>m.id===current)) $('model').value=current;
   behaviorUI(simulation.behavior||'odor');
+  physical?.configure();
 }
 async function refreshModel(id) {
   const request=++modelRequest, result=await api('model/'+encodeURIComponent(id));
@@ -236,6 +240,7 @@ function updateSimulation(s) {
   inspector?.tick(matches?s.activity:null,s.model);
   updateSelectionValue();
   if(`${s.behavior}:${s.model}`!==lastModelId){lastModelId=`${s.behavior}:${s.model}`;$('model').value=s.model;refreshModel(s.model).catch(e=>toast(e.message));}
+  physical?.render();
 }
 function updateEyes(s){
   if(s.behavior==='tictactoe'){gameEyes(s,eyeMode);return;}
@@ -263,7 +268,7 @@ function updateEyes(s){
 async function poll() {
   if(document.hidden){setTimeout(poll,1000);return;}
   try {
-    const data=await api('state');
+    const data=physical?await physical.poll():await api('state');
     if(data.simulation.starting){
       simulation={...data.simulation, activity:null};lastPacketAt=0;lastSequence=-1;
       behaviorUI(simulation.behavior);$('experiment').value=simulation.behavior;
@@ -278,6 +283,7 @@ async function poll() {
     const sequence=`${data.simulation.behavior}:${data.simulation.seq}`;
     if(data.simulation.seq&&sequence!==lastSequence){lastSequence=sequence;updateSimulation(data.simulation);}
     updateCharts(data.job);
+    physical?.render();
     if(lastPacketAt&&Date.now()-lastPacketAt>5000) throw Error('Canlı görüntü gecikti; son veri gösteriliyor.');
   } catch(e) {
     $('connection').classList.remove('ready');$('connection').innerHTML='<i></i> Bağlantı bekleniyor';
@@ -383,7 +389,7 @@ inspector=createInspector({api,onSelect:next=>selectEntity(next,false)});
 bindGame(api,toast);
 
 // Optional browser tool contract uses the same validated endpoint as the visible controls.
-if(document.modelContext?.registerTool){
+if(!physicalMode&&document.modelContext?.registerTool){
   const lifecycle=new AbortController();
   for(const tool of [
     {name:'read_fly_lab_state',description:'Read the live model, telemetry and current training status.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:async()=>{const d=await api('state');const {image,activity,...s}=d.simulation;return {simulation:s,job:d.job};}},
@@ -393,6 +399,7 @@ if(document.modelContext?.registerTool){
 }
 
 try {
+  if(physicalMode)physical=createPhysicalUI({toast});
   await refreshCatalog();
   poll();
 } catch(e){toast(e.message);$('brain-hint').textContent='Beyin görünümü yüklenemedi: '+e.message;}

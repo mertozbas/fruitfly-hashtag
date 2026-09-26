@@ -1,0 +1,157 @@
+{
+  "schema": "fruitfly-publication-validation-v1",
+  "validation_date": "2026-09-26",
+  "recorded_at_utc": "2026-09-26T11:06:09.685897+00:00",
+  "source": {
+    "repository": "https://github.com/mertozbas/fruitfly-hashtag",
+    "checkout_role": "original local development checkout; existing environments used without synchronization",
+    "tracked_source_edits_by_validator": false,
+    "tests": "Observed completed runs from this publication session; timings are unittest-reported elapsed seconds."
+  },
+  "environment": {
+    "scientific": {
+      "python_executable": ".venv/bin/python",
+      "python": "3.12.13",
+      "dependencies": {
+        "numpy": "2.5.3",
+        "scipy": "1.18.1",
+        "torch": "2.14.0",
+        "mujoco": "3.9.0",
+        "fastapi": "0.141.1"
+      }
+    },
+    "hardware_contracts": {
+      "python_executable": ".runtime/hardware-venv/bin/python",
+      "python": "3.12.13",
+      "dependencies": {
+        "numpy": "2.5.3",
+        "opencv-python-headless": "4.13.0.92",
+        "pyserial": "3.5",
+        "feetech-servo-sdk": "1.0.0"
+      }
+    }
+  },
+  "test_suites": [
+    {
+      "command": "rtk proxy .runtime/hardware-venv/bin/python -m unittest discover -s tests/hardware -v",
+      "tests_run": 178,
+      "passed": 178,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "elapsed_seconds": 17.248,
+      "exit_code": 0,
+      "result": "OK",
+      "scope": "Installed SDK with virtual serial transport, synthetic frames and offline safety/lifecycle contracts; no physical device I/O."
+    },
+    {
+      "command": "rtk proxy .venv/bin/python -m unittest discover -s tests -p test_hardware.py -v",
+      "tests_run": 12,
+      "passed": 12,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "elapsed_seconds": 1.067,
+      "exit_code": 0,
+      "result": "OK",
+      "scope": "Offline hardware manager and commissioning contracts."
+    },
+    {
+      "command": "rtk proxy .venv/bin/python -m unittest discover -s tests/scientific -v",
+      "tests_run": 57,
+      "passed": 43,
+      "skipped": 14,
+      "failures": 0,
+      "errors": 0,
+      "elapsed_seconds": 1.352,
+      "exit_code": 0,
+      "result": "OK (skipped=14)",
+      "scope": "Default scientific contract suite; local mesh/renderer tests remain gated unless SO101_TEST_ASSETS=1."
+    },
+    {
+      "command": "rtk proxy env SO101_TEST_ASSETS=1 .venv/bin/python -m unittest discover -s tests/scientific -v",
+      "tests_run": 57,
+      "passed": 57,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "elapsed_seconds": 3.533,
+      "exit_code": 0,
+      "result": "OK",
+      "supersedes_default_scientific_run_for_unique_total": true,
+      "scope": "Scientific contracts plus local MuJoCo gravity/contact, action bounds, RGB/depth perception and XOX camera tests."
+    }
+  ],
+  "unique_tests": {
+    "passed": 247,
+    "failed": 0,
+    "skipped": 0,
+    "counting_rule": "178 hardware + 12 managers + 57 asset-enabled scientific; default scientific run is not counted again."
+  },
+  "xox_strategy_evaluation": {
+    "command": "rtk proxy .venv/bin/python -c 'import json; from tictactoe.train import evaluate; print(json.dumps(evaluate(\"models/lab_runs/local-tictactoe-robot-seed53/trained.npz\"), indent=2))'",
+    "model": "models/lab_runs/local-tictactoe-robot-seed53/trained.npz",
+    "model_sha256": "cd704b86be32b9090222ffc9c5f2b57fd2982540b226633d002cfb2eeed11395",
+    "model_bytes": 1179008,
+    "started_at_utc": "2026-09-26T11:06:06.720556+00:00",
+    "finished_at_utc": "2026-09-26T11:06:09.685897+00:00",
+    "elapsed_seconds": 2.965341,
+    "result": {
+      "task": "tictactoe",
+      "strategy_only": true,
+      "success_count": 400,
+      "episodes": 400,
+      "criterion": "Sanal tahtada iki rolde minimax karşısında kaybetmeme; robot yerleştirme ayrı değerlendirilir.",
+      "reachable_decision_boards": 4520,
+      "optimal_decisions": 4520,
+      "optimal_fraction": 1.0,
+      "random_opponent": {
+        "episodes": 400,
+        "wins": 352,
+        "draws": 48,
+        "losses": 0,
+        "success_count": 400,
+        "seed": 731
+      },
+      "minimax_opponent": {
+        "episodes": 400,
+        "wins": 0,
+        "draws": 400,
+        "losses": 0,
+        "success_count": 400,
+        "seed": 731
+      },
+      "controls": {
+        "silenced": {
+          "episodes": 400,
+          "wins": 96,
+          "draws": 37,
+          "losses": 267,
+          "success_count": 133,
+          "seed": 731
+        }
+      },
+      "worst_case_by_role": {
+        "X": 0,
+        "O": 0
+      },
+      "acceptance_passed": true,
+      "scope": "Final model trained on the complete finite canonical board set. Exhaustive board coverage is not held-out generalization. No teacher in policy inference."
+    }
+  },
+  "warnings_observed": [
+    "StarletteDeprecationWarning: Using httpx with starlette.testclient is deprecated; install httpx2 instead.",
+    "MuJoCo: ARB_clip_control unavailable while mjDEPTH_ZEROFAR requested, depth accuracy will be limited."
+  ],
+  "scope_and_limitations": {
+    "new_physical_hardware_execution": false,
+    "physical_ports_or_cameras_opened": false,
+    "full_robot_motor_placement_evaluation_rerun": false,
+    "new_model_training_for_xox_evaluation": false,
+    "network_or_paid_api_usage": false,
+    "learned_models_unchanged": true,
+    "generalization_claim": "The final strategy was trained on the complete finite canonical board set. Exhaustive optimality is not held-out generalization.",
+    "physical_claim": "These fresh results validate software, virtual hardware contracts and bounded simulation/perception. Historical physical motion evidence is documented separately; this validation did not perform a new physical run.",
+    "checkpoint_availability": "Evaluation used the existing local checkpoint; this record does not imply that trained weights or downloaded simulation assets are included in the public repository."
+  }
+}

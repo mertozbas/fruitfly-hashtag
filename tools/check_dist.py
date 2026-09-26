@@ -22,12 +22,14 @@ def main():
             assert not FORBIDDEN.intersection(Path(name).parts), name
             assert not name.endswith(SUFFIXES), name
             assert size < 4_000_000, name
-            assert Path(name).name not in {"physical_contract.py", "physical_driver.py", "physical_worker.py"}, name
+            assert Path(name).name != "physical_worker.py", name
+        for module in ("neural_live", "neural_api", "neural_control", "physical_contract", "physical_driver", "body_control", "gripper_control", "teaching"):
+            assert any(name.endswith(f"so101/{module}.py") for name, _ in records), module
         assert any(name.endswith("docs/index.html") for name, _ in records)
         assert any(name.endswith("ui/calibration-target.html") for name, _ in records)
         assert any(name.endswith("tools/serve_calibration_target.py") for name, _ in records)
         assert any(name.endswith("THREE-LICENSE.txt") for name, _ in records)
-        assert path.stat().st_size < 8_000_000  # Offline screenshots and short simulation recordings.
+        assert path.stat().st_size < 10_000_000  # Offline research evidence, screenshots and short simulation recordings.
         print(f"{path.name}: {path.stat().st_size:,} bytes, {len(records)} entries; no brain/model/user data")
 
 

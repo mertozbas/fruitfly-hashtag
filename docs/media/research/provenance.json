@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "publication_date": "2026-09-26",
+  "files": [
+    {
+      "file": "physical-base-motion.png",
+      "bytes": 85443,
+      "sha256": "0c27799a0f0b215241d0b327be002e978f0a1107657f5ce03a4a43458ce35d56",
+      "width": 1707,
+      "height": 987,
+      "recorded_date": "2026-09-16",
+      "source": "reports/so101-connectome-2026-09-16/figures/02-neural-base.png",
+      "kind": "historical_physical_telemetry_plot",
+      "mime_type": "image/png"
+    },
+    {
+      "file": "physical-scene.png",
+      "bytes": 1084914,
+      "sha256": "7e9ad22648af32df1877e34f0c7a391846b7f94a8ab5e0f1da12b71b4d19b69f",
+      "width": 1707,
+      "height": 552,
+      "recorded_date": "2026-09-16",
+      "source": "reports/so101-connectome-2026-09-16/figures/01-physical-scene.png",
+      "kind": "historical_physical_camera_composite",
+      "mime_type": "image/png"
+    },
+    {
+      "file": "xox-brain-analysis.jpg",
+      "bytes": 224190,
+      "sha256": "a01241bb0436e6d23fed289ce28afd964a0e4dd502c1efc592cb5a239cb620e4",
+      "width": 2056,
+      "height": 1290,
+      "recorded_date": "2026-09-26",
+      "source": "Chrome screenshot of http://127.0.0.1:8766/",
+      "kind": "unmodified_browser_screenshot_simulation",
+      "mime_type": "image/jpeg"
+    },
+    {
+      "file": "xox-evaluation.jpg",
+      "bytes": 98872,
+      "sha256": "26a4ba01e246921fa0143aad1bf2841d59724eefe6d9aa8c0897d97e81f1dba3",
+      "width": 2056,
+      "height": 1290,
+      "recorded_date": "2026-09-26",
+      "source": "Chrome screenshot of http://127.0.0.1:8766/",
+      "kind": "unmodified_browser_screenshot_simulation",
+      "mime_type": "image/jpeg"
+    },
+    {
+      "file": "xox-live-metrics.jpg",
+      "bytes": 233194,
+      "sha256": "c29bf1908c35594ee64a0ef0061fbbfdf2e26e8344e104840102a426be7faae8",
+      "width": 2056,
+      "height": 1290,
+      "recorded_date": "2026-09-26",
+      "source": "Chrome screenshot of http://127.0.0.1:8766/",
+      "kind": "unmodified_browser_screenshot_simulation",
+      "mime_type": "image/jpeg"
+    }
+  ],
+  "xox_model_sha256": "cd704b86be32b9090222ffc9c5f2b57fd2982540b226633d002cfb2eeed11395"
+}

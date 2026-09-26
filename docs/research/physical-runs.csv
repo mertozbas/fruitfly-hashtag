@@ -1,0 +1,5 @@
+run_id,source_id,source_segment,samples,logged_span_seconds,command_rows,measured_delta_counts,measured_delta_degrees,unique_camera_frames,drive_min,drive_max
+R1,physical-session-1,1,157,16.160475254058838,85,160,14.065934065934067,124,-1.0,-1.0
+R2,physical-session-2,1,6,0.4633040428161621,4,0,0.0,5,-1.0,-1.0
+R3,physical-session-3,1,134,13.732824087142944,85,165,14.505494505494507,106,-1.0,-1.0
+R4,physical-session-3,2,33,3.275493860244751,31,52,4.571428571428572,26,-1.0,-1.0

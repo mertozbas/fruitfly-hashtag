@@ -22,6 +22,8 @@ PAGES = {
     "SIMULATION.md": "Yürüyüş", "flight/README.md": "Uçuş",
     "docs/local-tasks.md": "Yeni yerel görevler", "docs/so101-local.md": "SO-101 robot deneyi", "docs/tictactoe-local.md": "Tic-tac-toe laboratuvarı", "docs/experiments.md": "Deney kayıtları", "docs/data.md": "Veriler",
     "docs/so101-hardware.md": "Gerçek SO-101 hazırlığı",
+    "docs/research/README.md": "Araştırma kanıtları",
+    "docs/research/research-note.md": "Research note (English)",
     "docs/troubleshooting.md": "Sorun giderme", "docs/development.md": "Geliştirme",
     "docs/media/README.md": "Medya kökeni", "THIRD_PARTY_NOTICES.md": "Kaynaklar",
 }
@@ -56,7 +58,7 @@ class OfflineHTML(HTMLParser):
             return "#README"
         if file.startswith("docs/") or file in {"LICENSE", "ui/vendor/THREE-LICENSE.txt"}:
             return posixpath.relpath(file, "docs") + ("#" + anchor if anchor else "")
-        return f"{REPO}/blob/v{VERSION}/{file}" + ("#" + anchor if anchor else "")
+        return f"{REPO}/blob/main/{file}" + ("#" + anchor if anchor else "")
 
     def handle_starttag(self, tag, attrs):
         values = []

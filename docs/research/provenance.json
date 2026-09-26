@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "export_date": "2026-09-26",
+  "method": "Selective field export; original records unchanged; full source manifest verified before export.",
+  "original_manifest_entries_verified": 51,
+  "redactions": [
+    "Absolute paths",
+    "Device identifiers",
+    "Raw session identifiers",
+    "Wall-clock timestamps",
+    "Calibration profiles",
+    "Images",
+    "Full neural activations",
+    "Network/session metadata"
+  ],
+  "source_availability": "Original local evidence and checkpoints are not bundled in this snapshot. Hashes record identity, not public availability or independent certification.",
+  "inputs": [
+    {
+      "source_path": "models/lab_runs/local-tictactoe-robot-seed53/evaluation.json",
+      "bytes": 5173,
+      "sha256": "734d6c1ab221dc00fdaaea94f6ffefc75d4b919d954b8d90b7501f12fe19b71c",
+      "distributed": false
+    },
+    {
+      "source_path": "models/lab_runs/local-tictactoe-robot-seed53/training.json",
+      "bytes": 4958,
+      "sha256": "8e99285ab3ff285f75bf9942ea0c614eec649d74311dc2be7944a618d1022e78",
+      "distributed": false
+    },
+    {
+      "source_path": "models/lab_runs/local-tictactoe-robot-seed53/circuit.json",
+      "bytes": 1844,
+      "sha256": "6f100f4c6dd220a736ab02c349255530f4b54ab3b0dc15b3be41ea59e67ff9bb",
+      "distributed": false
+    },
+    {
+      "source_path": "models/lab_runs/local-tictactoe-robot-seed53/motor-evaluation.json",
+      "bytes": 3263,
+      "sha256": "a74d64255fd3ff24dc7d896bcb6cc5bfec59490a82b8e30c627a3e9990500985",
+      "distributed": false
+    },
+    {
+      "source_path": "models/lab_runs/local-so101-validated-seed42/evaluation.json",
+      "bytes": 870571,
+      "sha256": "da79a4378bf356f99b461b399891bd6aaf559c82e966ff11410ef18e3f3f6dd9",
+      "distributed": false
+    },
+    {
+      "source_path": "models/lab_runs/local-so101-uvc-recovery-seed49/evaluation.json",
+      "bytes": 487251,
+      "sha256": "cd2c29bf336cfdaabc8084dbac7a0b6915945286917225a207672091a9ed3afc",
+      "distributed": false
+    },
+    {
+      "source_path": "reports/so101-connectome-2026-09-16/metrics.json",
+      "bytes": 761586,
+      "sha256": "51f91cc6209176b80366837ec874cc7ab6b17e7165f7637fabd08b2517e35fa2",
+      "distributed": false
+    },
+    {
+      "source_path": "reports/so101-connectome-2026-09-16/evidence-manifest.json",
+      "bytes": 8696,
+      "sha256": "c55f338bb77a4f827765b5ada79785a45642e33b722d0c7c5fea575e15230b8e",
+      "distributed": false
+    },
+    {
+      "source_id": "physical-session-1",
+      "source_path": ".runtime/hardware/neural/<private-session>/decisions.jsonl",
+      "bytes": 7176057,
+      "sha256": "5c1d9944c2df8f6a30e0e327ec90436d5d37a416251fb5dda64e03cfe1b26f35",
+      "distributed": false
+    },
+    {
+      "source_id": "physical-session-2",
+      "source_path": ".runtime/hardware/neural/<private-session>/decisions.jsonl",
+      "bytes": 274238,
+      "sha256": "725217d07ec54bc52a0f358c299f92b0c88c7189b725387fb0349b489ebf3b5e",
+      "distributed": false
+    },
+    {
+      "source_id": "physical-session-3",
+      "source_path": ".runtime/hardware/neural/<private-session>/decisions.jsonl",
+      "bytes": 7632774,
+      "sha256": "45a0c9f95bda2ffa22be5df0375bf495e38fadfb226ed582a83c960d81018a40",
+      "distributed": false
+    }
+  ],
+  "public_artifacts": {
+    "physical-motion.csv": {
+      "bytes": 12844,
+      "sha256": "9da36aee87cda999eaf511a7a59df3d772080890d3d22c81a1d56649a9433b2a"
+    },
+    "physical-runs.csv": {
+      "bytes": 480,
+      "sha256": "13cce91f011efa45c224bfcdc26b99ad07238c1f00bfbff3f51a403d3169d18e"
+    },
+    "results.json": {
+      "bytes": 14945,
+      "sha256": "161089a8b4ce5dcf25ffbe3ce280a426431402f1c7a6a5ed4d60fc8aedb8688f"
+    },
+    "so101-episodes.csv": {
+      "bytes": 35032,
+      "sha256": "643707e7f9dca6ddb58d85e30c3d5741c94903daa47de719616955c657ecb4b2"
+    },
+    "tictactoe-motor.csv": {
+      "bytes": 864,
+      "sha256": "d1e69070767109e32c2f9382dbaf01d44c572610673c5084549919ee6eedea4c"
+    },
+    "validation-2026-09-26.json": {
+      "bytes": 5982,
+      "sha256": "972253bfab1797fb49fcb0ce377062058f469b2b87afeed372a7badac99148ce"
+    }
+  }
+}

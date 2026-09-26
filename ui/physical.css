@@ -1,0 +1,10 @@
+.physical-mode .sidebar>:not(.physical-controls){display:none!important}
+.physical-controls h3{font-size:17px;margin:18px 0 10px}.physical-controls p{font-size:12px;line-height:1.6;color:var(--muted,#91a4b4)}
+.physical-check{display:flex!important;align-items:flex-start;gap:8px;font-size:12px!important;line-height:1.5;margin:18px 0 9px!important}
+.physical-check input{width:auto!important;margin:3px 0 0!important;flex:none}
+.physical-controls .wide{margin-bottom:10px}.physical-stop{background:#772f3c!important;color:#fff!important;border-color:#bc586c!important;padding:10px;border-radius:5px;cursor:pointer}
+#physical-status{font-size:12px;line-height:1.6;margin:12px 0;color:#78dfbf}#physical-error{color:#ff9fa7}
+.physical-motor{display:flex;justify-content:space-between;gap:6px;font-size:10px;padding:9px 0;border-bottom:1px solid #253443}.physical-motor b{font-weight:500;color:#b4c7d9}
+.physical-mode .orientation,.physical-mode .camera-controls,.physical-mode .mouse-hint,.physical-mode #robot-sensor,.physical-mode #eye-tabs,.physical-mode #eye-task{display:none!important}
+.physical-mode #fly-image{cursor:default;object-fit:contain}.physical-mode #eye-preview{max-width:42%}
+.physical-mode .sidebar{overflow-y:auto}.physical-mode .model-stats{display:none}

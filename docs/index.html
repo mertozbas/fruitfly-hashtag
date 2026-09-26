@@ -1,10 +1,12 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rehber · Hashtag Neural Lab</title><link rel="icon" href="data:,"><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#0c121b;color:#d9e5ee;font:16px/1.75 system-ui,sans-serif}aside{position:fixed;inset:0 auto 0 0;width:220px;padding:28px 22px;overflow-y:auto;border-right:1px solid #263744;background:#101923}aside b{display:block;font-size:14px;letter-spacing:.08em;margin-bottom:25px}aside a{display:block;margin:10px 0}a{color:#7ee3c3}main{margin-left:220px;max-width:1440px;padding:36px 48px}section{padding:0 0 44px;margin-bottom:44px;border-bottom:1px solid #324653}h1{font-size:30px;line-height:1.3}h2{font-size:23px;margin-top:32px}h3{font-size:18px}pre{padding:18px;border:1px solid #2e4455;border-radius:7px;background:#060c13;overflow:auto;line-height:1.5}code{font:13px/1.65 ui-monospace,monospace;overflow-wrap:anywhere}blockquote{border-left:3px solid #7ee3c3;margin-left:0;padding:3px 20px;color:#b6c8d7}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px;border:1px solid #293b4a;vertical-align:top}th{background:#162332}li{margin:7px 0}.meta{color:#98adbd;font-size:13px}@media(max-width:760px){aside{position:static;width:auto}aside a{display:inline-block;margin-right:18px}main{margin:0;padding:24px}table{display:block;overflow:auto}}@media print{aside{display:none}main{margin:0;padding:0}body{background:white;color:black}a{color:#064f44}pre{background:#eee}}
 
 img,video{max-width:100%;height:auto;border-radius:8px}p:has(>img){margin:26px 0}h1,h2,h3{color:#ecf3f6}section{scroll-margin-top:24px}a{overflow-wrap:anywhere}aside a{font-size:14px;margin:7px 0}summary{cursor:pointer}.meta{line-height:1.7}
-</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-so101-local">SO-101 robot deneyi</a><a href="#docs-tictactoe-local">Tic-tac-toe laboratuvarı</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-so101-hardware">Gerçek SO-101 hazırlığı</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
+</style></head><body><aside><b># HASHTAG<br>NEURAL LAB / REHBER</b><a href="#README">Proje ve görüntüler</a><a href="#docs-README">Rehber dizini</a><a href="#docs-installation">Kurulum</a><a href="#LAB">Laboratuvar turu</a><a href="#docs-usage">UI kullanımı</a><a href="#docs-training">Eğitim</a><a href="#SIMULATION">Yürüyüş</a><a href="#flight-README">Uçuş</a><a href="#docs-local-tasks">Yeni yerel görevler</a><a href="#docs-so101-local">SO-101 robot deneyi</a><a href="#docs-tictactoe-local">Tic-tac-toe laboratuvarı</a><a href="#docs-experiments">Deney kayıtları</a><a href="#docs-data">Veriler</a><a href="#docs-so101-hardware">Gerçek SO-101 hazırlığı</a><a href="#docs-research-README">Araştırma kanıtları</a><a href="#docs-research-research-note">Research note (English)</a><a href="#docs-troubleshooting">Sorun giderme</a><a href="#docs-development">Geliştirme</a><a href="#docs-media-README">Medya kökeni</a><a href="#THIRD_PARTY_NOTICES">Kaynaklar</a><p class="meta">Çevrimdışı kılavuz<br>Sürüm 0.2.1<br>Görseller ve kısa videolar dahildir.</p></aside><main><section id="README"><p align="center"><img src="media/hero.svg" alt="Hashtag Neural Lab — anatomiyi incele, yönelmeyi eğit, davranışı izle" width="1200"></p>
 
 <h1 id="README--hashtag-neural-lab">Hashtag Neural Lab</h1>
-<p><strong>Gerçek sinek anatomisinden çıkarılan bir devreyi eğitin; yön kararını, canlı nöron yanıtlarını ve fizik simülasyonunu tek ekranda inceleyin.</strong></p>
+<p><strong>Meyve sineği konnektomundan görev devrelerine: yönelme, SO-101 robot kontrolü ve öğrenilmiş XOX stratejisi.</strong></p>
+<p>Mert Özbaş · Hashtag World Company · Açık araştırma prototipi · Eylül 2026</p>
+<p><a href="#docs-research-research-note">Research note (English)</a> · <a href="#docs-research-README">Deney verileri</a> · <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/main/CITATION.cff">Atıf</a></p>
 <p>Neural Lab, bilgisayarınızda çalışan bir deney laboratuvarıdır. Solda deneyi kurar,
 ortada sineğin yürüyüşünü veya uçuşunu izler, sağda o hareket için kullanılan
 hesabı incelersiniz. Yeni eğitim ayrı kaydedilir; eski ve yeni modeli aynı hedefte
@@ -21,20 +23,126 @@ haritası ve saydam kesit. Ekrandaki oturum sayacı aynı koşulun tekrarlarıd�
 yanıtıdır. Bacakları FlyGym, kanatları FlyBody'nin hazır motor kontrolcüleri
 yönetir. Öğrenilen şey yön kararı veya motor düzeltme kazancıdır. <a href="#docs-training--bilimsel-kapsam">Bilimsel kapsam</a>.</p>
 </blockquote>
-<p>Yerel ek: <strong>kaçınma 6/6, görsel yönelme 6/6, engel 2/6</strong>. Engel eğitiminde başarı
-artışı gösterilmedi. <a href="#docs-local-tasks">Üçlü kontrol deneyleri ve model dışa aktarımı</a>.</p>
-<p>Yerel SO-101 deneyinde aynı arayüz, 3.488 nöronlu anatomik alt ağın yönettiği
-temas tabanlı al ve yerleştirme simülasyonunu gösterir. Ayrı 100 başlangıçta
-94 başarı ve sıfır sınır ihlali ölçüldü. <a href="#docs-so101-local">Kurulum, kullanım, eğitim ve sınırlar</a>.
-Bu yerel ek henüz GitHub/PyPI'ye yayımlanmamıştır.</p>
-<p>Yerel <strong>tic-tac-toe</strong> deneyi kamera ile tahtayı okur ve hamleyi aynı anatomik alt ağda
-eğitilmiş bir strateji modeliyle seçer. Son model 4.520 geçerli karar durumunun tamamında
-optimal hamle seçti; bu sanal oyun ölçümü robot yerleştirme başarısından ayrıdır.
-Ayrı MuJoCo motor testinde 30 mm X işaretli eğitim küpleriyle 9/9 hedef ve beş robot
-hamleli tam oyun tamamlandı. O hamlelerini sanal rakip yerleştirir; özgün ince X/O
-parçalarıyla motor başarı iddiası yoktur.
-<a href="#docs-tictactoe-local">Oynama, eğitim, kamera ve robot deneyinin sınırları</a>.</p>
-<p><img alt="SO-101 tic-tac-toe: bilek kamerası, temasla taşıma ve aynı ağın canlı motor hesabı" src="media/tictactoe-lab.png"></p>
+<h2 id="README--araştırma-güncellemesi-so-101-ve-xox">Araştırma güncellemesi · SO-101 ve XOX</h2>
+<p>MaleCNS anatomisinden seçtiğimiz bağlantı yapısını koruyup görev kodlayıcılarını,
+mevcut bağlantıların kazançlarını ve çıkış okumalarını eğittik. Böylece özgün sinek
+laboratuvarını <strong>robot simülasyonu, XOX karar verme ve sınırlı fiziksel hareket</strong>
+deneyleriyle genişlettik. Çalışma hakem değerlendirmesinden geçmemiş bir mühendislik
+araştırmasıdır; tam beyin emülasyonu, biyolojik zekâ veya genel amaçlı model iddiası taşımaz.</p>
+<p><strong>Gerçek SO-101 üzerinde test yaptık ve sinir ağına bağlı, enkoderle ölçülmüş
+fiziksel taban hareketi elde ettik.</strong> XOX stratejisi ve küp yerleştirme sonuçları ise
+ayrı sanal tahta / MuJoCo deneyleridir. Fiziksel kolda otonom kavrama ve tam XOX
+oyunu henüz doğrulanmadı.</p>
+<table>
+<thead>
+<tr>
+<th>Deney ve koşul</th>
+<th>Kaydedilen sonuç</th>
+<th>Ne gösterir?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XOX · ayrı tutulan 125 simetri grubu</td>
+<td><strong>%96,8 optimal hamle</strong></td>
+<td>İlk eğitim aşamasının ayrılmış doğrulaması</td>
+</tr>
+<tr>
+<td>XOX · son model, tüm geçerli karar durumları</td>
+<td><strong>4.520 / 4.520 optimal hamle</strong></td>
+<td>Son model tüm bu gruplarla eğitildi; görülmemiş veri başarısı değildir</td>
+</tr>
+<tr>
+<td>XOX · rastgele rakip, iki rol, 400 oyun</td>
+<td><strong>352 galibiyet / 48 beraberlik / 0 yenilgi</strong></td>
+<td>Sanal tahta stratejisi</td>
+</tr>
+<tr>
+<td>XOX · minimax rakip, iki rol, 400 oyun</td>
+<td><strong>400 beraberlik / 0 yenilgi</strong></td>
+<td>Canlı hamleleri ağ seçer; minimax test rakibidir</td>
+</tr>
+<tr>
+<td>XOX · MuJoCo, 30 mm eğitim küpleri</td>
+<td><strong>9/9 hedef</strong>, beş robot hamleli tam oyun</td>
+<td>X taşları temas fiziğiyle taşınır; O sanal rakiptir</td>
+</tr>
+<tr>
+<td>SO-101 · ayrı 100 simülasyon başlangıcı</td>
+<td><strong>94/100 başarı</strong>, 0 sınır ihlali</td>
+<td>Belirtilen checkpoint ve başlangıç dağılımı</td>
+</tr>
+<tr>
+<td>Gerçek SO-101 · görsel devre → taban</td>
+<td><strong>160 enkoder sayımı ≈ 14,07°</strong>, 85 hedef güncellemesi</td>
+<td>Tek robotta sınırlı fiziksel hareket; görev başarı oranı değildir</td>
+</tr>
+</tbody>
+</table>
+<p>Kaynaklar, checkpoint SHA256 değerleri, kontrol deneyleri ve başarısız koşullar
+<a href="#docs-research-research-note">araştırma notunda</a> ve
+<a href="#docs-research-README">makinece okunabilir kanıt paketinde</a> bulunur.
+Bunlar 14–16 Eylül kayıtlarıdır; 26 Eylül'de yayına hazırlanırken yeni fiziksel
+deney yapılmadı. Yazılım testleri fiziksel görev doğrulamasının yerine geçmez.</p>
+<h3 id="README--xox-tahta-görüntüsünden-öğrenilmiş-hamleye">XOX: tahta görüntüsünden öğrenilmiş hamleye</h3>
+<p><img alt="Gerçek Neural Lab ekranı: XOX, robot simülasyonu, canlı motor hesabı ve öğrenme eğrisi" src="media/research/xox-live-metrics.jpg"></p>
+<p><em>26 Eylül 2026 tarayıcı kaydı; <code>cd704b86be32…</code> checkpoint'i, duraklatılmış MuJoCo
+kavrama aşaması. Bu ekran tek bir gösterim anıdır; çok koşullu başarı ölçümü değildir.</em></p>
+<p><strong>3.488 nöron / 81.104 bağlantı</strong> içeren Touch → VNC → Motor alt grafiğine
+27 öğeli tahta kodlaması ve dokuz hamle çıkışı bağlandı. Minimax eğitim etiketlerini
+ve değerlendirme rakibini sağlar; canlı çıkarımda arama veya hamle tablosu yoktur.
+Yasal hamle maskesi ve oyun kuralları deterministiktir.
+Motor yürütme ayrıca öğrenilmiş okuma ve mühendislik ürünü aşama gözetimi kullanır.</p>
+<p><img alt="XOX sonuç tablosu: eğitim öncesi, öğrenilmiş strateji ve nöron susturma kontrolü" src="media/research/xox-evaluation.jpg"></p>
+<p><em>Nöronlar susturulduğunda rastgele rakibe karşı 267/400 yenilgi; eğitim öncesinde
+197/400 yenilgi kaydedildi. Bu kontrol ağ etkinliğine bağımlılığı sınar;
+anatomik yapının eş boyutlu yapay ağlardan üstün olduğunu kanıtlamaz.</em></p>
+<p><img alt="Anatomik konum, aktivite haritası ve saydam kesit panelleri" src="media/research/xox-brain-analysis.jpg"></p>
+<p><em>Renkler modelin hesaplanan yanıtlarıdır; canlı hayvandan ölçüm değildir.
+Konumu bilinen 1.623/3.488 nöron çizilir; eksik konumlar uydurulmaz.</em></p>
+<p><a href="#docs-tictactoe-local">Oyun, eğitim ve motor deneyini yeniden üretme</a> ·
+<a href="#docs-so101-local">SO-101 simülasyon yöntemleri ve dayanıklılık sınırları</a></p>
+<h3 id="README--gerçek-robot-kamera-görsel-devre-sınırlı-taban-hareketi">Gerçek robot: kamera → görsel devre → sınırlı taban hareketi</h3>
+<p><img alt="Gerçek SO-101 deney düzeni: sabit kamera ve bilek kamerası" src="media/research/physical-scene.png"></p>
+<p><em>16 Eylül oturumundan kamera kareleri; nesne etiketleri algı katmanının çıktısıdır.
+Bu görüntü kavrama başarısını göstermez.</em></p>
+<p>Fiziksel deney, XOX alt ağından <strong>ayrı bir görsel devre</strong> kullanır:
+<strong>4.387 nöron / 23.327 mevcut bağlantı</strong>. Kırmızı uyaranın iki görüntü yarısındaki
+ölçümleri sinir ağına girer; çıkış yön/genlik üretir. Deterministik adaptör taban
+eklemini seçer, hız/süre/hareket sınırlarını uygular ve telemetriyi denetler.</p>
+<p><img alt="Gerçek taban hareketinde gönderilen hedef ve enkoder ölçümü" src="media/research/physical-base-motion.png"></p>
+<p><em>Kaydedilmiş hareket segmenti: 170 sayımlık gönderilen hedefe karşı 160 sayım
+ölçüm; yaklaşık 0,88° son fark. Devre çıkışı bu segmentte −1'de doygundur.
+Grafik geçmiş telemetriden üretilmiştir; yön değiştirme veya görsel takip
+kararlılığına ilişkin kapsamlı bir test değildir.</em></p>
+<p>Diğer gövde konumlandırmaları ve boş kıskaç açma deterministik denemelerdir.
+Kavrama tamamlanmadı; takip durmaları ve aralıklı sıcaklık okumaları açık
+bulgulardır. Fiziksel sonuçların sınırları ve başarısız denemeler
+<a href="#docs-research-research-note">araştırma notunda</a>, yürütme sözleşmeleri
+<a href="#docs-so101-hardware">donanım rehberinde</a> yer alır.</p>
+<h3 id="README--coming-soon-bu-devreyi-llm-benzeri-bir-arayüzle-kullanmak">Coming soon · bu devreyi LLM benzeri bir arayüzle kullanmak</h3>
+<p>Sonraki araştırma yönümüz, konnektomdan türetilen hesaplama çekirdeğini metinle
+etkileşilebilen ve görevler arasında değerlendirilebilen bir arayüz arkasında
+kullanmayı incelemek. Girdi/çıktı kodlama, durum/bellek, öğrenme ve çıkarım
+sözleşmeleri; küçük görevlerden başlayarak doğruluk, genelleme, gecikme ve
+maliyet ölçümleri araştırılacak.</p>
+<p><strong>Bu bir yol haritasıdır.</strong> Mevcut model dil üretmez, LLM değildir ve genel amaçlı
+akıl yürütme başarısı gösterilmedi. Önce uygun karşılaştırma modelleri ve
+ölçülebilir kabul kriterleri kurulacak. Fiziksel tarafta sonraki adım leader ile
+senkronize gösterim toplamak ve gerçek kavramayı ayrıca doğrulamaktır.</p>
+<h3 id="README--kaynak-sürümü-ve-hazır-paket">Kaynak sürümü ve hazır paket</h3>
+<p>Bu GitHub güncellemesi araştırma kodunu, seçilmiş kanıtları ve ekran görüntülerini
+paylaşır. <strong>PyPI'deki mevcut sürüm ayrı bir yayındır; bu güncelleme PyPI yayını değildir.</strong>
+Eğitilmiş kişisel checkpoint'ler, büyük MaleCNS indirmeleri ve ham cihaz/oturum
+arşivleri repoya dahil değildir. Yeni klonda aynı hazır model menüsünü beklemeyin;
+<a href="#docs-research-research-note">araştırma notundaki önkoşullar ve komutlarla</a>
+yerel model oluşturulur. Sayısal kanıt paketi robot veya bilimsel veri indirmeden incelenebilir:</p>
+<pre><code class="language-bash">python3 docs/research/verify_evidence.py
+</code></pre>
+<p>Sinek laboratuvarının kurulumunu, yürüyüş/uçuş deneylerini ve önceki medyasını
+aşağıda koruyoruz. Ek duyusal deneylerde kaçınma <strong>6/6</strong>, görsel yönelme <strong>6/6</strong>,
+engel <strong>2/6</strong>; engel eğitiminde başarı artışı gösterilmedi.
+<a href="#docs-local-tasks">Yöntem ve kontrol deneyleri</a>.</p>
 <h2 id="README--bir-anatomik-haritadan-çalışan-deneye">Bir anatomik haritadan çalışan deneye</h2>
 <p>Başlangıç sorusu basitti: “İndirilen sinir sistemi verisinden bir devre seçip,
 onun parametrelerini değiştirince davranıştaki farkı görebilir miyiz?”
@@ -174,7 +282,7 @@ politikasına referans olur. Beyin paneli o anda kullanılan hesabı gösterir.<
 <p>Uçuş seçiliyken <strong>Yönelme ağını eğit</strong>, yeni ağı altı uçuş hedefinde de sınar.
 <strong>Sinek havada başlar.</strong> Kalkış, iniş, irtifa öğrenimi ve kanat politikasını yeniden
 eğitme bu sürümde yoktur. Kaçınma, görme ve engel görevleri yerel çalışma
-kopyasına eklenmiştir; bu ek henüz GitHub/PyPI sürümünde bulunmaz. <a href="#docs-local-tasks">Yerel görevler ve sonuçlar</a>. <a href="#flight-README">Uçuş kontrol yolu ve kullanım</a>.</p>
+kopyasında geliştirilip bu GitHub kaynak sürümünde paylaşılmıştır; mevcut PyPI sürümü ayrıdır. <a href="#docs-local-tasks">Yerel görevler ve sonuçlar</a>. <a href="#flight-README">Uçuş kontrol yolu ve kullanım</a>.</p>
 <p><a id="README--kanitlar"></a></p>
 <h2 id="README--05-sonucu-neyle-doğruluyoruz">05 — Sonucu neyle doğruluyoruz?</h2>
 <table>
@@ -246,6 +354,10 @@ kurulumu ve rehberi sınar; bilimsel Linux doğrulaması yerine geçmez.</p>
 <td><a href="#docs-data">Veriler ve modeller</a></td>
 </tr>
 <tr>
+<td>SO-101 / XOX araştırması, kanıt ve sınırlılıklar</td>
+<td><a href="#docs-research-research-note">Research note</a> · <a href="#docs-research-README">Kanıt paketi</a></td>
+</tr>
+<tr>
 <td>Gerçek ölçümler ve görsel kökeni</td>
 <td><a href="#docs-experiments">Deneyler</a> · <a href="#docs-media-README">Medya dizini</a></td>
 </tr>
@@ -307,6 +419,10 @@ Kod adları ve kaynak veri alanları özgün halleriyle korunur; açıklamalar T
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>Bilimsel yöntem, SO-101 / XOX metrikleri ve araştırma yol haritası</td>
+<td><a href="#docs-research-research-note">Research note (English)</a> · <a href="#docs-research-README">Doğrulanabilir kanıtlar</a></td>
+</tr>
 <tr>
 <td>Projenin hikâyesi ve canlı görüntüler</td>
 <td><a href="#README">Ana README</a></td>
@@ -995,7 +1111,7 @@ Başka checkpoint için <code>--model</code> yolunu değiştirin. Özel veri diz
 <a href="https://doi.org/10.25378/janelia.25309105.v4">Figshare v4 politikaları</a> ·
 <a href="#THIRD_PARTY_NOTICES">Atıflar ve lisanslar</a>.</p></section>
 <section id="docs-local-tasks"><h1 id="docs-local-tasks--yerel-duyusal-görevler-ve-taşınabilir-modeller">Yerel duyusal görevler ve taşınabilir modeller</h1>
-<p>Bu ekleme şu anda yerel çalışma kopyasındadır; GitHub veya PyPI'ye yayımlanmadı.
+<p>Bu deneyler GitHub kaynak sürümünde paylaşılır. Mevcut PyPI yayını bu araştırma güncellemesinden ayrıdır.
 Yayımlanmış 0.2.1'in ekran görüntüleri önceki koku/uçuş sürümünü gösterir.</p>
 <h2 id="docs-local-tasks--gerçek-bir-beyin-mi-çalışıyor">Gerçek bir beyin mi çalışıyor?</h2>
 <p>Çalışan bir sinir ağı var. Ağın nöron kimlikleri ve seçilmiş yönlü bağlantıları
@@ -1187,9 +1303,11 @@ Bir robotta ayrıca fiziksel doğrulama ve güvenlik sınırları gerekir. Bu mo
 genel amaçlı, her işi öğrenmiş veya yeni donanımda doğrudan çalışacak bir beyin değildir.</p>
 <p><a href="#docs-training">Eğitim rehberine dön</a> · <a href="#docs-usage">UI kullanımı</a></p></section>
 <section id="docs-so101-local"><h1 id="docs-so101-local--so-101-yerel-sinir-ağı-deneyi">SO-101 yerel sinir ağı deneyi</h1>
-<p>Bu çalışma yalnızca yerel simülasyon içindir. Fiziksel robot sürücüsü çağrılmaz;
-GitHub veya PyPI yayını yapılmaz. Mevcut sinek görevleri ve checkpoint'leri korunur.
-Gerçek follower ve USB kameralar için ayrı <a href="#docs-so101-hardware">bağlantı hazırlığı ve tanılama rehberi</a> vardır; fiziksel motor yürütmesi henüz devreye alınmadı.</p>
+<p>Bu belge yerel simülasyon deneyini anlatır; buradaki komutlar fiziksel robot sürücüsünü çağırmaz.
+Kod bu GitHub kaynak sürümünde paylaşılır; mevcut PyPI sürümü ayrıdır.
+Mevcut sinek görevleri ve checkpoint'leri korunur. Gerçek kolda elde edilen sınırlı
+taban hareketi, ayrı görsel model ve ayrı deneydir: <a href="#docs-research-research-note">araştırma notu</a>,
+<a href="#docs-so101-hardware">donanım rehberi</a>. Simülasyon başarısı fiziksel kavrama sonucu değildir.</p>
 <p><img alt="SO-101 ve aynı kararı üreten canlı anatomik ağ" src="media/so101-lab.jpg"></p>
 <h2 id="docs-so101-local--aç-ve-kullan">Aç ve kullan</h2>
 <pre><code class="language-bash">.venv/bin/python lab_server.py
@@ -1521,7 +1639,7 @@ kütle veya kavrama desteği eklemezler.</p>
 <p>Resmî <strong>SO-101 32×32 UVC somun yuvalı adaptörünün STL dosyası</strong> kullanılır.
 İki M3 vida ekseni ve dış montaj yüzeyi robot CAD modelindeki somun yuvalarıyla
 eşlenmiştir. PCB delikleri 27×27 mm ve kamera eğimi 25° olarak CAD geometrisinden
-alınır. <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/so101/assets/README.md">Kaynak ve mekanik eşleme</a> kayıt altındadır.</p>
+alınır. <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/main/so101/assets/README.md">Kaynak ve mekanik eşleme</a> kayıt altındadır.</p>
 <p>Lens merkezi ofseti <code>[2,5; 64,812; −11,742]</code> mm, lens uzunluğu 16 mm ve dikey
 görüş açısı 90° nominal simülasyon profilidir. <strong>Mekanik adaptör eşlenmiştir;
 fiziksel lens kalibrasyonu yapılmamıştır.</strong> Gerçek UVC modül yalnızca RGB
@@ -2094,6 +2212,138 @@ standart HTTP istekleri yapar; kişisel model/eğitim yükleme veya telemetri se
 UI yalnızca <code>127.0.0.1</code> dinler; kimlik doğrulamalı çok kullanıcılı bir servis değildir.
 LAN'a veya internete açmak bu dağıtımın hazır bir özelliği değildir.</p></section>
 <section id="docs-so101-hardware"><h1 id="docs-so101-hardware--gerçek-so-101-bağlantı-ve-devreye-alma">Gerçek SO-101: bağlantı ve devreye alma</h1>
+<p>Son fiziksel oturumun kamuya açık sonuçları ve sonraki deney planı
+<a href="#docs-research-research-note">araştırma notunda</a> bulunur. Ham oturum ve cihaz kayıtları
+yerel tutulur. Buradaki eski pozlar güncel hareket izni değildir.</p>
+<h2 id="docs-so101-hardware--canlı-beyin-kontrolü-mevcut-neural-lab-arayüzü">Canlı beyin kontrolü · mevcut Neural Lab arayüzü</h2>
+<pre><code class="language-bash">./neural.sh --serial YOUR_FOLLOWER_SERIAL --calibration /path/to/follower.json
+</code></pre>
+<p><a href="http://127.0.0.1:8766/?physical=1">Fiziksel konsol</a>, mevcut Neural Lab'ın
+yerleşimini, sağdaki 3D beyni, nöron/bağlantı inceleyicisini ve analizlerini kullanır.
+Sol görüntü gerçek üst kamera, küçük görüntü gerçek bilek kamerasıdır; kameralar
+üstteki düğmelerle yer değiştirebilir. Beyin için girdi üst kameradır.</p>
+<p>Program başlangıcında motorlara yalnızca okuma yapılır. Taban sabit, bilek destekli
+ve kıskaç masadan boşta iken <strong>Mevcut pozu tut</strong>; kol kendi pozunu koruduktan ve
+eller çekildikten sonra <strong>Beyinle yönlendir</strong> kullanılır. İlk beş motor mevcut
+konumu tutar, kıskaç torku açılmaz. Kırmızı nesneyi üst görüntünün sol/sağ tarafına
+taşımak anatomik görsel devrenin çıkışını değiştirir. Yalnız taban hareket eder:
+oturum başlangıcına göre ±170 sayım (yaklaşık ±15°), en çok 30 saniye.
+Kırmızı görünmezse, iki taraf dengeliyse veya ağ çıkışı sıfırsa hareket ilerlemez.</p>
+<p><strong>Esc / Hareketi durdur</strong>, pencereyi gizleme ve bir saniyelik kontrol bağlantısı
+kaybı hareketi durdurur. Kamera, model/kalibrasyon kimliği, sıcaklık, voltaj,
+servo durumu, yük, diğer eklemlerin kayması ve takip mesafesi denetlenir.
+Durdurma gövde torkunu açık tutar; gücü kesmeden önce kol desteklenmelidir.
+Hata sonrası otomatik yeniden başlama yoktur.
+Boştaki motor gözlemi kamera okumasından önce yapılır; kamera kesilse de sıcaklık,
+poz ve tork bilgisi yenilenir. Motor ve kamera zaman damgaları ayrı tutulur;
+hareket için ikisinin de güncel olması gerekir. Son sıcaklık eşiği uyarısı panelde
+saatiyle kalır. Ham bir yüksek değeri göstermek, hareket sınırını değiştirmez.</p>
+<p>Kamera önizlemesinin 10 dakikalık tanılama oturumu sona erdiğinde fiziksel ekran
+açıksa görüntü bağlantısı yeniden kurulur. Yeniden bağlantı gecikmeli ve en fazla
+üç denemelidir; hareket oturumu kendiliğinden başlamaz. Kamera kesintisi sırasında
+hareket varsa önce durdurulur; yeni kamera oturumuyla yeniden başlatma gerekir.</p>
+<p>Bu mod <code>local-vision-seed42</code> görsel yönelme modelini kullanır. Sağdaki etkinlik
+motor hedefini hesaplayan aynı ileri geçiştir; model SHA ve anatomik devre kimliği
+mevcut 3D görünümle eşleştirilir. Kalibre edilmiş görsel servo, altı eklemli alma/
+bırakma veya bütün sinek beyninin emülasyonu değildir. Sinir ağı yön ve genliği,
+deterministik adaptör ise taban seçimi, hız ve hareket sınırlarını sağlar.
+Kararlar ve motor ölçümleri <code>.runtime/hardware/neural/</code> altında kaydedilir.</p>
+<p><code>./neural.sh --check</code> iki yerel servisi kontrol eder. <code>Ctrl+C</code> başlatıcının açtığı
+servisleri kapatır; tekrar başlatmak hareketi kendiliğinden başlatmaz.</p>
+<h3 id="docs-so101-hardware--altı-eklemli-elle-gösterim">Altı eklemli elle gösterim</h3>
+<p>Fiziksel konsoldaki <strong>Kırmızı küp · Elle öğret</strong> bölümü, kolu sürekli desteklediğinizi
+onayladıktan sonra altı motorun torkunu kapatır ve gerçek enkoder konumlarını kaydeder.
+Küpe uzanma, kıskacı elle kapatma ve kaldırma hareketi gösterilir. <strong>Gösterimi bitir</strong>
+kaydı saklar; motorları açmaz. Destek sürdürülerek <strong>Desteklediğim mevcut pozu tut</strong>
+kullanılabilir; bu düğme ilk beş motoru tutar, kıskacı serbest bırakır.</p>
+<p>Kayıt en fazla 90 saniyedir; enkoderler kamera HTTP isteklerinden bağımsız, yalnız
+okuma yapan bir iş parçacığında 20 Hz kaydedilir. Kamera gecikmesi kaydı kesmez;
+görüntülerin kendi zaman damgaları saklanır. Motor okuması/örnekleme kaybolursa kayıt
+kesilir ve kol serbest kalır. El hareketine motor komutunun adım/hız sınırı uygulanmaz.
+Torku kapalı öğretimde sıcaklık, besleme, yük ve durum uyarıları ham motor ölçümleriyle
+birlikte kayda eklenir; bu uyarılar veri kaydını durdurmaz veya motor çalıştırma izni
+vermez. Uyarılı kayıtlar <code>requires_review</code> taşır, her kayıt <code>execution_allowed=false</code>
+kalır. Poz tutma/hareketin 50°C sınırı ve diğer yürütme kontrolleri değişmez.
+Yürütme sınırının dışına çıkan elle hareketler kayıtta korunur fakat geçerli bir hareket
+yolu olarak kabul edilmez. Kaydın hızı, robotun sonraki yürütme hızını belirlemez.
+<code>teaching-*/samples.jsonl</code>, saniyelik kamera kareleri ve <code>demonstration.json</code> aynı fiziksel
+oturum dizinine yazılır. Gösterim kaydı motor politikası eğitimi veya beyinle kavrama
+başarısı değildir; henüz otomatik yeniden yürütme başlatmaz.
+Yeniden başlatıldığında aynı USB kimliği ve kalibrasyonla eşleşen son gösterimin
+özeti panelde geri yüklenir. Kaydı geri yüklemek tork veya hareket başlatmaz.</p>
+<h3 id="docs-so101-hardware--sınırlı-gövde-konumlandırması">Sınırlı gövde konumlandırması</h3>
+<p>Yerel fiziksel API'nin <code>joints</code> işlemi, zaten poz tutan ilk beş motora önizlenmiş
+yerel enkoder hedefleri gönderir. Altı tam sayı hedef gerekir; kıskacın hedefi mevcut
+değeriyle aynı kalmalıdır. Eklem başına en çok 170 sayım, komut başına 2 sayım,
+16 sayım takip farkı, 30 saniye süre ve mevcut hız/tork ayarları denetlenir.
+Takip gecikmesinde yeni hedef gönderilmeden en çok bir saniye beklenir; son hedefte
+iki saniye içinde 8 sayımlık ölçüm toleransına girilemezse hareket durur.
+Durdurma yalnız bir kez ölçülen pozu tutturur; gövdeyi serbest bırakmaz.
+Hedefi önizlemedeki ölçüme eşit bırakılan eklemin mevcut motor tutma hedefi korunur;
+yük altındaki ölçüm farkını her işlemde yeniden hedefleyerek aşağı kayma biriktirilmez.</p>
+<p>Bu işlem deterministik konumlandırmadır. Panelde <strong>Gövde konumlandırma</strong> olarak
+gösterilir ve <code>brain_connected=false</code> kalır; gösterim tekrarı veya beyinle kavrama
+başarısı olarak sunulmaz. Plan ve motor geri bildirimi fiziksel oturumda saklanır.</p>
+<p>Tek taban veya bilek dönüşünden oluşan kamera ölçümü, açık bir
+<code>thermal_pause_review</code> metniyle önceki aralık deneyinin sınırlı sıcaklık
+duraklamasını kullanabilir. İlk 50–59°C ölçümünde yalnız hareket eden eklem
+ölçülen konumda tutulur. Bütün motorlar kesintisiz iki saniye 45°C altında
+kalmadan yeni hedef ilerlemez. Sekiz saniye bekleme, üçüncü uyarı veya 60°C
+denemeyi bitirir; kamera, izleyici, yük, voltaj, tork, konum ve süre kontrolleri
+bekleme sırasında da çalışır. Başlangıçta 50°C hareketi engeller. Bu seçenek
+omuz, dirsek, bilek eğimi, kıskaç veya çok eklemli hareket için kabul edilmez;
+normal <code>joints</code> ve beyin çalıştırma davranışı değişmez.</p>
+<h3 id="docs-so101-hardware--boş-kıskacı-sınırlı-açma">Boş kıskacı sınırlı açma</h3>
+<p>Yerel <code>gripper_open</code> işlemi aynı oturum/tek kullanımlık önizleme onayını ve
+<code>empty_gripper=true</code> bilgisini gerektirir. İlk beş motor zaten pozu tutmalı,
+kıskaç torku kapalı ve boş olmalıdır. Altı tam sayı hedeften yalnız motor 6
+artabilir: en fazla 128 sayım açılma, adım başına 2 sayım, 8 sayım takip sınırı,
+15 saniye süre. Motor 6 için hız 20, tork tavanı mevcut değeri artırmadan en çok
+100, ham yük sınırı 80'dir. Başlangıç ve yürütmede altı motorun 50°C sınırı ile
+kamera, izleyici, voltaj, tork ve gövde kayması kontrolleri sürer.</p>
+<p>Kıskaç torku açılmadan önce ölçülen başlangıç hedefi yazılıp doğrulanır.
+Bitişte veya hatada yalnız kıskaç torku kapatılır; kapandığı doğrulanınca geçici
+SRAM ayarları geri yüklenir. Gövde torku bırakılmaz. Bu işlem kıskacı kapatmaz,
+nesne tutmaz ve sinir ağıyla kavrama değildir. Son hedefte 5 sayım toleransı
+0,5 saniye korunmalı; iki saniyede yerleşmezse sonuç başarısızdır.</p>
+<h3 id="docs-so101-hardware--16-eylül-2026-kamera-eşleştirmesi-ve-fiziksel-sonuç">16 Eylül 2026 · kamera eşleştirmesi ve fiziksel sonuç</h3>
+<p>Kanıtlar <code>.runtime/reconnect/handeye/</code> altındadır. Aşağıdaki değerler bu kurulumun
+ölçümüdür; başka robot veya kamera oturumuna yürütme izni vermez.</p>
+<ul>
+<li><code>two-tag-elbow-5.json</code>: küp 200 ve tepsi 206 üzerindeki 20 mm etiketlerle
+  sekiz farklı taban/bilek dönüşü pozu kullanıldı. Yerel MuJoCo modelinde bilek
+  dönüşü için −90°, dirsek için −5° açı eşleştirmesi ve taban mesh alt yüzeyi
+  Z=0,0300817 m varsayımı kullanıldı. Servo kalibrasyonu veya EEPROM değiştirilmedi.
+  Eğitim karelerinde köşe RMS hatası 1,93 piksel; bir pozu dışarıda bırakarak
+  yapılan değerlendirmelerde 1,44–3,09 piksel. Bu aday daha sonra değiştirilmedi.</li>
+<li><code>pitch-heldout-validation.json</code>: modele katılmayan gerçek 26 sayımlık bilek
+  eğiminden sonra küp/tepsi köşe hataları 1,51/1,27 piksel.
+  Hareketin istenen 44 sayımı, kıskaç motorundan gelen 50°C okumasıyla kesildi.</li>
+<li><code>body-air-heldout-validation.json</code>: modele katılmayan ilk beş eklem hareketinden
+  sonra küp/tepsi köşe hataları 2,17/1,87 piksel. Bu, görüntü eşleştirmesi kanıtıdır;
+  parmak temas noktası veya yük altında kaldırma doğrulaması değildir.</li>
+<li><code>09-gripper-opening/capture.json</code>: boş kıskaç 2309→2367, yani 5,10° açıldı.
+  İstenen 2373 hedefinin 6 sayım gerisinde kaldı; 5 sayımlık bitiş toleransı
+  nedeniyle <strong>başarısız</strong> kaydedildi. Motor 6 kapatıldı, gövde değişmedi.</li>
+<li><code>10-body-air-step/capture.json</code>: beş gövde eklemi birlikte hareket etti.
+  Bilek eğimi 2585 hedefine karşı 2596 ölçüldü; son hedef toleransı nedeniyle
+  <strong>başarısız</strong> kaydedildi. Sonra okunan kararlı poz:
+  <code>[2130,1369,2583,2596,2069,2367]</code>.</li>
+<li><code>11a-body-air-step2/capture.json</code>: ikinci serbest alan hareketinde bilek
+  eğimi 2596→2519 ilerledi. Son gönderilen hedef 2504 iken ölçüm yaklaşık bir
+  saniye 2519'da kaldı; ham yük 72 idi. Sonraki 2502 hedefi 17 sayım fark
+  yaratacağından <strong>gönderilmedi</strong>; mevcut 16 sayımlık takip sınırı hareketi kesti.
+  Bu denemede sıcaklık hatası olmadı. Sonraki salt okunur 16 örnekte poz
+  <code>[2123,1442,2601,2519,2061,2367]</code> olarak tutuldu; motor 6 kapalıydı.</li>
+</ul>
+<p>Bu sonuçlar gerçek altı motorun yazılım bağlantısını ve sınırlı hareketini
+gösterir; <strong>küp kavranmadı</strong>. Boşta görülen kıskaç sıcaklık sıçramasının nedeni
+ve yük altındaki bilek/dirsek takibi çözülmüş değildir. Daha ileri yaklaşma veya
+kavrama rotası bu sonuçlara dayanarak otomatik çalıştırılmaz. Aday kamera/model
+dosyalarında <code>physical_alignment_verified=false</code> ve <code>execution_allowed=false</code>
+kalır. Brain modu halen taban yönlendirmesidir; beş eklem konumlandırması ve boş
+kıskaç açma deterministik işlemlerdir.</p>
+<hr>
 <p>Neural Lab'ın <strong>Gerçek kol ↗</strong> paneli fiziksel SO-101 follower'ı ve USB kameralarını
 tanılamaya hazırlar. Motor konumlarını, sıcaklığı, voltajı ve mevcut tork durumunu
 okur; kaydedilmiş kalibrasyonu motor belleğiyle karşılaştırır. Bilek ve sabit kamera
@@ -2611,6 +2861,319 @@ Hedef konum, tork açma, ID değiştirme ve toplu motor yazımı seri sınırda 
 <a href="https://docs.opencv.org/4.13.0/dc/dbb/tutorial_py_calibration.html">OpenCV lens kalibrasyonu</a>,
 <a href="https://docs.opencv.org/4.13.0/df/d4a/tutorial_charuco_detection.html">ChArUco algılama</a>.</p>
 <p><a href="#docs-so101-local">← SO-101 simülasyonu</a> · <a href="#docs-tictactoe-local">Tic-tac-toe</a> · <a href="#docs-README">Rehber dizini</a></p></section>
+<section id="docs-research-README"><h1 id="docs-research-README--research-evidence">Research evidence</h1>
+<p>This public snapshot documents connectome-derived SO-101 simulation, tic-tac-toe strategy and manipulation, and a separate bounded physical-motion experiment.</p>
+<p>Read the <a href="#docs-research-research-note">technical research note</a> for methods, results, limitations and planned work. It is a retrospective project report, not a peer-reviewed paper.</p>
+<table>
+<thead>
+<tr>
+<th>Evidence level</th>
+<th>Recorded observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learned XOX strategy</td>
+<td>4,520 / 4,520 optimal decisions across the complete finite decision set</td>
+</tr>
+<tr>
+<td>SO-101 XOX in MuJoCo</td>
+<td>9 / 9 destinations; 5 / 5 sequential X placements in one game</td>
+</tr>
+<tr>
+<td>SO-101 cube placement in MuJoCo</td>
+<td>94 / 100 held-out state-input trials</td>
+</tr>
+<tr>
+<td>Physical SO-101</td>
+<td>Real base motion; R1: 160 encoder counts, approximately 14.07°</td>
+</tr>
+</tbody>
+</table>
+<p>XOX strategy and simulation use a 3,488-neuron anatomical subgraph. Physical motion used a separate 4,387-neuron visual subgraph. The final XOX strategy trained on the full finite canonical board set. Physical XOX and autonomous physical grasping have not been demonstrated.</p>
+<p><img alt="XOX interface with recorded strategy and motor metrics" src="media/research/xox-evaluation.jpg"></p>
+<p><em>A UI view of recorded strategy and simulation results. Screenshot capture is separate from the original benchmark execution.</em></p>
+<p><img alt="Historical physical base target and encoder trace" src="media/research/physical-base-motion.png"></p>
+<p><em>Historical physical experiment, 16 September 2026. Neural drive remains saturated in one direction; this trace does not establish bidirectional visual tracking.</em></p>
+<p>The <a href="research/results.json">machine-readable summary</a>, <a href="research/so101-episodes.csv">episode outcomes</a>, <a href="research/tictactoe-motor.csv">motor trials</a>, <a href="research/physical-runs.csv">physical segments</a> and <a href="research/physical-motion.csv">physical trace</a> include unsuccessful outcomes. The <a href="research/provenance.json">provenance manifest</a> records source identities and public file hashes. Private raw sessions and device metadata are excluded.</p>
+<p>The <a href="research/validation-2026-09-26.json">26 September validation record</a> reports <strong>247 distinct passing software tests</strong> and a fresh XOX strategy evaluation matching the historical result. Full motor benchmarks and physical experiments were not rerun.</p>
+<p>Verify the compact evidence without scientific dependencies or hardware:</p>
+<pre><code class="language-bash">python3 docs/research/verify_evidence.py
+</code></pre>
+<p>The verifier recalculates counts and displacements from the public CSVs. It does not run new experiments. The optional <a href="research/export_evidence.py">export utility</a> requires the original unpublished local records; <a href="#docs-research-research-note--evidence-and-reproducibility">reproduction boundaries</a> explain what is included.</p>
+<p><strong>Coming soon:</strong> research into an LLM-like interaction interface around a connectome-derived model. No language-model capability is claimed by this snapshot.</p></section>
+<section id="docs-research-research-note"><h1 id="docs-research-research-note--connectome-derived-task-circuits-for-so-101-and-tic-tac-toe">Connectome-derived task circuits for SO-101 and tic-tac-toe</h1>
+<p>Mert Özbaş · Hashtag World Company / Hashtag Robotics · 26 September 2026</p>
+<p><strong>Research software and retrospective technical note; not peer reviewed.</strong> This snapshot reports existing experiments. Preparing it did not run a new physical robot experiment.</p>
+<h2 id="docs-research-research-note--abstract">Abstract</h2>
+<p>We repurpose selected anatomical connectivity from MaleCNS for engineered tasks, while keeping sensory encoding, artificial neural responses, learned readouts and deterministic robot execution explicit. A 3,488-neuron subgraph learned tic-tac-toe strategy and was adapted to contact-based SO-101 manipulation in MuJoCo. The final strategy selected an optimal move in 4,520/4,520 reachable decision states; its training included the complete finite canonical board set. A separate motor evaluation completed nine single-destination placements and five sequential robot placements in one game. Earlier SO-101 simulation experiments achieved 94/100 held-out cube placements. Separately, a 4,387-neuron visual subgraph drove measured motion of a physical SO-101 base joint. One recorded segment contains 85 target updates and 160 encoder counts of motion, approximately 14.07°. These are distinct task models and evidence levels. Physical tic-tac-toe and autonomous physical grasping have not been demonstrated.</p>
+<h2 id="docs-research-research-note--research-questions-and-method">Research questions and method</h2>
+<p>The experiments ask whether anatomical connectivity can serve as a trainable task substrate, whether its live computed activity can be traced to an action, and whether a bounded adapter can connect a derived circuit to real motors. They do not test whole-brain emulation, consciousness or a universal advantage of biological topology.</p>
+<p>The anatomical source is <a href="https://male-cns.janelia.org/">MaleCNS v1.0</a>. The project uses selected directed paths, artificial sigmoid responses, task encoders and motor decoders. The models are not living brains or validated physiological simulations. Existing anatomical edge gains can change; new anatomical edges are not added. <a href="https://mujoco.readthedocs.io/en/stable/overview.html">MuJoCo</a> provides simulated contact dynamics.</p>
+<table>
+<thead>
+<tr>
+<th>Experiment</th>
+<th>Anatomical core</th>
+<th>Engineered interface</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SO-101 simulation / XOX</td>
+<td>Touch → VNC relay → VNC premotor → Motor; 3,488 neurons, 81,104 edges</td>
+<td>Task-specific input encoders, learned readouts, IK, bounded servos and task supervision</td>
+</tr>
+<tr>
+<td>Physical visual experiment</td>
+<td>Photoreceptor → optic relay → visual projection → descending; 4,387 neurons, 23,327 edges</td>
+<td>Bilateral red-salience input, signed base command, deterministic execution limits</td>
+</tr>
+</tbody>
+</table>
+<p>XOX uses 27 board features, rotation/reflection canonicalization and nine output scores. Minimax provides offline supervision and evaluation. Live strategy inference performs a neural forward pass, masks occupied cells and selects the highest score; it does not invoke minimax, a move table or an LLM. The motor adaptation keeps the learned anatomical weights fixed and fits a separate readout using 4,000 synthetic geometries, with 1,000 separate validation geometries. A nine-phase supervisor, inverse kinematics, contact checks and retry limits remain engineered components. <a href="#docs-tictactoe-local">Implementation and complete protocol</a>.</p>
+<h2 id="docs-research-research-note--recorded-results">Recorded results</h2>
+<h3 id="docs-research-research-note--tic-tac-toe-strategy">Tic-tac-toe strategy</h3>
+<p>The recorded strategy used seed 51 and 6,000 optimization steps. A first stage held out entire D4 symmetry orbits: 502 canonical training boards and 125 validation boards. The final stage trained on all 627 canonical boards. The first-stage validation set was used for model selection, so its result is not an independent final test.</p>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th style="text-align: right;">Recorded result</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First-stage validation optimal move</td>
+<td style="text-align: right;">96.8%</td>
+<td>Held-out symmetry groups at that stage</td>
+</tr>
+<tr>
+<td>Final exhaustive decision-state coverage</td>
+<td style="text-align: right;">4,520 / 4,520</td>
+<td>Finite learned coverage; not unseen-board generalization</td>
+</tr>
+<tr>
+<td>Random opponent, both roles, 400 games</td>
+<td style="text-align: right;">352 wins / 48 draws / 0 losses</td>
+<td>Fixed evaluation seed 731</td>
+</tr>
+<tr>
+<td>Minimax opponent, both roles, 400 games</td>
+<td style="text-align: right;">400 draws / 0 losses</td>
+<td>Fixed evaluation seed 731</td>
+</tr>
+<tr>
+<td>All possible opponent replies from empty board</td>
+<td style="text-align: right;">Worst case: draw as X and O</td>
+<td>Exhaustive finite-game evaluation</td>
+</tr>
+<tr>
+<td>All four activity layers silenced, random opponent</td>
+<td style="text-align: right;">96 wins / 37 draws / 267 losses</td>
+<td>Readout biases and legal-move mask remain</td>
+</tr>
+<tr>
+<td>Untrained network, random opponent</td>
+<td style="text-align: right;">185 wins / 18 draws / 197 losses</td>
+<td>Same opponent seed and episode count</td>
+</tr>
+</tbody>
+</table>
+<h3 id="docs-research-research-note--contact-based-xox-motor-simulation">Contact-based XOX motor simulation</h3>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th style="text-align: right;">Recorded result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First X cube placed in each of nine destinations</td>
+<td style="text-align: right;">9 / 9, first attempt</td>
+</tr>
+<tr>
+<td>One complete sequential self-play game</td>
+<td style="text-align: right;">5 / 5 robot X placements, first attempt; nine-move draw</td>
+</tr>
+<tr>
+<td>Silenced motor activity, center destination</td>
+<td style="text-align: right;">Failed; invalid command rejected at workspace limit</td>
+</tr>
+</tbody>
+</table>
+<p>The robot moves 30 mm cubes marked X through contact physics. The opponent's O pieces are placed virtually. The original thin printed X/O tokens did not achieve reliable lifting and are not covered by the success claim. Fixed scene tests do not estimate arbitrary game-sequence or real-world success. Sensor input is simulated RGB-D with a fixed palette; a physical UVC camera supplies RGB only.</p>
+<h3 id="docs-research-research-note--so-101-cube-placement-simulation">SO-101 cube placement simulation</h3>
+<p>The state-based model was selected before evaluating seeds 8000–8099. Success requires the cube fully inside the receptacle, released and stationary, with the end effector more than 65 mm away for 0.5 s and no prohibited contact or physics warning.</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th style="text-align: right;">Successful / total</th>
+<th style="text-align: right;">Unsafe outcomes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trained anatomical model, state input</td>
+<td style="text-align: right;">94 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Untrained model</td>
+<td style="text-align: right;">0 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Neural activity silenced</td>
+<td style="text-align: right;">0 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Anatomical core fixed during training</td>
+<td style="text-align: right;">37 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>MLP reference</td>
+<td style="text-align: right;">62 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Same trained model, synthetic RGB-D input</td>
+<td style="text-align: right;">93 / 100</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Later wrist-camera controller, normal scenes</td>
+<td style="text-align: right;">38 / 40</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Wrist controller, forced release after lift</td>
+<td style="text-align: right;">23 / 24</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Wrist controller, forced release during transport</td>
+<td style="text-align: right;">3 / 8</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Wrist controller, pre-grasp lateral push</td>
+<td style="text-align: right;">7 / 8</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>Wrist controller, neural activity silenced</td>
+<td style="text-align: right;">0 / 8</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>The MLP has different parameter counts; this single dataset comparison does not establish general superiority of anatomical connectivity. The wrist controller passed its basic 40/24 acceptance suite and failed extended robustness. Its matched previous <strong>trained</strong> controller obtained 35/40 normal and 20/24 release-after-lift successes. Changes include both neural readouts and task supervision, so improvements cannot be attributed to anatomy alone. <a href="#docs-so101-local">Training, assumptions and failure modes</a>.</p>
+<h3 id="docs-research-research-note--physical-so-101-motion-16-september-2026">Physical SO-101 motion, 16 September 2026</h3>
+<p>Real hardware was tested and measured base motion was obtained from the connectome-derived visual model through a bounded motor adapter. The table preserves all four analyzed segments, including the segment with no measured displacement.</p>
+<table>
+<thead>
+<tr>
+<th>Segment</th>
+<th style="text-align: right;">Logged samples</th>
+<th style="text-align: right;">Target updates</th>
+<th style="text-align: right;">Base displacement</th>
+<th style="text-align: right;">Logged span</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">160 counts / 14.07°</td>
+<td style="text-align: right;">16.160 s</td>
+</tr>
+<tr>
+<td>R2</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0 counts / 0°</td>
+<td style="text-align: right;">0.463 s</td>
+</tr>
+<tr>
+<td>R3</td>
+<td style="text-align: right;">134</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">165 counts / 14.51°</td>
+<td style="text-align: right;">13.733 s</td>
+</tr>
+<tr>
+<td>R4</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">52 counts / 4.57°</td>
+<td style="text-align: right;">3.275 s</td>
+</tr>
+</tbody>
+</table>
+<p>R3 and R4 are segments of one session, separated by a logging gap; these are not four independent randomized trials. Every analyzed neural drive value is −1. The data establish a functioning model-output → bounded-command → encoder-motion path, not physical bidirectional visual target tracking or an advantage over a simpler controller. Counts convert to degrees using 360/4095; this is an encoder displacement rather than external pose metrology. Logged span is not necessarily active-motion duration.</p>
+<p>Separate deterministic tests moved body joints and opened an empty gripper, but gripper/body attempts ended on tracking or settling criteria. A two-tag camera/model candidate had 1.93 px coordinate RMS over eight poses and 1.27–2.17 px on two additional poses in the same setup. This is image reprojection error, not millimetric contact accuracy. The candidate retained <code>physical_alignment_verified=false</code> and <code>execution_allowed=false</code>. Intermittent elevated servo temperature readings remained unresolved. Autonomous cube grasping was not achieved.</p>
+<h2 id="docs-research-research-note--evidence-and-reproducibility">Evidence and reproducibility</h2>
+<p>This directory contains a compact public export, not the complete local workspace or training dataset:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="research/results.json">results.json</a></td>
+<td>Source-derived aggregates, circuit sizes, model hashes, training history and limitations</td>
+</tr>
+<tr>
+<td><a href="research/so101-episodes.csv">so101-episodes.csv</a></td>
+<td>Per-seed outcomes, including failures, for 13 simulation conditions</td>
+</tr>
+<tr>
+<td><a href="research/tictactoe-motor.csv">tictactoe-motor.csv</a></td>
+<td>Nine destinations, five sequential placements and the silenced control</td>
+</tr>
+<tr>
+<td><a href="research/physical-runs.csv">physical-runs.csv</a></td>
+<td>Four anonymized physical segment summaries</td>
+</tr>
+<tr>
+<td><a href="research/physical-motion.csv">physical-motion.csv</a></td>
+<td>All 330 logged samples: relative time, base/goal displacement and drive</td>
+</tr>
+<tr>
+<td><a href="research/provenance.json">provenance.json</a></td>
+<td>Source paths, SHA256 identities, redactions and hashes of the public data files</td>
+</tr>
+<tr>
+<td><a href="research/validation-2026-09-26.json">validation-2026-09-26.json</a></td>
+<td>Fresh software checks, environment versions and a repeated strategy evaluation</td>
+</tr>
+</tbody>
+</table>
+<p>The original 51-entry physical evidence manifest matched its local files during export. Original raw sessions, device IDs, absolute paths, calibration profiles, full activity vectors and private archives are not bundled. Hashes preserve identity; they do not independently certify experimental correctness. The public CSVs support recalculation of outcome counts and physical displacement. The strategy's exhaustive optimality result is an aggregate; the public snapshot alone does not rerun its policy.</p>
+<p>During publication preparation on 26 September, <strong>247 distinct software tests passed</strong>: 178 virtual hardware/safety contracts, 12 hardware-manager contracts and 57 scientific tests including local MuJoCo assets. The separate default scientific run is not double-counted. The local XOX checkpoint was evaluated again, reproducing 4,520/4,520 optimal decisions, 352/48/0 against random play, 0/400/0 against minimax and 96/37/267 under neural silencing. The <a href="research/validation-2026-09-26.json">validation record</a> preserves commands, versions, durations and warnings. These fresh checks did not retrain the model, rerun the full robot placement benchmark or connect to physical hardware. The motor success tables and physical trajectories remain historical evidence.</p>
+<p>From the repository root, using only Python's standard library:</p>
+<pre><code class="language-bash">python3 docs/research/verify_evidence.py
+</code></pre>
+<p>This checks public file hashes, recomputes simulation counts and physical displacement, and confirms that all physical drive samples are −1. It does not train a model, simulate new trials or operate a robot. Maintainers with the original source records can regenerate the data into a <strong>new</strong> directory:</p>
+<pre><code class="language-bash">python3 docs/research/export_evidence.py \
+  --source /path/to/original-workspace --output /path/to/new-evidence-export \
+  --validation-record docs/research/validation-2026-09-26.json
+</code></pre>
+<p>Training and simulation require the scientific environment, external assets and separate model data described in the <a href="#docs-so101-local">SO-101</a> and <a href="#docs-tictactoe-local">XOX</a> guides. This publication does not claim a complete one-command reproduction from a fresh clone.</p>
+<h2 id="docs-research-research-note--limitations-and-next-work">Limitations and next work</h2>
+<p>The physical evidence is a descriptive single-robot case study. It has no matched physical non-anatomical controller, no independent torque/temperature/TCP metrology, no successful autonomous grasp and no physical XOX evaluation. Simulation geometry, fixed colors, known targets, synthetic depth and engineered control stages limit transfer claims. Model-selection decisions and a finite game-state space further limit generalization claims.</p>
+<p>The next robotics experiment is controlled leader teleoperation, verified motor-driven grasps and synchronized recordings before learning a physical readout. Earlier hand-guided movement did not establish successful autonomous grasping.</p>
+<p><strong>Coming soon — an LLM-like interface to a connectome-derived model.</strong> A future research direction will investigate prompting, sequential interaction and bounded task interfaces around these neural circuits. No language-model capability, language benchmark or replacement for an LLM is claimed by the present results.</p></section>
 <section id="docs-troubleshooting"><h1 id="docs-troubleshooting--sorun-giderme-bakım-ve-yedekleme">Sorun giderme, bakım ve yedekleme</h1>
 <p>Önce çalışan terminalin günlüğünü ve <code>fruitfly doctor</code> çıktısını inceleyin.
 Aşağıdaki işlemlerde uygulama sürümü ile kişisel veri dizinini ayrı tutun.</p>
@@ -2770,11 +3333,12 @@ kontrol edin; “sağ taraf başarılı” açıklaması her yeni eğitimde otom
 olmaz. UI ekranlarını gerçek tarayıcı sekmesinden alın; demo sayacı veya MSE'yi
 sonradan değiştirmeyin. Medya kökenini ve dosya SHA256'larını <code>docs/media/</code> altında
 belgeleyin. <code>pyproject.toml</code> içindeki wheel/sdist izin listesine her yeni varlığı
-ayrı ekleyin. Paket bütçesi 8 MB, tek dosya sınırı 4 MB'dir; ham model ve veri
+ayrı ekleyin. Paket bütçesi 10 MB, tek dosya sınırı 4 MB'dir; ham model ve veri
 uzantıları yasak kalır. Uzun kayıtları pakete koymayın.</p></section>
 <section id="docs-media-README"><h1 id="docs-media-README--görseller-videolar-ve-kökenleri">Görseller, videolar ve kökenleri</h1>
 <p><strong>Buradaki UI ve sinek görüntüleri gerçek uygulama / fizik çıktılarıdır.</strong>
-Ekranlar 14 Eylül 2026'da Chrome sekmelerinden alındı. Görüntülere sonradan
+İlk ekranlar 14 Eylül 2026'da, aşağıda belirtilen araştırma ekranları 26 Eylül
+2026'da Chrome sekmelerinden alındı. Görüntülere sonradan
 sonuç, nöron, sayı veya model aktivitesi eklenmedi. Hero ve akış çizimi açıklayıcı
 SVG şemalarıdır; anatomik ölçüm gibi sunulmaz.</p>
 <p><a href="#docs-README">Rehber dizini</a> · <a href="#docs-experiments">Deney sonuçları</a> · <a href="#THIRD_PARTY_NOTICES">Lisans bildirimleri</a></p>
@@ -2839,7 +3403,7 @@ GIF 10 FPS'e indirildi. Uçuş MP4'ü 1280×720 / 30 FPS; GIF 640×360 / 8 FPS.
 GIF'lerde palet azaltımı uygulanır. Fizik sonucu veya model hesabı değiştirilmez.
 Tam kaynak kayıtları çalışma dizinindedir; küçük gösterim dosyaları repodadır.</p>
 <h2 id="docs-media-README--tekrar-üretim">Tekrar üretim</h2>
-<p><a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/tools/record_media.py">tools/record_media.py</a> kurulu bilimsel ortamın
+<p><a href="https://github.com/mertozbas/fruitfly-hashtag/blob/main/tools/record_media.py">tools/record_media.py</a> kurulu bilimsel ortamın
 kendi modelini okur; checkpoint yazmaz. Yürüyüşte iki modeli aynı hedefte çalıştırır,
 uçuşta kullanılan motor adaptörüyle gerçek MuJoCo kareleri üretir. Komutlar ve
 FFmpeg birleştirmesi <a href="#docs-development--medya-uretimi">geliştirici rehberindedir</a>.</p>
@@ -2873,7 +3437,53 @@ gösterir; yerleştirme başarısı ayrı fizik testleriyle ölçülür.</p>
 1728×1050 boyutunda değiştirilmemiş ekran görüntüsüdür. Model <code>cd704b86be32…</code>;
 SO-101 X işaretli 30 mm eğitim küpünü taşıyor. Bilek penceresi motor girdisinin
 kamera karesi, sağdaki aktivite aynı checkpoint'in motor ileri hesabıdır.
-Orijinal 240 mm tahta korunur; O sanal rakiptir. Kayıt gerçek donanım videosu değildir.</p></section>
+Orijinal 240 mm tahta korunur; O sanal rakiptir. Kayıt gerçek donanım videosu değildir.</p>
+<h2 id="docs-media-README--so-101-xox-araştırma-yayını-26-eylül-2026">SO-101 / XOX araştırma yayını · 26 Eylül 2026</h2>
+<p>Yeni ekranlar gerçek <code>http://127.0.0.1:8766/</code> arayüzünden, <code>local-tictactoe-robot-seed53</code>
+modeliyle alındı. Checkpoint SHA256:
+<code>cd704b86be32b9090222ffc9c5f2b57fd2982540b226633d002cfb2eeed11395</code>.
+Mevcut model yeni bir yerel <strong>simülasyon gösteriminde</strong> açıldı; yeniden eğitim yapılmadı.
+Simülasyon 10,55 saniyede, ilk küpün kavrama aşamasında duraklatıldı.
+Değerlendirme penceresindeki sayılar modelin kayıtlı deney raporundandır.
+Aynı strateji sonuçları 26 Eylül'de ayrıca çevrimdışı yeniden değerlendirildi.</p>
+<table>
+<thead>
+<tr>
+<th>Dosya</th>
+<th>Kaynak ve kapsam</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="media/research/xox-live-metrics.jpg">XOX ve metrikler</a></td>
+<td>MuJoCo sahnesi, motor hesabı, telemetri ve kayıtlı öğrenme eğrisi</td>
+</tr>
+<tr>
+<td><a href="media/research/xox-brain-analysis.jpg">Beyin analizleri</a></td>
+<td>Aynı duraklatılmış sahnede anatomik konum, aktivite haritası ve kesit</td>
+</tr>
+<tr>
+<td><a href="media/research/xox-evaluation.jpg">XOX değerlendirmesi</a></td>
+<td>Tahta durumları, rakipler ve nöron susturma sonuçlarını gösteren UI penceresi</td>
+</tr>
+<tr>
+<td><a href="media/research/physical-scene.png">Fiziksel sahne</a></td>
+<td>16 Eylül gerçek üst/bilek kamera karelerinin rapordaki yan yana düzeni; algılanan etiketler işaretlidir</td>
+</tr>
+<tr>
+<td><a href="media/research/physical-base-motion.png">Fiziksel hareket</a></td>
+<td>16 Eylül logundan hedef ve ölçülen taban açısı; sonlu tek hareket segmenti</td>
+</tr>
+</tbody>
+</table>
+<p>Üç yeni UI ekranı kırpılmamış ve değiştirilmemiş tarayıcı görüntüleridir. Son iki
+şekil 16 Eylül teknik raporundan aynen alınmıştır; 26 Eylül'de donanım çalıştırılmadı.
+Kamera şekli gerçek kurulumu, zaman serisi ise hareketi belgeler; ikisi de fiziksel
+XOX oyunu veya otonom kavrama sonucu değildir. Sıfır/sabit hareketli denemeler ve
+başarısızlıklar <a href="#docs-research-README">kanıt paketinde</a> korunur.</p>
+<p>Yeni varlıkların tarih, boyut, SHA256 ve kaynak bilgileri
+<a href="media/research/provenance.json">araştırma medya manifestinde</a>, bütün medya hash'leri
+<a href="media/manifest.json">genel manifestte</a> bulunur.</p></section>
 <section id="THIRD_PARTY_NOTICES"><h1 id="THIRD_PARTY_NOTICES--kaynaklar-ve-lisans-bildirimleri">Kaynaklar ve lisans bildirimleri</h1>
 <p>Neural Lab bağımsız bir Hashtag projesidir; aşağıdaki projelerle resmi bağlantı
 veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politikaları kapsamaz.</p>
@@ -2918,12 +3528,12 @@ veya onların onayı iddia edilmez. Uygulamanın MIT lisansı dış veri/politik
 </tr>
 <tr>
 <td>SO-101 UVC somun yuvalı kamera adaptörü</td>
-<td><a href="https://github.com/TheRobotStudio/SO-ARM100/tree/main/Optional/SO101_Wrist_Cam_Hex-Nut_Mount_32x32_UVC_Module">TheRobotStudio / SO-ARM100</a>, Apache 2.0; <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/so101/assets/SO-ARM100-LICENSE">yerel lisans</a></td>
+<td><a href="https://github.com/TheRobotStudio/SO-ARM100/tree/main/Optional/SO101_Wrist_Cam_Hex-Nut_Mount_32x32_UVC_Module">TheRobotStudio / SO-ARM100</a>, Apache 2.0; <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/main/so101/assets/SO-ARM100-LICENSE">yerel lisans</a></td>
 <td>Değiştirilmemiş STL, <code>63eede5a636e548eb8f2854e558bd343c21db9f7</code> revizyonundan; <code>so101/assets/README.md</code> kaynak ve mekanik eşlemeyi içerir</td>
 </tr>
 <tr>
 <td>Tic-tac-toe tahta ve X/O parçaları</td>
-<td>Hashtag Robotics / Mert Özbaş, <code>Hashtag-Robotics/so101-tic-tac-toe</code>; <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/v0.2.1/tictactoe/assets/LICENSE">CERN-OHL-P-2.0 lisansı</a></td>
+<td>Hashtag Robotics / Mert Özbaş, <code>Hashtag-Robotics/so101-tic-tac-toe</code>; <a href="https://github.com/mertozbas/fruitfly-hashtag/blob/main/tictactoe/assets/LICENSE">CERN-OHL-P-2.0 lisansı</a></td>
 <td><code>73292400ad72ea895db233715e3a093e491563f9</code> revizyonu; kaynak SCAD, özgün STL ve SHA-256 kayıtları <code>tictactoe/assets/</code> içindedir</td>
 </tr>
 <tr>

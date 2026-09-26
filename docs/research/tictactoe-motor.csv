@@ -1,0 +1,16 @@
+condition,trial,cell,success,outcome,seconds,attempts
+single_destination,1,0,True,success,21.050000000000164,1
+single_destination,2,1,True,success,25.60000000000023,1
+single_destination,3,2,True,success,23.4500000000002,1
+single_destination,4,3,True,success,21.45000000000017,1
+single_destination,5,4,True,success,21.950000000000177,1
+single_destination,6,5,True,success,23.300000000000196,1
+single_destination,7,6,True,success,23.200000000000195,1
+single_destination,8,7,True,success,22.80000000000019,1
+single_destination,9,8,True,success,23.800000000000203,1
+sequential_game,1,4,True,success,21.950000000000177,1
+sequential_game,2,7,True,success,21.700000000000173,1
+sequential_game,3,3,True,success,20.950000000000163,1
+sequential_game,4,2,True,success,35.70000000000011,1
+sequential_game,5,0,True,success,22.500000000000185,1
+silenced,1,4,False,unsafe,0.05,1

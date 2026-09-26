@@ -177,6 +177,11 @@ export function createBrain(data, {getState, onSelect}) {
   }
   function freshness(stale=false){
     const {simulation:s,selectedModel:m}=getState(), ok=modelMatches(data,s,m);
+    if(s.physical){
+      $('brain-live').textContent=(stale?'AKIŞ KESİLDİ':!ok?'MODEL EŞLEŞTİRİLİYOR':s.neural?.decision_applied?'FİZİKSEL MOTOR HESABI':'CANLI BEYİN · HAREKET BEKLİYOR')+` · #${s.seq}`;
+      $('brain-live').classList.toggle('stale',stale||!ok);
+      return;
+    }
     $('brain-live').textContent=stale?'AKIŞ KESİLDİ · SON KARE':!ok?'MODEL EŞLEŞTİRİLİYOR':`${s.behavior==='tictactoe'?(s.neural?.displayed_pass==='motor'?'MOTOR HESABI':s.game?.waiting_for_human?'TAHTA ANALİZİ · SENİN SIRAN':s.neural?.decision_applied?'HAMLE KARARI':'SON KARAR'):s.neural?.decision_applied===false?'BAŞLANGIÇ · HENÜZ MOTOR ADIMI YOK':s.paused?'DURAKLATILDI':s.idle?'BOŞTA':'CANLI HESAP'} · ${Number(s.neural?.sample_time_s??s.time_s).toFixed(2)} s · #${s.seq}`;
     $('brain-live').classList.toggle('stale',stale||!ok||s.paused||s.idle);
   }

@@ -1,6 +1,9 @@
 """Offline commissioning contracts. Never opens a physical port or camera."""
 import copy
+from contextlib import redirect_stderr,redirect_stdout
+import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -135,6 +138,23 @@ class ManagerTests(unittest.TestCase):
         self.assertNotIn('image',process.snapshot());self.assertFalse(process.snapshot()['fresh'])
         self.assertNotIn('perception',process.snapshot())
         process.stop();self.assertFalse(process.snapshot()['running'])
+
+
+class LauncherTests(unittest.TestCase):
+    def test_physical_start_requires_explicit_robot_identity_before_subprocesses(self):
+        from tools import run_neural_lab
+        for args in ([],['--serial','test-follower'],['--calibration','test.json']):
+            with self.subTest(args=args),patch.dict(os.environ,{},clear=True),patch.object(sys,'argv',['neural.sh',*args]),patch.object(run_neural_lab.subprocess,'check_output') as inventory,redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as result:run_neural_lab.main()
+                self.assertEqual(result.exception.code,2)
+                inventory.assert_not_called()
+
+    def test_status_check_does_not_require_or_inspect_robot_identity(self):
+        from tools import run_neural_lab
+        with patch.dict(os.environ,{},clear=True),patch.object(sys,'argv',['neural.sh','--check']),patch.object(run_neural_lab,'read',return_value={'status':'ok'}) as read,patch.object(run_neural_lab.subprocess,'check_output') as inventory,redirect_stdout(io.StringIO()):
+            run_neural_lab.main()
+            self.assertEqual(read.call_count,2)
+            inventory.assert_not_called()
 
 
 if __name__=='__main__':unittest.main()

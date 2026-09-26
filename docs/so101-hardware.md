@@ -1,5 +1,160 @@
 # Gerçek SO-101: bağlantı ve devreye alma
 
+Son fiziksel oturumun kamuya açık sonuçları ve sonraki deney planı
+[araştırma notunda](research/research-note.md) bulunur. Ham oturum ve cihaz kayıtları
+yerel tutulur. Buradaki eski pozlar güncel hareket izni değildir.
+
+## Canlı beyin kontrolü · mevcut Neural Lab arayüzü
+
+```bash
+./neural.sh --serial YOUR_FOLLOWER_SERIAL --calibration /path/to/follower.json
+```
+
+[Fiziksel konsol](http://127.0.0.1:8766/?physical=1), mevcut Neural Lab'ın
+yerleşimini, sağdaki 3D beyni, nöron/bağlantı inceleyicisini ve analizlerini kullanır.
+Sol görüntü gerçek üst kamera, küçük görüntü gerçek bilek kamerasıdır; kameralar
+üstteki düğmelerle yer değiştirebilir. Beyin için girdi üst kameradır.
+
+Program başlangıcında motorlara yalnızca okuma yapılır. Taban sabit, bilek destekli
+ve kıskaç masadan boşta iken **Mevcut pozu tut**; kol kendi pozunu koruduktan ve
+eller çekildikten sonra **Beyinle yönlendir** kullanılır. İlk beş motor mevcut
+konumu tutar, kıskaç torku açılmaz. Kırmızı nesneyi üst görüntünün sol/sağ tarafına
+taşımak anatomik görsel devrenin çıkışını değiştirir. Yalnız taban hareket eder:
+oturum başlangıcına göre ±170 sayım (yaklaşık ±15°), en çok 30 saniye.
+Kırmızı görünmezse, iki taraf dengeliyse veya ağ çıkışı sıfırsa hareket ilerlemez.
+
+**Esc / Hareketi durdur**, pencereyi gizleme ve bir saniyelik kontrol bağlantısı
+kaybı hareketi durdurur. Kamera, model/kalibrasyon kimliği, sıcaklık, voltaj,
+servo durumu, yük, diğer eklemlerin kayması ve takip mesafesi denetlenir.
+Durdurma gövde torkunu açık tutar; gücü kesmeden önce kol desteklenmelidir.
+Hata sonrası otomatik yeniden başlama yoktur.
+Boştaki motor gözlemi kamera okumasından önce yapılır; kamera kesilse de sıcaklık,
+poz ve tork bilgisi yenilenir. Motor ve kamera zaman damgaları ayrı tutulur;
+hareket için ikisinin de güncel olması gerekir. Son sıcaklık eşiği uyarısı panelde
+saatiyle kalır. Ham bir yüksek değeri göstermek, hareket sınırını değiştirmez.
+
+Kamera önizlemesinin 10 dakikalık tanılama oturumu sona erdiğinde fiziksel ekran
+açıksa görüntü bağlantısı yeniden kurulur. Yeniden bağlantı gecikmeli ve en fazla
+üç denemelidir; hareket oturumu kendiliğinden başlamaz. Kamera kesintisi sırasında
+hareket varsa önce durdurulur; yeni kamera oturumuyla yeniden başlatma gerekir.
+
+Bu mod `local-vision-seed42` görsel yönelme modelini kullanır. Sağdaki etkinlik
+motor hedefini hesaplayan aynı ileri geçiştir; model SHA ve anatomik devre kimliği
+mevcut 3D görünümle eşleştirilir. Kalibre edilmiş görsel servo, altı eklemli alma/
+bırakma veya bütün sinek beyninin emülasyonu değildir. Sinir ağı yön ve genliği,
+deterministik adaptör ise taban seçimi, hız ve hareket sınırlarını sağlar.
+Kararlar ve motor ölçümleri `.runtime/hardware/neural/` altında kaydedilir.
+
+`./neural.sh --check` iki yerel servisi kontrol eder. `Ctrl+C` başlatıcının açtığı
+servisleri kapatır; tekrar başlatmak hareketi kendiliğinden başlatmaz.
+
+### Altı eklemli elle gösterim
+
+Fiziksel konsoldaki **Kırmızı küp · Elle öğret** bölümü, kolu sürekli desteklediğinizi
+onayladıktan sonra altı motorun torkunu kapatır ve gerçek enkoder konumlarını kaydeder.
+Küpe uzanma, kıskacı elle kapatma ve kaldırma hareketi gösterilir. **Gösterimi bitir**
+kaydı saklar; motorları açmaz. Destek sürdürülerek **Desteklediğim mevcut pozu tut**
+kullanılabilir; bu düğme ilk beş motoru tutar, kıskacı serbest bırakır.
+
+Kayıt en fazla 90 saniyedir; enkoderler kamera HTTP isteklerinden bağımsız, yalnız
+okuma yapan bir iş parçacığında 20 Hz kaydedilir. Kamera gecikmesi kaydı kesmez;
+görüntülerin kendi zaman damgaları saklanır. Motor okuması/örnekleme kaybolursa kayıt
+kesilir ve kol serbest kalır. El hareketine motor komutunun adım/hız sınırı uygulanmaz.
+Torku kapalı öğretimde sıcaklık, besleme, yük ve durum uyarıları ham motor ölçümleriyle
+birlikte kayda eklenir; bu uyarılar veri kaydını durdurmaz veya motor çalıştırma izni
+vermez. Uyarılı kayıtlar `requires_review` taşır, her kayıt `execution_allowed=false`
+kalır. Poz tutma/hareketin 50°C sınırı ve diğer yürütme kontrolleri değişmez.
+Yürütme sınırının dışına çıkan elle hareketler kayıtta korunur fakat geçerli bir hareket
+yolu olarak kabul edilmez. Kaydın hızı, robotun sonraki yürütme hızını belirlemez.
+`teaching-*/samples.jsonl`, saniyelik kamera kareleri ve `demonstration.json` aynı fiziksel
+oturum dizinine yazılır. Gösterim kaydı motor politikası eğitimi veya beyinle kavrama
+başarısı değildir; henüz otomatik yeniden yürütme başlatmaz.
+Yeniden başlatıldığında aynı USB kimliği ve kalibrasyonla eşleşen son gösterimin
+özeti panelde geri yüklenir. Kaydı geri yüklemek tork veya hareket başlatmaz.
+
+### Sınırlı gövde konumlandırması
+
+Yerel fiziksel API'nin `joints` işlemi, zaten poz tutan ilk beş motora önizlenmiş
+yerel enkoder hedefleri gönderir. Altı tam sayı hedef gerekir; kıskacın hedefi mevcut
+değeriyle aynı kalmalıdır. Eklem başına en çok 170 sayım, komut başına 2 sayım,
+16 sayım takip farkı, 30 saniye süre ve mevcut hız/tork ayarları denetlenir.
+Takip gecikmesinde yeni hedef gönderilmeden en çok bir saniye beklenir; son hedefte
+iki saniye içinde 8 sayımlık ölçüm toleransına girilemezse hareket durur.
+Durdurma yalnız bir kez ölçülen pozu tutturur; gövdeyi serbest bırakmaz.
+Hedefi önizlemedeki ölçüme eşit bırakılan eklemin mevcut motor tutma hedefi korunur;
+yük altındaki ölçüm farkını her işlemde yeniden hedefleyerek aşağı kayma biriktirilmez.
+
+Bu işlem deterministik konumlandırmadır. Panelde **Gövde konumlandırma** olarak
+gösterilir ve `brain_connected=false` kalır; gösterim tekrarı veya beyinle kavrama
+başarısı olarak sunulmaz. Plan ve motor geri bildirimi fiziksel oturumda saklanır.
+
+Tek taban veya bilek dönüşünden oluşan kamera ölçümü, açık bir
+`thermal_pause_review` metniyle önceki aralık deneyinin sınırlı sıcaklık
+duraklamasını kullanabilir. İlk 50–59°C ölçümünde yalnız hareket eden eklem
+ölçülen konumda tutulur. Bütün motorlar kesintisiz iki saniye 45°C altında
+kalmadan yeni hedef ilerlemez. Sekiz saniye bekleme, üçüncü uyarı veya 60°C
+denemeyi bitirir; kamera, izleyici, yük, voltaj, tork, konum ve süre kontrolleri
+bekleme sırasında da çalışır. Başlangıçta 50°C hareketi engeller. Bu seçenek
+omuz, dirsek, bilek eğimi, kıskaç veya çok eklemli hareket için kabul edilmez;
+normal `joints` ve beyin çalıştırma davranışı değişmez.
+
+### Boş kıskacı sınırlı açma
+
+Yerel `gripper_open` işlemi aynı oturum/tek kullanımlık önizleme onayını ve
+`empty_gripper=true` bilgisini gerektirir. İlk beş motor zaten pozu tutmalı,
+kıskaç torku kapalı ve boş olmalıdır. Altı tam sayı hedeften yalnız motor 6
+artabilir: en fazla 128 sayım açılma, adım başına 2 sayım, 8 sayım takip sınırı,
+15 saniye süre. Motor 6 için hız 20, tork tavanı mevcut değeri artırmadan en çok
+100, ham yük sınırı 80'dir. Başlangıç ve yürütmede altı motorun 50°C sınırı ile
+kamera, izleyici, voltaj, tork ve gövde kayması kontrolleri sürer.
+
+Kıskaç torku açılmadan önce ölçülen başlangıç hedefi yazılıp doğrulanır.
+Bitişte veya hatada yalnız kıskaç torku kapatılır; kapandığı doğrulanınca geçici
+SRAM ayarları geri yüklenir. Gövde torku bırakılmaz. Bu işlem kıskacı kapatmaz,
+nesne tutmaz ve sinir ağıyla kavrama değildir. Son hedefte 5 sayım toleransı
+0,5 saniye korunmalı; iki saniyede yerleşmezse sonuç başarısızdır.
+
+### 16 Eylül 2026 · kamera eşleştirmesi ve fiziksel sonuç
+
+Kanıtlar `.runtime/reconnect/handeye/` altındadır. Aşağıdaki değerler bu kurulumun
+ölçümüdür; başka robot veya kamera oturumuna yürütme izni vermez.
+
+- `two-tag-elbow-5.json`: küp 200 ve tepsi 206 üzerindeki 20 mm etiketlerle
+  sekiz farklı taban/bilek dönüşü pozu kullanıldı. Yerel MuJoCo modelinde bilek
+  dönüşü için −90°, dirsek için −5° açı eşleştirmesi ve taban mesh alt yüzeyi
+  Z=0,0300817 m varsayımı kullanıldı. Servo kalibrasyonu veya EEPROM değiştirilmedi.
+  Eğitim karelerinde köşe RMS hatası 1,93 piksel; bir pozu dışarıda bırakarak
+  yapılan değerlendirmelerde 1,44–3,09 piksel. Bu aday daha sonra değiştirilmedi.
+- `pitch-heldout-validation.json`: modele katılmayan gerçek 26 sayımlık bilek
+  eğiminden sonra küp/tepsi köşe hataları 1,51/1,27 piksel.
+  Hareketin istenen 44 sayımı, kıskaç motorundan gelen 50°C okumasıyla kesildi.
+- `body-air-heldout-validation.json`: modele katılmayan ilk beş eklem hareketinden
+  sonra küp/tepsi köşe hataları 2,17/1,87 piksel. Bu, görüntü eşleştirmesi kanıtıdır;
+  parmak temas noktası veya yük altında kaldırma doğrulaması değildir.
+- `09-gripper-opening/capture.json`: boş kıskaç 2309→2367, yani 5,10° açıldı.
+  İstenen 2373 hedefinin 6 sayım gerisinde kaldı; 5 sayımlık bitiş toleransı
+  nedeniyle **başarısız** kaydedildi. Motor 6 kapatıldı, gövde değişmedi.
+- `10-body-air-step/capture.json`: beş gövde eklemi birlikte hareket etti.
+  Bilek eğimi 2585 hedefine karşı 2596 ölçüldü; son hedef toleransı nedeniyle
+  **başarısız** kaydedildi. Sonra okunan kararlı poz:
+  `[2130,1369,2583,2596,2069,2367]`.
+- `11a-body-air-step2/capture.json`: ikinci serbest alan hareketinde bilek
+  eğimi 2596→2519 ilerledi. Son gönderilen hedef 2504 iken ölçüm yaklaşık bir
+  saniye 2519'da kaldı; ham yük 72 idi. Sonraki 2502 hedefi 17 sayım fark
+  yaratacağından **gönderilmedi**; mevcut 16 sayımlık takip sınırı hareketi kesti.
+  Bu denemede sıcaklık hatası olmadı. Sonraki salt okunur 16 örnekte poz
+  `[2123,1442,2601,2519,2061,2367]` olarak tutuldu; motor 6 kapalıydı.
+
+Bu sonuçlar gerçek altı motorun yazılım bağlantısını ve sınırlı hareketini
+gösterir; **küp kavranmadı**. Boşta görülen kıskaç sıcaklık sıçramasının nedeni
+ve yük altındaki bilek/dirsek takibi çözülmüş değildir. Daha ileri yaklaşma veya
+kavrama rotası bu sonuçlara dayanarak otomatik çalıştırılmaz. Aday kamera/model
+dosyalarında `physical_alignment_verified=false` ve `execution_allowed=false`
+kalır. Brain modu halen taban yönlendirmesidir; beş eklem konumlandırması ve boş
+kıskaç açma deterministik işlemlerdir.
+
+---
+
 Neural Lab'ın **Gerçek kol ↗** paneli fiziksel SO-101 follower'ı ve USB kameralarını
 tanılamaya hazırlar. Motor konumlarını, sıcaklığı, voltajı ve mevcut tork durumunu
 okur; kaydedilmiş kalibrasyonu motor belleğiyle karşılaştırır. Bilek ve sabit kamera

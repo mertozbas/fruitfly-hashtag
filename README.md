@@ -11,7 +11,11 @@
 
 # Hashtag Neural Lab
 
-**Gerçek sinek anatomisinden çıkarılan bir devreyi eğitin; yön kararını, canlı nöron yanıtlarını ve fizik simülasyonunu tek ekranda inceleyin.**
+**Meyve sineği konnektomundan görev devrelerine: yönelme, SO-101 robot kontrolü ve öğrenilmiş XOX stratejisi.**
+
+Mert Özbaş · Hashtag World Company · Açık araştırma prototipi · Eylül 2026
+
+[Research note (English)](docs/research/research-note.md) · [Deney verileri](docs/research/README.md) · [Atıf](CITATION.cff)
 
 Neural Lab, bilgisayarınızda çalışan bir deney laboratuvarıdır. Solda deneyi kurar,
 ortada sineğin yürüyüşünü veya uçuşunu izler, sağda o hareket için kullanılan
@@ -32,23 +36,117 @@ haritası ve saydam kesit. Ekrandaki oturum sayacı aynı koşulun tekrarlarıd�
 > yanıtıdır. Bacakları FlyGym, kanatları FlyBody'nin hazır motor kontrolcüleri
 > yönetir. Öğrenilen şey yön kararı veya motor düzeltme kazancıdır. [Bilimsel kapsam](docs/training.md#bilimsel-kapsam).
 
-Yerel ek: **kaçınma 6/6, görsel yönelme 6/6, engel 2/6**. Engel eğitiminde başarı
-artışı gösterilmedi. [Üçlü kontrol deneyleri ve model dışa aktarımı](docs/local-tasks.md).
+## Araştırma güncellemesi · SO-101 ve XOX
 
-Yerel SO-101 deneyinde aynı arayüz, 3.488 nöronlu anatomik alt ağın yönettiği
-temas tabanlı al ve yerleştirme simülasyonunu gösterir. Ayrı 100 başlangıçta
-94 başarı ve sıfır sınır ihlali ölçüldü. [Kurulum, kullanım, eğitim ve sınırlar](docs/so101-local.md).
-Bu yerel ek henüz GitHub/PyPI'ye yayımlanmamıştır.
+MaleCNS anatomisinden seçtiğimiz bağlantı yapısını koruyup görev kodlayıcılarını,
+mevcut bağlantıların kazançlarını ve çıkış okumalarını eğittik. Böylece özgün sinek
+laboratuvarını **robot simülasyonu, XOX karar verme ve sınırlı fiziksel hareket**
+deneyleriyle genişlettik. Çalışma hakem değerlendirmesinden geçmemiş bir mühendislik
+araştırmasıdır; tam beyin emülasyonu, biyolojik zekâ veya genel amaçlı model iddiası taşımaz.
 
-Yerel **tic-tac-toe** deneyi kamera ile tahtayı okur ve hamleyi aynı anatomik alt ağda
-eğitilmiş bir strateji modeliyle seçer. Son model 4.520 geçerli karar durumunun tamamında
-optimal hamle seçti; bu sanal oyun ölçümü robot yerleştirme başarısından ayrıdır.
-Ayrı MuJoCo motor testinde 30 mm X işaretli eğitim küpleriyle 9/9 hedef ve beş robot
-hamleli tam oyun tamamlandı. O hamlelerini sanal rakip yerleştirir; özgün ince X/O
-parçalarıyla motor başarı iddiası yoktur.
-[Oynama, eğitim, kamera ve robot deneyinin sınırları](docs/tictactoe-local.md).
+**Gerçek SO-101 üzerinde test yaptık ve sinir ağına bağlı, enkoderle ölçülmüş
+fiziksel taban hareketi elde ettik.** XOX stratejisi ve küp yerleştirme sonuçları ise
+ayrı sanal tahta / MuJoCo deneyleridir. Fiziksel kolda otonom kavrama ve tam XOX
+oyunu henüz doğrulanmadı.
 
-![SO-101 tic-tac-toe: bilek kamerası, temasla taşıma ve aynı ağın canlı motor hesabı](docs/media/tictactoe-lab.png)
+| Deney ve koşul | Kaydedilen sonuç | Ne gösterir? |
+| --- | --- | --- |
+| XOX · ayrı tutulan 125 simetri grubu | **%96,8 optimal hamle** | İlk eğitim aşamasının ayrılmış doğrulaması |
+| XOX · son model, tüm geçerli karar durumları | **4.520 / 4.520 optimal hamle** | Son model tüm bu gruplarla eğitildi; görülmemiş veri başarısı değildir |
+| XOX · rastgele rakip, iki rol, 400 oyun | **352 galibiyet / 48 beraberlik / 0 yenilgi** | Sanal tahta stratejisi |
+| XOX · minimax rakip, iki rol, 400 oyun | **400 beraberlik / 0 yenilgi** | Canlı hamleleri ağ seçer; minimax test rakibidir |
+| XOX · MuJoCo, 30 mm eğitim küpleri | **9/9 hedef**, beş robot hamleli tam oyun | X taşları temas fiziğiyle taşınır; O sanal rakiptir |
+| SO-101 · ayrı 100 simülasyon başlangıcı | **94/100 başarı**, 0 sınır ihlali | Belirtilen checkpoint ve başlangıç dağılımı |
+| Gerçek SO-101 · görsel devre → taban | **160 enkoder sayımı ≈ 14,07°**, 85 hedef güncellemesi | Tek robotta sınırlı fiziksel hareket; görev başarı oranı değildir |
+
+Kaynaklar, checkpoint SHA256 değerleri, kontrol deneyleri ve başarısız koşullar
+[araştırma notunda](docs/research/research-note.md) ve
+[makinece okunabilir kanıt paketinde](docs/research/README.md) bulunur.
+Bunlar 14–16 Eylül kayıtlarıdır; 26 Eylül'de yayına hazırlanırken yeni fiziksel
+deney yapılmadı. Yazılım testleri fiziksel görev doğrulamasının yerine geçmez.
+
+### XOX: tahta görüntüsünden öğrenilmiş hamleye
+
+![Gerçek Neural Lab ekranı: XOX, robot simülasyonu, canlı motor hesabı ve öğrenme eğrisi](docs/media/research/xox-live-metrics.jpg)
+
+*26 Eylül 2026 tarayıcı kaydı; `cd704b86be32…` checkpoint'i, duraklatılmış MuJoCo
+kavrama aşaması. Bu ekran tek bir gösterim anıdır; çok koşullu başarı ölçümü değildir.*
+
+**3.488 nöron / 81.104 bağlantı** içeren Touch → VNC → Motor alt grafiğine
+27 öğeli tahta kodlaması ve dokuz hamle çıkışı bağlandı. Minimax eğitim etiketlerini
+ve değerlendirme rakibini sağlar; canlı çıkarımda arama veya hamle tablosu yoktur.
+Yasal hamle maskesi ve oyun kuralları deterministiktir.
+Motor yürütme ayrıca öğrenilmiş okuma ve mühendislik ürünü aşama gözetimi kullanır.
+
+![XOX sonuç tablosu: eğitim öncesi, öğrenilmiş strateji ve nöron susturma kontrolü](docs/media/research/xox-evaluation.jpg)
+
+*Nöronlar susturulduğunda rastgele rakibe karşı 267/400 yenilgi; eğitim öncesinde
+197/400 yenilgi kaydedildi. Bu kontrol ağ etkinliğine bağımlılığı sınar;
+anatomik yapının eş boyutlu yapay ağlardan üstün olduğunu kanıtlamaz.*
+
+![Anatomik konum, aktivite haritası ve saydam kesit panelleri](docs/media/research/xox-brain-analysis.jpg)
+
+*Renkler modelin hesaplanan yanıtlarıdır; canlı hayvandan ölçüm değildir.
+Konumu bilinen 1.623/3.488 nöron çizilir; eksik konumlar uydurulmaz.*
+
+[Oyun, eğitim ve motor deneyini yeniden üretme](docs/tictactoe-local.md) ·
+[SO-101 simülasyon yöntemleri ve dayanıklılık sınırları](docs/so101-local.md)
+
+### Gerçek robot: kamera → görsel devre → sınırlı taban hareketi
+
+![Gerçek SO-101 deney düzeni: sabit kamera ve bilek kamerası](docs/media/research/physical-scene.png)
+
+*16 Eylül oturumundan kamera kareleri; nesne etiketleri algı katmanının çıktısıdır.
+Bu görüntü kavrama başarısını göstermez.*
+
+Fiziksel deney, XOX alt ağından **ayrı bir görsel devre** kullanır:
+**4.387 nöron / 23.327 mevcut bağlantı**. Kırmızı uyaranın iki görüntü yarısındaki
+ölçümleri sinir ağına girer; çıkış yön/genlik üretir. Deterministik adaptör taban
+eklemini seçer, hız/süre/hareket sınırlarını uygular ve telemetriyi denetler.
+
+![Gerçek taban hareketinde gönderilen hedef ve enkoder ölçümü](docs/media/research/physical-base-motion.png)
+
+*Kaydedilmiş hareket segmenti: 170 sayımlık gönderilen hedefe karşı 160 sayım
+ölçüm; yaklaşık 0,88° son fark. Devre çıkışı bu segmentte −1'de doygundur.
+Grafik geçmiş telemetriden üretilmiştir; yön değiştirme veya görsel takip
+kararlılığına ilişkin kapsamlı bir test değildir.*
+
+Diğer gövde konumlandırmaları ve boş kıskaç açma deterministik denemelerdir.
+Kavrama tamamlanmadı; takip durmaları ve aralıklı sıcaklık okumaları açık
+bulgulardır. Fiziksel sonuçların sınırları ve başarısız denemeler
+[araştırma notunda](docs/research/research-note.md), yürütme sözleşmeleri
+[donanım rehberinde](docs/so101-hardware.md) yer alır.
+
+### Coming soon · bu devreyi LLM benzeri bir arayüzle kullanmak
+
+Sonraki araştırma yönümüz, konnektomdan türetilen hesaplama çekirdeğini metinle
+etkileşilebilen ve görevler arasında değerlendirilebilen bir arayüz arkasında
+kullanmayı incelemek. Girdi/çıktı kodlama, durum/bellek, öğrenme ve çıkarım
+sözleşmeleri; küçük görevlerden başlayarak doğruluk, genelleme, gecikme ve
+maliyet ölçümleri araştırılacak.
+
+**Bu bir yol haritasıdır.** Mevcut model dil üretmez, LLM değildir ve genel amaçlı
+akıl yürütme başarısı gösterilmedi. Önce uygun karşılaştırma modelleri ve
+ölçülebilir kabul kriterleri kurulacak. Fiziksel tarafta sonraki adım leader ile
+senkronize gösterim toplamak ve gerçek kavramayı ayrıca doğrulamaktır.
+
+### Kaynak sürümü ve hazır paket
+
+Bu GitHub güncellemesi araştırma kodunu, seçilmiş kanıtları ve ekran görüntülerini
+paylaşır. **PyPI'deki mevcut sürüm ayrı bir yayındır; bu güncelleme PyPI yayını değildir.**
+Eğitilmiş kişisel checkpoint'ler, büyük MaleCNS indirmeleri ve ham cihaz/oturum
+arşivleri repoya dahil değildir. Yeni klonda aynı hazır model menüsünü beklemeyin;
+[araştırma notundaki önkoşullar ve komutlarla](docs/research/research-note.md)
+yerel model oluşturulur. Sayısal kanıt paketi robot veya bilimsel veri indirmeden incelenebilir:
+
+```bash
+python3 docs/research/verify_evidence.py
+```
+
+Sinek laboratuvarının kurulumunu, yürüyüş/uçuş deneylerini ve önceki medyasını
+aşağıda koruyoruz. Ek duyusal deneylerde kaçınma **6/6**, görsel yönelme **6/6**,
+engel **2/6**; engel eğitiminde başarı artışı gösterilmedi.
+[Yöntem ve kontrol deneyleri](docs/local-tasks.md).
 
 ## Bir anatomik haritadan çalışan deneye
 
@@ -182,7 +280,7 @@ politikasına referans olur. Beyin paneli o anda kullanılan hesabı gösterir.
 Uçuş seçiliyken **Yönelme ağını eğit**, yeni ağı altı uçuş hedefinde de sınar.
 **Sinek havada başlar.** Kalkış, iniş, irtifa öğrenimi ve kanat politikasını yeniden
 eğitme bu sürümde yoktur. Kaçınma, görme ve engel görevleri yerel çalışma
-kopyasına eklenmiştir; bu ek henüz GitHub/PyPI sürümünde bulunmaz. [Yerel görevler ve sonuçlar](docs/local-tasks.md). [Uçuş kontrol yolu ve kullanım](flight/README.md).
+kopyasında geliştirilip bu GitHub kaynak sürümünde paylaşılmıştır; mevcut PyPI sürümü ayrıdır. [Yerel görevler ve sonuçlar](docs/local-tasks.md). [Uçuş kontrol yolu ve kullanım](flight/README.md).
 
 <a id="kanitlar"></a>
 ## 05 — Sonucu neyle doğruluyoruz?
@@ -209,6 +307,7 @@ kurulumu ve rehberi sınar; bilimsel Linux doğrulaması yerine geçmez.
 | Eğitim, kayıt, karşılaştırma, bilimsel kapsam | [Eğitim](docs/training.md) |
 | Fizik ve videolar | [Yürüyüş](SIMULATION.md) · [Uçuş](flight/README.md) |
 | Kaynak URL'leri, dosyalar ve SHA256 | [Veriler ve modeller](docs/data.md) |
+| SO-101 / XOX araştırması, kanıt ve sınırlılıklar | [Research note](docs/research/research-note.md) · [Kanıt paketi](docs/research/README.md) |
 | Gerçek ölçümler ve görsel kökeni | [Deneyler](docs/experiments.md) · [Medya dizini](docs/media/README.md) |
 | Güncelleme, yedekleme, sorunlar | [Sorun giderme](docs/troubleshooting.md) |
 | Kod, build, test ve yayın | [Geliştirici rehberi](docs/development.md) |

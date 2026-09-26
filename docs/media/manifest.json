@@ -76,6 +76,37 @@
       "file": "tictactoe-lab.png",
       "bytes": 558925,
       "sha256": "83eb5eab0352dfc7a230b9847231019232b35aa3190ecde38aa4a95cff715f59"
+    },
+    {
+      "file": "research/physical-base-motion.png",
+      "bytes": 85443,
+      "sha256": "0c27799a0f0b215241d0b327be002e978f0a1107657f5ce03a4a43458ce35d56"
+    },
+    {
+      "file": "research/physical-scene.png",
+      "bytes": 1084914,
+      "sha256": "7e9ad22648af32df1877e34f0c7a391846b7f94a8ab5e0f1da12b71b4d19b69f"
+    },
+    {
+      "file": "research/provenance.json",
+      "bytes": 2152,
+      "sha256": "816bdd1d1f58459dd4af3cb4085fe09d5f4cad8137233defa9dc026ec0bb6786"
+    },
+    {
+      "file": "research/xox-brain-analysis.jpg",
+      "bytes": 224190,
+      "sha256": "a01241bb0436e6d23fed289ce28afd964a0e4dd502c1efc592cb5a239cb620e4"
+    },
+    {
+      "file": "research/xox-evaluation.jpg",
+      "bytes": 98872,
+      "sha256": "26a4ba01e246921fa0143aad1bf2841d59724eefe6d9aa8c0897d97e81f1dba3"
+    },
+    {
+      "file": "research/xox-live-metrics.jpg",
+      "bytes": 233194,
+      "sha256": "c29bf1908c35594ee64a0ef0061fbbfdf2e26e8344e104840102a426be7faae8"
     }
-  ]
+  ],
+  "updated_date": "2026-09-26"
 }

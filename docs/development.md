@@ -117,5 +117,5 @@ kontrol edin; “sağ taraf başarılı” açıklaması her yeni eğitimde otom
 olmaz. UI ekranlarını gerçek tarayıcı sekmesinden alın; demo sayacı veya MSE'yi
 sonradan değiştirmeyin. Medya kökenini ve dosya SHA256'larını `docs/media/` altında
 belgeleyin. `pyproject.toml` içindeki wheel/sdist izin listesine her yeni varlığı
-ayrı ekleyin. Paket bütçesi 8 MB, tek dosya sınırı 4 MB'dir; ham model ve veri
+ayrı ekleyin. Paket bütçesi 10 MB, tek dosya sınırı 4 MB'dir; ham model ve veri
 uzantıları yasak kalır. Uzun kayıtları pakete koymayın.
